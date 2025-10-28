@@ -152,6 +152,12 @@ model UserStats {
   currentStreak         Int       @default(0)
   longestStreak         Int       @default(0)
   lastObservationDate   DateTime?
+
+  // Rarity streaks (consecutive rare+ observations)
+  currentRarityStreak    Int       @default(0)
+  longestRarityStreak    Int       @default(0)
+  lastRareObservationDate DateTime?
+
   lastSyncedAt          DateTime? // Track when we last synced to enable incremental sync
 
   // Leaderboard stats (reset periodically)

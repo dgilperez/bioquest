@@ -26,6 +26,8 @@ interface DashboardClientProps {
   currentStreak: number;
   longestStreak: number;
   lastObservationDate: Date | null;
+  currentRarityStreak: number;
+  longestRarityStreak: number;
 }
 
 export function DashboardClient({
@@ -41,6 +43,8 @@ export function DashboardClient({
   currentStreak,
   longestStreak,
   lastObservationDate,
+  currentRarityStreak,
+  longestRarityStreak,
 }: DashboardClientProps) {
   // Celebration states
   const [levelUpData, setLevelUpData] = useState<{ show: boolean; newLevel: number; levelTitle: string } | null>(null);
@@ -179,6 +183,8 @@ export function DashboardClient({
               lastObservationDate={lastObservationDate}
               streakAtRisk={streakAtRisk}
               hoursUntilBreak={hoursUntilBreak}
+              currentRarityStreak={currentRarityStreak}
+              longestRarityStreak={longestRarityStreak}
             />
           </div>
         </div>

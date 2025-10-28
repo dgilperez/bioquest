@@ -46,6 +46,8 @@ export default async function DashboardPage() {
         currentStreak={stats.currentStreak}
         longestStreak={stats.longestStreak}
         lastObservationDate={stats.lastObservationDate}
+        currentRarityStreak={stats.currentRarityStreak}
+        longestRarityStreak={stats.longestRarityStreak}
       />
     </div>
   );

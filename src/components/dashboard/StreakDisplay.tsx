@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { getStreakColor, getStreakEmoji, getStreakMessage, getNextMilestone } from '@/lib/gamification/streaks';
+import { getRarityStreakMessage } from '@/lib/gamification/streak-tracking';
 
 interface StreakDisplayProps {
   currentStreak: number;
@@ -9,6 +10,8 @@ interface StreakDisplayProps {
   lastObservationDate: Date | null;
   streakAtRisk?: boolean;
   hoursUntilBreak?: number;
+  currentRarityStreak?: number;
+  longestRarityStreak?: number;
 }
 
 export function StreakDisplay({
@@ -17,6 +20,8 @@ export function StreakDisplay({
   lastObservationDate,
   streakAtRisk = false,
   hoursUntilBreak = 0,
+  currentRarityStreak = 0,
+  longestRarityStreak = 0,
 }: StreakDisplayProps) {
   const streakColor = getStreakColor(currentStreak);
   const streakEmoji = getStreakEmoji(currentStreak);
@@ -199,6 +204,33 @@ export function StreakDisplay({
             <p className="text-xs font-body text-nature-600 dark:text-nature-400">
               Make an observation today and come back tomorrow to build your streak
             </p>
+          </motion.div>
+        )}
+
+        {/* Rarity Streak Section */}
+        {(currentRarityStreak > 0 || longestRarityStreak > 0) && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="mt-4 p-4 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border border-purple-200 dark:border-purple-800 rounded-lg"
+          >
+            <div className="flex items-center justify-between mb-2">
+              <h4 className="text-sm font-display font-bold text-purple-900 dark:text-purple-300">
+                💎 Rarity Streak
+              </h4>
+              <span className="text-2xl font-display font-black text-purple-600 dark:text-purple-400">
+                {currentRarityStreak}
+              </span>
+            </div>
+            <p className="text-xs font-body text-purple-700 dark:text-purple-300 mb-2">
+              {getRarityStreakMessage(currentRarityStreak)}
+            </p>
+            {longestRarityStreak > currentRarityStreak && (
+              <p className="text-xs font-display text-purple-600 dark:text-purple-400">
+                Personal best: {longestRarityStreak} rare+ in a row
+              </p>
+            )}
           </motion.div>
         )}
       </div>

@@ -8,6 +8,7 @@ import { checkAndUnlockBadges } from '@/lib/gamification/badges/unlock';
 import { updateAllQuestProgress } from '@/lib/gamification/quests/progress';
 import { assignAvailableQuestsToUser } from '@/lib/gamification/quests/generation';
 import { calculateLevel } from '@/lib/stats/user-stats';
+import { updateStreaks } from '@/lib/gamification/streak-tracking';
 import { Badge, Quest } from '@/types';
 
 export interface CompletedQuest {
@@ -113,6 +114,38 @@ export async function syncMockObservations(
     const rareCount = mockObservations.filter(o => o.rarity === 'rare').length;
     const legendaryCount = mockObservations.filter(o => o.rarity === 'legendary').length;
 
+    // Calculate rarity streaks
+    let currentRarityStreak = currentStats?.currentRarityStreak || 0;
+    let longestRarityStreak = currentStats?.longestRarityStreak || 0;
+    let lastRareObservationDate = currentStats?.lastRareObservationDate || null;
+    let lastObservationDate = currentStats?.lastObservationDate || null;
+
+    // Sort observations by date ascending to track streaks chronologically
+    const sortedObservations = [...mockObservations].sort((a, b) =>
+      new Date(a.observedOn).getTime() - new Date(b.observedOn).getTime()
+    );
+
+    for (const obs of sortedObservations) {
+      const streakUpdate = updateStreaks(
+        {
+          currentStreak: currentStats?.currentStreak || 0,
+          longestStreak: currentStats?.longestStreak || 0,
+          currentRarityStreak,
+          longestRarityStreak,
+          lastObservationDate,
+          lastRareObservationDate,
+        },
+        new Date(obs.observedOn),
+        obs.rarity
+      );
+
+      // Update values for next iteration
+      currentRarityStreak = streakUpdate.currentRarityStreak;
+      longestRarityStreak = streakUpdate.longestRarityStreak;
+      lastRareObservationDate = streakUpdate.lastRareObservationDate;
+      lastObservationDate = streakUpdate.lastObservationDate;
+    }
+
     // Update stats
     await prisma.userStats.upsert({
       where: { userId },
@@ -124,6 +157,9 @@ export async function syncMockObservations(
         pointsToNextLevel,
         rareObservations: rareCount,
         legendaryObservations: legendaryCount,
+        currentRarityStreak,
+        longestRarityStreak,
+        lastRareObservationDate,
         updatedAt: new Date(),
       },
       create: {
@@ -135,6 +171,9 @@ export async function syncMockObservations(
         pointsToNextLevel,
         rareObservations: rareCount,
         legendaryObservations: legendaryCount,
+        currentRarityStreak,
+        longestRarityStreak,
+        lastRareObservationDate,
       },
     });
 
