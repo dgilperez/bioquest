@@ -6,7 +6,9 @@ import { Observation } from '@prisma/client';
 import { Rarity } from '@/types';
 import { RarityShimmer } from '@/components/animations/RarityShimmer';
 import { ParticleBurst } from '@/components/animations/ParticleBurst';
+import { SpeciesInfoModal } from '@/components/species/SpeciesInfoModal';
 import { getRarityConfig } from '@/styles/design-tokens';
+import { Info } from 'lucide-react';
 
 interface AnimatedObservationCardProps {
   observation: Observation;
@@ -22,6 +24,7 @@ export function AnimatedObservationCard({
   const [revealed, setRevealed] = useState(!isNew);
   const [showShimmer, setShowShimmer] = useState(false);
   const [showParticles, setShowParticles] = useState(false);
+  const [showSpeciesInfo, setShowSpeciesInfo] = useState(false);
   const controls = useAnimation();
 
   const rarity = (observation.rarity || 'common') as Rarity;
@@ -78,20 +81,21 @@ export function AnimatedObservationCard({
   };
 
   return (
-    <motion.div
-      initial={isNew ? { rotateY: 180, scale: 0.8, opacity: 0 } : false}
-      animate={controls}
-      whileHover={{
-        scale: 1.03,
-        y: -4,
-        transition: { duration: 0.2 },
-      }}
-      className={`relative rounded-xl border-2 ${rarityColors[rarity]} bg-white dark:bg-gray-800 overflow-hidden shadow-lg cursor-pointer`}
-      style={{
-        transformStyle: 'preserve-3d',
-        boxShadow: config ? config.shadow : undefined,
-      }}
-    >
+    <>
+      <motion.div
+        initial={isNew ? { rotateY: 180, scale: 0.8, opacity: 0 } : false}
+        animate={controls}
+        whileHover={{
+          scale: 1.03,
+          y: -4,
+          transition: { duration: 0.2 },
+        }}
+        className={`relative rounded-xl border-2 ${rarityColors[rarity]} bg-white dark:bg-gray-800 overflow-hidden shadow-lg`}
+        style={{
+          transformStyle: 'preserve-3d',
+          boxShadow: config ? config.shadow : undefined,
+        }}
+      >
       {/* Card Back (before reveal) */}
       {!revealed && (
         <div className="absolute inset-0 backface-hidden" style={{ transform: 'rotateY(180deg)' }}>
@@ -126,16 +130,32 @@ export function AnimatedObservationCard({
             </motion.div>
           )}
 
-          {/* Species Info */}
+          {/* Species Info with Learn More button */}
           <div className="mb-3">
-            <h3 className="font-display font-bold text-lg mb-1">
-              {observation.commonName || observation.speciesGuess}
-            </h3>
-            {observation.commonName && (
-              <p className="text-sm text-muted-foreground font-body italic">
-                {observation.taxonName}
-              </p>
-            )}
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex-1">
+                <h3 className="font-display font-bold text-lg mb-1">
+                  {observation.commonName || observation.speciesGuess}
+                </h3>
+                {observation.commonName && (
+                  <p className="text-sm text-muted-foreground font-body italic">
+                    {observation.taxonName}
+                  </p>
+                )}
+              </div>
+              {observation.taxonId && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowSpeciesInfo(true);
+                  }}
+                  className="flex-shrink-0 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors group"
+                  aria-label="Learn more about this species"
+                >
+                  <Info className="w-5 h-5 text-nature-600 dark:text-nature-400 group-hover:scale-110 transition-transform" />
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Metadata */}
@@ -188,5 +208,16 @@ export function AnimatedObservationCard({
         )}
       </div>
     </motion.div>
+
+      {/* Species Info Modal */}
+      {showSpeciesInfo && observation.taxonId && (
+        <SpeciesInfoModal
+          taxonId={observation.taxonId}
+          taxonName={observation.taxonName || observation.speciesGuess || 'Unknown'}
+          commonName={observation.commonName || undefined}
+          onClose={() => setShowSpeciesInfo(false)}
+        />
+      )}
+    </>
   );
 }

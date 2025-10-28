@@ -69,9 +69,32 @@ export function SyncButton({ userId, inatUsername, accessToken }: SyncButtonProp
         notifyMultipleQuests(quests, totalPoints);
       }
 
-      // Show toast notifications for badges
+      // Badge unlock ceremony (show full ceremony for first badge only)
       if (result.newBadges && result.newBadges.length > 0) {
-        notifyMultipleBadges(result.newBadges);
+        // Show full ceremony for the first/most important badge
+        const primaryBadge = result.newBadges[0];
+        celebrationParams.set('badgeUnlock', 'true');
+        celebrationParams.set('badgeId', primaryBadge.id);
+        celebrationParams.set('badgeCode', primaryBadge.code);
+        celebrationParams.set('badgeName', primaryBadge.name);
+        celebrationParams.set('badgeDescription', primaryBadge.description);
+        if (primaryBadge.iconUrl) {
+          celebrationParams.set('badgeIconUrl', primaryBadge.iconUrl);
+        }
+        celebrationParams.set('badgeTier', primaryBadge.tier || 'bronze');
+        hasCelebrations = true;
+
+        // Show toasts for other badges
+        if (result.newBadges.length > 1) {
+          notifyMultipleBadges(result.newBadges.slice(1));
+        }
+      }
+
+      // Show toast notifications for quests
+      if (result.completedQuests && result.completedQuests.length > 0) {
+        const quests = result.completedQuests.map((cq: any) => cq.quest);
+        const totalPoints = result.completedQuests.reduce((sum: number, cq: any) => sum + cq.pointsEarned, 0);
+        notifyMultipleQuests(quests, totalPoints);
       }
 
       notifySyncComplete(result.newObservations || 0);

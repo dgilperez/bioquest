@@ -66,6 +66,34 @@ export function DashboardClient({
       }
     }
 
+    // Check for badge unlock
+    if (params.get('badgeUnlock') === 'true') {
+      const badgeId = params.get('badgeId') || '';
+      const badgeCode = params.get('badgeCode') || '';
+      const badgeName = params.get('badgeName') || '';
+      const badgeDescription = params.get('badgeDescription') || '';
+      const badgeIconUrl = params.get('badgeIconUrl');
+      const badgeTier = params.get('badgeTier') || 'bronze';
+      if (badgeName) {
+        setTimeout(() => {
+          setBadgeData({
+            id: badgeId,
+            code: badgeCode,
+            name: badgeName,
+            description: badgeDescription,
+            iconUrl: badgeIconUrl,
+            tier: badgeTier as 'bronze' | 'silver' | 'gold' | 'platinum',
+            category: 'milestone',
+            criteria: {},
+            isSecret: false,
+            sortOrder: 0,
+            createdAt: new Date(),
+          });
+        }, levelUpData ? 2000 : 0); // Delay if level up is showing
+        window.history.replaceState({}, '', window.location.pathname);
+      }
+    }
+
     // Check for streak milestone
     if (params.get('streakMilestone') === 'true') {
       const days = parseInt(params.get('streakDays') || '0');
@@ -74,7 +102,7 @@ export function DashboardClient({
       if (days > 0) {
         setTimeout(() => {
           setStreakMilestoneData({ show: true, days, title, bonusPoints });
-        }, levelUpData ? 1000 : 0); // Delay if level up is showing
+        }, (levelUpData || badgeData) ? 3000 : 0); // Delay if other celebrations are showing
         window.history.replaceState({}, '', window.location.pathname);
       }
     }
