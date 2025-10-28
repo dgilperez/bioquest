@@ -79,10 +79,17 @@ export const authOptions: NextAuthOptions = {
   },
   callbacks: {
     async jwt({ token, user, account }) {
-      // Initial sign in
+      // Initial sign in - need to get database user ID
       if (account && user) {
+        // Look up the database user ID from inatId
+        const dbUser = await prisma.user.findUnique({
+          where: { inatId: (user as any).inatId },
+          select: { id: true },
+        });
+
         return {
           ...token,
+          userId: dbUser?.id, // Store the database user ID
           accessToken: account.access_token,
           refreshToken: account.refresh_token,
           accessTokenExpires: account.expires_at ? account.expires_at * 1000 : 0,
@@ -101,6 +108,7 @@ export const authOptions: NextAuthOptions = {
     },
     async session({ session, token }) {
       if (session.user) {
+        (session.user as any).id = token.userId; // Use database user ID
         (session.user as any).inatId = token.inatId;
         (session.user as any).inatUsername = token.inatUsername;
         (session as any).accessToken = token.accessToken;

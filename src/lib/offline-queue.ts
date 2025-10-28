@@ -132,12 +132,16 @@ export async function processQueue(): Promise<{
 async function executeAction(action: QueuedAction): Promise<void> {
   switch (action.type) {
     case 'sync_observations':
+      console.log('Executing sync_observations action with payload:', action.payload);
       await fetch('/api/sync', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(action.payload),
       }).then(res => {
-        if (!res.ok) throw new Error(`Sync failed: ${res.statusText}`);
+        if (!res.ok) {
+          console.error('Sync failed with status:', res.status, res.statusText);
+          throw new Error(`Sync failed: ${res.statusText}`);
+        }
         return res;
       });
       break;

@@ -52,36 +52,41 @@ export function SpeciesAccumulationChart({ data }: SpeciesAccumulationChartProps
               d={`
                 M 0 ${chartHeight}
                 ${sampledData.map((point, i) => {
-                  const x = (i / (sampledData.length - 1)) * 100;
+                  const xPercent = (i / (sampledData.length - 1));
                   const y = chartHeight - (point.cumulativeSpecies / maxSpecies) * chartHeight;
-                  return `L ${x}% ${y}`;
+                  return `L ${xPercent * 100} ${y}`;
                 }).join(' ')}
-                L 100% ${chartHeight}
+                L 100 ${chartHeight}
                 Z
               `}
               fill="url(#areaGradient)"
+              viewBox="0 0 100 ${chartHeight}"
+              preserveAspectRatio="none"
             />
 
             {/* Line */}
             <polyline
               points={sampledData.map((point, i) => {
-                const x = (i / (sampledData.length - 1)) * 100;
+                const xPercent = (i / (sampledData.length - 1));
                 const y = chartHeight - (point.cumulativeSpecies / maxSpecies) * chartHeight;
-                return `${x}%,${y}`;
+                return `${xPercent * 100},${y}`;
               }).join(' ')}
               fill="none"
               stroke="rgb(34, 197, 94)"
               strokeWidth="2"
+              vectorEffect="non-scaling-stroke"
+              viewBox="0 0 100 ${chartHeight}"
+              preserveAspectRatio="none"
             />
 
             {/* Data points */}
             {sampledData.map((point, i) => {
-              const x = (i / (sampledData.length - 1)) * 100;
+              const xPercent = (i / (sampledData.length - 1));
               const y = chartHeight - (point.cumulativeSpecies / maxSpecies) * chartHeight;
               return (
                 <circle
                   key={i}
-                  cx={`${x}%`}
+                  cx={xPercent * 100}
                   cy={y}
                   r="3"
                   fill="rgb(34, 197, 94)"

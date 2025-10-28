@@ -18,7 +18,10 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { userId, inatUsername, accessToken } = body;
 
+    console.log('Sync API received body:', { userId, inatUsername, hasAccessToken: !!accessToken });
+
     if (!userId || !inatUsername) {
+      console.error('Missing required fields. Body:', body);
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 

@@ -157,6 +157,10 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'inaturalist-open-data.s3.amazonaws.com',
       },
+      {
+        protocol: 'https',
+        hostname: 'api.dicebear.com',
+      },
     ],
   },
   experimental: {

@@ -239,6 +239,146 @@ export class INatClient {
 
     return this.request(`/taxa?${params.toString()}`);
   }
+
+  /**
+   * Search for places
+   */
+  async searchPlaces(query: string, options: { per_page?: number } = {}): Promise<{
+    total_results: number;
+    results: Array<{
+      id: number;
+      name: string;
+      display_name: string;
+      place_type: number;
+      bbox_area: number;
+      location: string; // "lat,lng"
+      admin_level?: number;
+    }>;
+  }> {
+    const params = new URLSearchParams({
+      q: query,
+      per_page: (options.per_page || 20).toString(),
+    });
+
+    return this.request(`/places/autocomplete?${params.toString()}`);
+  }
+
+  /**
+   * Get nearby places based on coordinates
+   */
+  async getNearbyPlaces(lat: number, lng: number, options: { per_page?: number } = {}): Promise<{
+    total_results: number;
+    results: {
+      standard: Array<{
+        id: number;
+        name: string;
+        display_name: string;
+        place_type: number;
+        bbox_area: number;
+        ancestor_place_ids: number[] | null;
+      }>;
+      community: Array<{
+        id: number;
+        name: string;
+        display_name: string;
+        place_type: number;
+        bbox_area: number;
+      }>;
+    };
+  }> {
+    const params = new URLSearchParams({
+      nelat: (lat + 0.5).toString(),
+      nelng: (lng + 0.5).toString(),
+      swlat: (lat - 0.5).toString(),
+      swlng: (lng - 0.5).toString(),
+      per_page: (options.per_page || 50).toString(),
+    });
+
+    return this.request(`/places/nearby?${params.toString()}`);
+  }
+
+  /**
+   * Get observations at a specific place
+   */
+  async getPlaceObservations(
+    placeId: number,
+    options: GetObservationsOptions = {}
+  ): Promise<{
+    total_results: number;
+    page: number;
+    per_page: number;
+    results: INatObservation[];
+  }> {
+    const params = new URLSearchParams({
+      place_id: placeId.toString(),
+      per_page: (options.per_page || 50).toString(),
+      page: (options.page || 1).toString(),
+      order_by: options.order_by || 'created_at',
+      order: options.order || 'desc',
+    });
+
+    if (options.quality_grade) {
+      params.append('quality_grade', options.quality_grade);
+    }
+    if (options.taxon_id) {
+      params.append('taxon_id', options.taxon_id.toString());
+    }
+    if (options.d1) {
+      params.append('d1', options.d1);
+    }
+    if (options.d2) {
+      params.append('d2', options.d2);
+    }
+
+    return this.request(`/observations?${params.toString()}`);
+  }
+
+  /**
+   * Get species counts for a place
+   */
+  async getPlaceSpeciesCounts(
+    placeId: number,
+    options: { taxon_id?: number; per_page?: number } = {}
+  ): Promise<{
+    total_results: number;
+    results: Array<{
+      count: number;
+      taxon: INatTaxon;
+    }>;
+  }> {
+    const params = new URLSearchParams({
+      place_id: placeId.toString(),
+      per_page: (options.per_page || 200).toString(),
+    });
+
+    if (options.taxon_id) {
+      params.append('taxon_id', options.taxon_id.toString());
+    }
+
+    return this.request(`/observations/species_counts?${params.toString()}`);
+  }
+
+  /**
+   * Get histogram of observations at a place (for activity analysis)
+   */
+  async getPlaceObservationsHistogram(
+    placeId: number,
+    dateField: 'created_at' | 'observed_on' = 'created_at',
+    interval: 'day' | 'week' | 'month' = 'week'
+  ): Promise<{
+    total_results: number;
+    results: {
+      [date: string]: number;
+    };
+  }> {
+    const params = new URLSearchParams({
+      place_id: placeId.toString(),
+      date_field: dateField,
+      interval: interval,
+    });
+
+    return this.request(`/observations/histogram?${params.toString()}`);
+  }
 }
 
 // Singleton instance for server-side usage

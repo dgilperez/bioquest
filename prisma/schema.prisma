@@ -35,6 +35,7 @@ model User {
   accounts      Account[]
   friendships   Friendship[] @relation("UserFriendships")
   friendOf      Friendship[] @relation("FriendOf")
+  trips         Trip[]
 
   @@index([inatId])
   @@index([inatUsername])
@@ -109,7 +110,8 @@ model Observation {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user  User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  trips TripObservation[]
 
   @@index([userId])
   @@index([taxonId])
@@ -310,4 +312,168 @@ enum FriendshipStatus {
   PENDING
   ACCEPTED
   BLOCKED
+}
+
+// ============================================================================
+// Places & Exploration (Cached)
+// ============================================================================
+
+model Place {
+  id           Int      @id // iNaturalist place ID
+  name         String
+  displayName  String
+  placeType    Int?
+  latitude     Float    // Calculated center latitude
+  longitude    Float    // Calculated center longitude
+  bboxArea     Float?
+
+  // Cached species data
+  totalSpecies        Int      @default(0)
+  recentObservations  Int      @default(0) // Last 30 days
+  cachedAt            DateTime @default(now())
+
+  // Track usage
+  queriedCount Int      @default(0)
+  lastQueriedAt DateTime @default(now())
+
+  // Relations
+  trips Trip[]
+
+  @@index([latitude, longitude])
+  @@index([totalSpecies])
+  @@index([cachedAt])
+  @@map("places")
+}
+
+// ============================================================================
+// Trip Journal & Exploration
+// ============================================================================
+
+model Trip {
+  id          String      @id @default(cuid())
+  userId      String
+  placeId     Int?        // Reference to Place model (null if custom location)
+
+  // Trip metadata
+  title       String      // e.g., "Morning Bird Walk at Central Park"
+  description String?     // User's notes/goals for the trip
+  status      TripStatus  @default(planned)
+
+  // Timing
+  plannedDate DateTime?   // When user plans to go
+  startedAt   DateTime?   // When trip actually started (check-in)
+  completedAt DateTime?   // When trip ended
+
+  // Location (fallback if placeId is null)
+  customLocationName String?
+  customLatitude     Float?
+  customLongitude    Float?
+
+  // Trip conditions (recorded during/after trip)
+  weather     String?     // e.g., "Sunny, 65°F"
+  conditions  String?     // e.g., "Muddy trails, high wind"
+  notes       String?     // Post-trip journal entry
+
+  // Gamification metadata (calculated on completion)
+  newSpeciesFound     Int      @default(0)
+  totalObservations   Int      @default(0)
+  pointsEarned        Int      @default(0)
+  rarityHighlight     Rarity?  // Highest rarity found
+  completionScore     Float?   // % of target species found (0-100)
+
+  // Social (Phase 2)
+  isPublic            Boolean  @default(false)
+  shareUrl            String?  @unique
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  place           Place?            @relation(fields: [placeId], references: [id])
+  observations    TripObservation[] // Observations made during this trip
+  targetSpecies   TripTarget[]      // Species user wanted to find
+  achievements    TripAchievement[] // Badges/achievements earned
+
+  @@index([userId])
+  @@index([placeId])
+  @@index([status])
+  @@index([plannedDate])
+  @@index([startedAt])
+  @@map("trips")
+}
+
+enum TripStatus {
+  planned      // User created trip but hasn't started
+  in_progress  // User checked in, trip is active
+  completed    // Trip finished, observations synced
+  cancelled    // User cancelled planned trip
+}
+
+// Target species for a trip (what user wants to find)
+model TripTarget {
+  id          String   @id @default(cuid())
+  tripId      String
+  taxonId     Int
+  taxonName   String
+  commonName  String?
+  iconicTaxon String?
+  priority    Int      @default(0) // 1-5, user-defined importance
+
+  // Achievement tracking
+  spotted     Boolean  @default(false)
+  spottedAt   DateTime?
+
+  trip Trip @relation(fields: [tripId], references: [id], onDelete: Cascade)
+
+  @@unique([tripId, taxonId])
+  @@index([tripId])
+  @@map("trip_targets")
+}
+
+// Link observations to trips (many-to-many)
+model TripObservation {
+  id             String   @id @default(cuid())
+  tripId         String
+  observationId  Int      // References Observation.id
+  isTargetSpecies Boolean @default(false) // Was this a target?
+  addedAt        DateTime @default(now())
+
+  trip        Trip         @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  observation Observation  @relation(fields: [observationId], references: [id], onDelete: Cascade)
+
+  @@unique([tripId, observationId])
+  @@index([tripId])
+  @@index([observationId])
+  @@map("trip_observations")
+}
+
+// Achievements earned during specific trips
+model TripAchievement {
+  id           String   @id @default(cuid())
+  tripId       String
+  type         TripAchievementType
+  title        String
+  description  String
+  metadata     Json?    // Achievement-specific data
+  earnedAt     DateTime @default(now())
+
+  trip Trip @relation(fields: [tripId], references: [id], onDelete: Cascade)
+
+  @@index([tripId])
+  @@index([type])
+  @@map("trip_achievements")
+}
+
+enum TripAchievementType {
+  first_visit          // First time at this location
+  return_visitor       // 2nd+ visit to location
+  season_master        // Visited in all 4 seasons
+  target_complete      // Found all target species
+  rarity_hunter        // Found mythic/legendary during trip
+  early_bird           // Trip before 8am
+  night_owl            // Trip after 8pm
+  weather_warrior      // Trip in challenging conditions
+  species_surge        // 20+ species in one trip
+  photo_master         // All observations have 3+ photos
 }
