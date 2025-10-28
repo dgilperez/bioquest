@@ -132,7 +132,7 @@ export async function processQueue(): Promise<{
 async function executeAction(action: QueuedAction): Promise<void> {
   switch (action.type) {
     case 'sync_observations':
-      await fetch('/api/inaturalist/sync', {
+      await fetch('/api/sync', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(action.payload),
