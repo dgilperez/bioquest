@@ -68,13 +68,33 @@
 - [x] **Icon hover animations** (controlled, smooth)
 - [x] **Game feel polish** throughout the app
 
-### Auto-Sync Feature ⭐ NEW
+### Auto-Sync Feature ⭐
 - [x] **Automatic background sync** on page load/reload
 - [x] **Incremental sync** using `updated_since` parameter
 - [x] **Visual sync indicator** (top-right corner)
 - [x] **Smart refresh** (only when changes detected)
 - [x] **2-second delay** (non-blocking page render)
 - [x] **Track lastSyncedAt** in database
+
+### Explore & Trip Planning ⭐ NEW
+- [x] **Real location recommendations** with iNat API integration
+- [x] **Species gap analysis** (shows new species possible at each location)
+- [x] **Seasonal patterns** from real histogram data (2-year lookback)
+- [x] **User location detection** (geolocation + fallback to observation history)
+- [x] **Recommendation caching** (24-hour TTL with auto-cleanup)
+- [x] **Trip planning** with target species selection
+- [x] **Trip tracking** (planned, in progress, completed)
+- [x] **Trip achievements** and completion scoring
+
+### Enhanced Rarity System ⭐ NEW
+- [x] **6-tier rarity system** (mythic, legendary, epic, rare, uncommon, common)
+- [x] **Global rarity classification** (based on iNat observation counts)
+- [x] **Regional rarity overlay** (compares region vs. global rarity)
+- [x] **Smart rarity scoring** (uses higher of regional/global)
+- [x] **Point bonuses per tier** (mythic: 2000pts → common: 0pts)
+- [x] **First observation detection** (5000pts global, 1000pts regional)
+- [x] **Batch classification** for performance
+- [x] **Rarity emojis and labels** (💎✨🌟💠🔷⚪)
 
 ### Stats & Visualization
 - [x] Dashboard with stats overview
@@ -115,11 +135,13 @@
 - [ ] Handle observation updates/deletes
 
 #### 2. Enhanced Gamification
-- [ ] **Rarity system implementation**
-  - [ ] Calculate global rarity from iNat data
-  - [ ] Calculate regional rarity
-  - [ ] Display rarity badges on observations
-  - [ ] Bonus points for rare/legendary finds
+- [x] **Rarity system implementation** ✅ COMPLETE
+  - [x] Calculate global rarity from iNat data
+  - [x] Calculate regional rarity
+  - [x] 6-tier system with point bonuses
+  - [x] First observation detection
+  - [ ] Display rarity badges on observation cards (UI integration)
+  - [ ] Rarity streak tracking
 - [ ] **Daily/Weekly quests**
   - [ ] Generate rotating daily quests
   - [ ] Weekly challenge system
@@ -266,11 +288,21 @@ npm run test:coverage    # Coverage report
 ## 📝 Recent Changes (Last 3 Days)
 
 ### October 28, 2025
+- ✅ **Completed real location recommendations system**
+  - Already had: iNat API integration, gap analysis, location detection
+  - Added: 24-hour caching layer with automatic cleanup
+  - Coordinates rounded for efficient cache grouping
+  - Mock/real mode switching based on OAuth configuration
 - ✅ **Integrated iNaturalist histogram API for seasonal recommendations**
   - Real seasonal patterns from 2-year observation data
   - Month-to-season aggregation with peak activity calculation
   - Fallback mock data for development/errors
   - Dynamic seasonal ordering (current season first)
+- ✅ **Enhanced rarity system to 6 tiers**
+  - Mythic (<10), Legendary (<100), Epic (<500), Rare (<2000), Uncommon (<10000), Common (≥10000)
+  - Regional vs. global rarity comparison
+  - Point bonuses: mythic 2000pts, legendary 500pts, epic 250pts, rare 100pts, uncommon 25pts
+  - First observation bonuses: 5000pts global, 1000pts regional
 - ✅ Added game feel animations throughout app
 - ✅ Implemented auto-sync on page load
 - ✅ Fixed hydration errors
