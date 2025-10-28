@@ -136,7 +136,7 @@ export function GapAnalysis({ taxonId, taxonName, regionId }: GapAnalysisProps) 
                 {/* Summary */}
                 <div className="p-4 rounded-xl border-2 border-nature-500 dark:border-nature-600 bg-nature-50 dark:bg-nature-950/20">
                   <p className="text-sm text-muted-foreground">
-                    You haven't observed{' '}
+                    You haven&apos;t observed{' '}
                     <span className="font-bold text-nature-700 dark:text-nature-300">
                       {data.unobservedCount}
                     </span>{' '}
@@ -234,7 +234,7 @@ export function GapAnalysis({ taxonId, taxonName, regionId }: GapAnalysisProps) 
                 {data.recommended.length === 0 && data.unobserved.length === 0 && (
                   <div className="p-6 rounded-xl border-2 border-green-500 bg-green-50 dark:bg-green-950/20 text-center">
                     <p className="text-green-700 dark:text-green-300 font-semibold">
-                      Amazing! You've observed all available taxa at this level!
+                      Amazing! You&apos;ve observed all available taxa at this level!
                     </p>
                   </div>
                 )}

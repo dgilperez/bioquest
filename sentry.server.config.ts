@@ -13,7 +13,7 @@ if (SENTRY_DSN && SENTRY_ENVIRONMENT === 'production') {
     tracesSampleRate: SENTRY_ENVIRONMENT === 'production' ? 0.1 : 1.0,
 
     // Setting this option to true will print useful information to the console while you're setting up Sentry.
-    debug: SENTRY_ENVIRONMENT === 'dev',
+    debug: SENTRY_ENVIRONMENT !== 'production',
 
     beforeSend(event, hint) {
       // Filter out certain errors if needed

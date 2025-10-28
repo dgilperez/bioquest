@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/db';
+import { prisma } from '@/lib/db/prisma';
 import { getINatClient } from '@/lib/inat/client';
 
 export interface TaxonProgress {
