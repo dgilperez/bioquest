@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { getLocationRecommendations, getUserCoordinates } from '@/lib/explore/recommendations-optimized';
 import { MOCK_RECOMMENDATIONS } from '@/lib/explore/mock-recommendations';
+import { recommendationsCache } from '@/lib/cache/recommendations-cache';
 
 // Check if we're in mock mode (no iNat OAuth configured)
 const isMockMode = !process.env.INATURALIST_CLIENT_ID || process.env.INATURALIST_CLIENT_ID === 'your_client_id_here';
@@ -72,6 +73,19 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Access token required' }, { status: 400 });
     }
 
+    // Check cache first
+    const cachedRecommendations = recommendationsCache.get(userId, userCoordinates);
+    if (cachedRecommendations) {
+      console.log('✨ Returning cached recommendations');
+      return NextResponse.json({
+        success: true,
+        userCoordinates,
+        recommendations: cachedRecommendations,
+        count: cachedRecommendations.length,
+        cached: true,
+      });
+    }
+
     // Get real recommendations
     const recommendations = await getLocationRecommendations(
       userId,
@@ -82,6 +96,9 @@ export async function GET(req: NextRequest) {
         minNewSpecies,
       }
     );
+
+    // Cache the results (24-hour TTL)
+    recommendationsCache.set(userId, userCoordinates, recommendations);
 
     return NextResponse.json({
       success: true,
