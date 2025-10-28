@@ -219,23 +219,127 @@ function determineActivityLevel(recentCount: number): 'low' | 'medium' | 'high' 
 }
 
 /**
- * Analyze seasonal patterns for a location
- * Returns simple seasonal recommendations based on current month
+ * Analyze seasonal patterns for a location using iNat histogram API
+ * Returns seasonal recommendations based on actual observation data
  */
-function analyzeSeasonalPatterns(_placeId: number, _placeName: string): SeasonalInfo[] {
-  // For MVP, provide general seasonal guidance
-  // In production, this would call iNat histogram API for actual data
+async function analyzeSeasonalPatterns(
+  placeId: number,
+  placeName: string,
+  client: INatClient
+): Promise<SeasonalInfo[]> {
+  try {
+    // Get observation histogram for this location (last 2 years for good seasonal data)
+    const twoYearsAgo = new Date();
+    twoYearsAgo.setFullYear(twoYearsAgo.getFullYear() - 2);
 
-  const currentMonth = new Date().getMonth(); // 0-11
+    const histogramData = await client.getObservationHistogram({
+      place_id: placeId,
+      date_field: 'observed',
+      interval: 'month',
+      d1: twoYearsAgo.toISOString().split('T')[0],
+    });
 
-  // Determine current season
+    // Aggregate by season
+    const seasonalData = {
+      spring: { months: [2, 3, 4], count: 0 }, // Mar, Apr, May
+      summer: { months: [5, 6, 7], count: 0 }, // Jun, Jul, Aug
+      fall: { months: [8, 9, 10], count: 0 },  // Sep, Oct, Nov
+      winter: { months: [11, 0, 1], count: 0 }, // Dec, Jan, Feb
+    };
+
+    // Sum observations by season
+    Object.entries(histogramData.results?.month || {}).forEach(([month, count]) => {
+      const monthNum = parseInt(month) - 1; // iNat uses 1-12, JS uses 0-11
+      const observationCount = count as number;
+
+      if (seasonalData.spring.months.includes(monthNum)) {
+        seasonalData.spring.count += observationCount;
+      } else if (seasonalData.summer.months.includes(monthNum)) {
+        seasonalData.summer.count += observationCount;
+      } else if (seasonalData.fall.months.includes(monthNum)) {
+        seasonalData.fall.count += observationCount;
+      } else if (seasonalData.winter.months.includes(monthNum)) {
+        seasonalData.winter.count += observationCount;
+      }
+    });
+
+    // Convert to SeasonalInfo array, sorted by activity
+    const seasons = [
+      { season: 'spring' as const, count: seasonalData.spring.count },
+      { season: 'summer' as const, count: seasonalData.summer.count },
+      { season: 'fall' as const, count: seasonalData.fall.count },
+      { season: 'winter' as const, count: seasonalData.winter.count },
+    ].sort((a, b) => b.count - a.count);
+
+    const totalObservations = seasons.reduce((sum, s) => sum + s.count, 0);
+
+    const currentMonth = new Date().getMonth(); // 0-11
+
+    // Determine current season
+    let currentSeason: 'spring' | 'summer' | 'fall' | 'winter';
+    if (currentMonth >= 2 && currentMonth <= 4) currentSeason = 'spring';
+    else if (currentMonth >= 5 && currentMonth <= 7) currentSeason = 'summer';
+    else if (currentMonth >= 8 && currentMonth <= 10) currentSeason = 'fall';
+    else currentSeason = 'winter';
+
+    // Map seasons to SeasonalInfo with real data
+    const seasonalInfo: SeasonalInfo[] = seasons.map(s => {
+      const peakActivity = totalObservations > 0 ? Math.round((s.count / totalObservations) * 100) : 50;
+
+      const recommendations: Record<typeof s.season, string> = {
+        spring: peakActivity > 25 ? 'Peak time for wildflowers, migratory birds, and emerging insects' : 'Moderate activity for spring species',
+        summer: peakActivity > 25 ? 'Great for butterflies, dragonflies, and reptiles in warm weather' : 'Good time for summer species',
+        fall: peakActivity > 25 ? 'Excellent for fall migrants, mushrooms, and autumn foliage' : 'Decent activity for fall observations',
+        winter: peakActivity > 15 ? 'Best for winter birds and tracking mammals' : 'Lower activity but unique winter species present',
+      };
+
+      const monthRanges: Record<typeof s.season, string> = {
+        spring: 'March-May',
+        summer: 'June-August',
+        fall: 'September-November',
+        winter: 'December-February',
+      };
+
+      const typicalTaxa: Record<typeof s.season, string[]> = {
+        spring: ['Plantae', 'Aves', 'Insecta'],
+        summer: ['Insecta', 'Plantae', 'Reptilia'],
+        fall: ['Aves', 'Fungi', 'Plantae'],
+        winter: ['Aves', 'Mammalia'],
+      };
+
+      return {
+        season: s.season,
+        months: monthRanges[s.season],
+        peakActivity,
+        topTaxa: typicalTaxa[s.season],
+        recommendation: recommendations[s.season],
+      };
+    });
+
+    // Sort so current season is first, then by peak activity
+    return seasonalInfo.sort((a, b) => {
+      if (a.season === currentSeason) return -1;
+      if (b.season === currentSeason) return 1;
+      return b.peakActivity - a.peakActivity;
+    });
+  } catch (error) {
+    console.error('Error analyzing seasonal patterns:', error);
+    // Fallback to simplified seasonal data
+    return getFallbackSeasonalData();
+  }
+}
+
+/**
+ * Fallback seasonal data when histogram API fails or in development
+ */
+function getFallbackSeasonalData(): SeasonalInfo[] {
+  const currentMonth = new Date().getMonth();
   let currentSeason: 'spring' | 'summer' | 'fall' | 'winter';
   if (currentMonth >= 2 && currentMonth <= 4) currentSeason = 'spring';
   else if (currentMonth >= 5 && currentMonth <= 7) currentSeason = 'summer';
   else if (currentMonth >= 8 && currentMonth <= 10) currentSeason = 'fall';
   else currentSeason = 'winter';
 
-  // General seasonal recommendations
   const seasonalPatterns: Record<string, SeasonalInfo> = {
     spring: {
       season: 'spring',
@@ -382,7 +486,7 @@ async function analyzeLocation(
     score += strongFor.length * 5;
 
     // Get seasonal patterns
-    const bestSeasons = analyzeSeasonalPatterns(placeId, placeName);
+    const bestSeasons = await analyzeSeasonalPatterns(placeId, placeName, client);
 
     return {
       placeId,

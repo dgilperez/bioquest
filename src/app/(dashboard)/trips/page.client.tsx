@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import {
@@ -68,11 +68,7 @@ export function TripsListClient() {
   const [isLoading, setIsLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>('all');
 
-  useEffect(() => {
-    fetchTrips();
-  }, [statusFilter]);
-
-  const fetchTrips = async () => {
+  const fetchTrips = useCallback(async () => {
     setIsLoading(true);
     try {
       const params = new URLSearchParams();
@@ -94,7 +90,11 @@ export function TripsListClient() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [statusFilter]);
+
+  useEffect(() => {
+    fetchTrips();
+  }, [fetchTrips]);
 
   const getStatusCounts = () => {
     return {

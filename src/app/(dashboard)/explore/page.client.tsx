@@ -345,7 +345,7 @@ function LocationCard({ location, index }: LocationCardProps) {
       {/* Top Targets */}
       {location.topTargets.length > 0 && (
         <div>
-          <h4 className="text-sm font-semibold mb-2">Top targets you haven't seen:</h4>
+          <h4 className="text-sm font-semibold mb-2">Top targets you haven&apos;t seen:</h4>
           <ul className="space-y-2">
             {location.topTargets.map((target) => (
               <li

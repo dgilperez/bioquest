@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import {
@@ -126,11 +126,7 @@ export function TripDetailClient({ tripId }: { tripId: string }) {
   const [isLoading, setIsLoading] = useState(true);
   const [isActionLoading, setIsActionLoading] = useState(false);
 
-  useEffect(() => {
-    fetchTrip();
-  }, [tripId]);
-
-  const fetchTrip = async () => {
+  const fetchTrip = useCallback(async () => {
     setIsLoading(true);
     try {
       const response = await fetch(`/api/trips/${tripId}`);
@@ -152,7 +148,11 @@ export function TripDetailClient({ tripId }: { tripId: string }) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [tripId, router]);
+
+  useEffect(() => {
+    fetchTrip();
+  }, [fetchTrip]);
 
   const handleAction = async (action: 'start' | 'complete' | 'cancel') => {
     if (!trip) return;

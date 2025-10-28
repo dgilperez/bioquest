@@ -1,6 +1,58 @@
 import { LocationRecommendation } from './recommendations-optimized';
 
 /**
+ * Generate seasonal data using current month logic
+ */
+function generateSeasonalData() {
+  const currentMonth = new Date().getMonth();
+  let currentSeason: 'spring' | 'summer' | 'fall' | 'winter';
+
+  if (currentMonth >= 2 && currentMonth <= 4) currentSeason = 'spring';
+  else if (currentMonth >= 5 && currentMonth <= 7) currentSeason = 'summer';
+  else if (currentMonth >= 8 && currentMonth <= 10) currentSeason = 'fall';
+  else currentSeason = 'winter';
+
+  const patterns = {
+    spring: {
+      season: 'spring' as const,
+      months: 'March-May',
+      peakActivity: 85,
+      topTaxa: ['Plantae', 'Aves', 'Insecta'],
+      recommendation: 'Peak time for wildflowers, migratory birds, and emerging insects',
+    },
+    summer: {
+      season: 'summer' as const,
+      months: 'June-August',
+      peakActivity: 75,
+      topTaxa: ['Insecta', 'Plantae', 'Aves'],
+      recommendation: 'Great for butterflies, summer wildflowers, and resident birds',
+    },
+    fall: {
+      season: 'fall' as const,
+      months: 'September-November',
+      peakActivity: 70,
+      topTaxa: ['Aves', 'Fungi', 'Plantae'],
+      recommendation: 'Excellent for fall migrants, mushrooms, and autumn foliage',
+    },
+    winter: {
+      season: 'winter' as const,
+      months: 'December-February',
+      peakActivity: 45,
+      topTaxa: ['Aves', 'Mammalia', 'Fungi'],
+      recommendation: 'Good for wintering birds, mammals, and mushrooms',
+    },
+  };
+
+  const result = [patterns[currentSeason]];
+  const others = (['spring', 'summer', 'fall', 'winter'] as const).filter(s => s !== currentSeason);
+  others.forEach(s => result.push(patterns[s]));
+
+  return result;
+}
+
+const seasonalData = generateSeasonalData();
+
+/**
  * Mock location recommendations for development
  */
 export const MOCK_RECOMMENDATIONS: LocationRecommendation[] = [
@@ -22,22 +74,7 @@ export const MOCK_RECOMMENDATIONS: LocationRecommendation[] = [
       epic: 8,
       rare: 12,
     },
-    bestSeasons: [
-      {
-        season: 'fall',
-        months: 'September-November',
-        peakActivity: 70,
-        topTaxa: ['Aves', 'Fungi', 'Plantae'],
-        recommendation: 'Excellent for fall migrants, mushrooms, and autumn foliage',
-      },
-      {
-        season: 'spring',
-        months: 'March-May',
-        peakActivity: 85,
-        topTaxa: ['Plantae', 'Aves', 'Insecta'],
-        recommendation: 'Peak time for wildflowers, migratory birds, and emerging insects',
-      },
-    ],
+    bestSeasons: seasonalData,
     topTargets: [
       {
         taxonId: 51775,
