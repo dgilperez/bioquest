@@ -136,29 +136,33 @@
 - [ ] Store individual observations in database
 - [ ] Handle observation updates/deletes
 
-#### 2. Enhanced Gamification
+#### 2. Enhanced Gamification ✅ COMPLETE
 - [x] **Rarity system implementation** ✅ COMPLETE
   - [x] Calculate global rarity from iNat data
   - [x] Calculate regional rarity
   - [x] 6-tier system with point bonuses
   - [x] First observation detection
   - [x] Rarity streak tracking ✅ COMPLETE
-  - [ ] Display rarity badges on observation cards (UI integration)
-- [ ] **Daily/Weekly quests**
-  - [ ] Generate rotating daily quests
-  - [ ] Weekly challenge system
-  - [ ] Quest completion notifications
-- [ ] **Streaks**
-  - [ ] Observation streak tracking
-  - [ ] Streak badges
-  - [ ] Streak notifications
+  - [x] Display rarity badges on observation cards (UI integration) ✅ COMPLETE
+- [x] **Daily/Weekly quests** ✅ COMPLETE
+  - [x] Generate rotating daily quests (3 per day)
+  - [x] Weekly challenge system (2 per week)
+  - [x] Monthly quest system (2 per month)
+  - [x] Quest completion notifications (via sync)
+- [x] **Streaks** ✅ COMPLETE
+  - [x] Observation streak tracking
+  - [x] Rarity streak tracking
+  - [x] Streak display in dashboard
+  - [x] Streak at-risk warnings
 
-#### 3. Leaderboards
-- [ ] Global leaderboards (observations, species, points)
-- [ ] Local leaderboards (by region)
-- [ ] Taxon-specific leaderboards (birds, insects, etc.)
-- [ ] Friends leaderboard
-- [ ] Weekly/monthly resets
+#### 3. Leaderboards ✅ COMPLETE
+- [x] Global leaderboards (observations, species, points) ✅ COMPLETE
+- [x] Local/regional leaderboards (by region) ✅ COMPLETE
+- [x] Taxon-specific leaderboards (birds, insects, etc.) ✅ COMPLETE
+- [x] Friends leaderboard ✅ COMPLETE
+- [x] Weekly/monthly automatic resets ✅ COMPLETE
+- [x] Leaderboard UI page with tabs and filters ✅ COMPLETE
+- [x] API endpoint with multiple period options (all-time, weekly, monthly) ✅ COMPLETE
 
 #### 4. Advanced Stats & Analytics
 - [ ] **Taxonomic coverage visualization**
