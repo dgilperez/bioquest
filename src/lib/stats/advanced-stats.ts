@@ -138,7 +138,18 @@ export async function getLifeList(
     ];
   }
 
-  // Get unique species with their first observation
+  // First get distinct taxonIds to count total species
+  const distinctSpecies = await prisma.observation.findMany({
+    where,
+    distinct: ['taxonId'],
+    select: { taxonId: true },
+  });
+
+  const total = distinctSpecies.length;
+
+  // Get observation counts and first observation for each species
+  // Note: For better performance with large datasets, this could be optimized
+  // with raw SQL or aggregation, but for typical use cases this is fine
   const observations = await prisma.observation.findMany({
     where,
     orderBy: {
@@ -172,7 +183,7 @@ export async function getLifeList(
     }
   }
 
-  // Convert to array and sort by first observation date
+  // Convert to array and sort by first observation date (newest first)
   const allEntries: LifeListEntry[] = Array.from(speciesMap.values())
     .map((obs) => ({
       taxonId: obs.taxonId!,
@@ -188,7 +199,7 @@ export async function getLifeList(
     }))
     .sort((a, b) => b.firstObservedOn.getTime() - a.firstObservedOn.getTime());
 
-  const total = allEntries.length;
+  // Apply pagination in memory (acceptable for species lists which are typically < 10k)
   const entries = allEntries.slice(offset, offset + limit);
 
   return { entries, total };
