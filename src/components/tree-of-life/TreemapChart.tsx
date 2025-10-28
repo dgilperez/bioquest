@@ -77,7 +77,7 @@ export function TreemapChart({
       .attr('stroke', 'white')
       .attr('stroke-width', 2)
       .style('cursor', 'pointer')
-      .on('click', (event: any, d: any) => {
+      .on('click', (_event: any, d: any) => {
         if (onNodeClick) {
           onNodeClick(d.data);
         }

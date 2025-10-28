@@ -14,9 +14,10 @@ async function handleGetGaps(
   { params }: { params: { taxonId: string } }
 ): Promise<NextResponse> {
   const session = await getServerSession(authOptions);
-  if (!session?.user?.id) {
+  if (!session?.user) {
     throw new UnauthorizedError('You must be logged in to view gap analysis');
   }
+  const userId = (session.user as any).id;
 
   const taxonId = parseInt(params.taxonId);
   if (isNaN(taxonId)) {
@@ -30,7 +31,7 @@ async function handleGetGaps(
 
   // Get unobserved taxa
   const unobserved = await getUnobservedChildrenTaxa(
-    session.user.id,
+    userId,
     taxonId,
     regionId,
     limit
@@ -38,7 +39,7 @@ async function handleGetGaps(
 
   // Get recommended taxa based on difficulty
   const recommended = await getRecommendedTaxa(
-    session.user.id,
+    userId,
     taxonId,
     regionId,
     difficulty

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ExternalLink, MapPin, Calendar, Camera, Info, Sparkles } from 'lucide-react';
+import { X, ExternalLink, Info, Sparkles } from 'lucide-react';
 
 interface SpeciesInfo {
   id: number;

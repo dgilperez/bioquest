@@ -19,6 +19,8 @@ export interface UserStatsData {
   currentStreak: number;
   longestStreak: number;
   lastObservationDate: Date | null;
+  currentRarityStreak: number;
+  longestRarityStreak: number;
 }
 
 /**

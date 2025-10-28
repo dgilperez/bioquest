@@ -20,7 +20,7 @@ interface Place {
 
 async function handleSearchPlaces(req: NextRequest): Promise<NextResponse> {
   const session = await getServerSession(authOptions);
-  if (!session?.user?.id) {
+  if (!session?.user) {
     throw new UnauthorizedError('You must be logged in to search places');
   }
 

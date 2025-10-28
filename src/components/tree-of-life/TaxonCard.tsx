@@ -17,7 +17,6 @@ interface TaxonCardProps {
 }
 
 export function TaxonCard({
-  id,
   name,
   commonName,
   rank,

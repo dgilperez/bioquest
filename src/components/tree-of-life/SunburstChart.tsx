@@ -67,7 +67,7 @@ export function SunburstChart({
       .style('font', '12px sans-serif');
 
     // Create paths
-    const paths = svg.append('g')
+    svg.append('g')
       .selectAll('path')
       .data((root as any).descendants().filter((d: any) => d.depth))
       .join('path')
@@ -80,7 +80,7 @@ export function SunburstChart({
       )
       .attr('d', (d: any) => arc(d.current))
       .style('cursor', 'pointer')
-      .on('click', (event: any, d: any) => {
+      .on('click', (_event: any, d: any) => {
         if (onNodeClick) {
           onNodeClick(d.data);
         }
@@ -116,7 +116,7 @@ export function SunburstChart({
       });
 
     // Add labels
-    const labels = svg.append('g')
+    svg.append('g')
       .attr('pointer-events', 'none')
       .attr('text-anchor', 'middle')
       .style('user-select', 'none')

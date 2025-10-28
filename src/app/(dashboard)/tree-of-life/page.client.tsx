@@ -89,7 +89,7 @@ export function TreeOfLifeClient() {
 
         // Update breadcrumbs (build full path from ancestors)
         const ancestors = taxonData.taxon.ancestorIds || [];
-        const newBreadcrumbs: BreadcrumbItem[] = ancestors.map((id: number, index: number) => ({
+        const newBreadcrumbs: BreadcrumbItem[] = ancestors.map((id: number) => ({
           id,
           name: `Taxon ${id}`, // We'd need to fetch names for full path
           rank: 'unknown',

@@ -19,11 +19,12 @@ interface IconicTaxonSummary {
   userSpeciesCount: number;
 }
 
-async function handleGetStartingTaxa(req: NextRequest): Promise<NextResponse> {
+async function handleGetStartingTaxa(_req: NextRequest): Promise<NextResponse> {
   const session = await getServerSession(authOptions);
-  if (!session?.user?.id) {
+  if (!session?.user) {
     throw new UnauthorizedError('You must be logged in to access the Tree of Life');
   }
+  const userId = (session.user as any).id;
 
   // Iconic taxon IDs from iNaturalist
   // These are the main kingdoms/groups that iNat organizes observations by
@@ -44,7 +45,6 @@ async function handleGetStartingTaxa(req: NextRequest): Promise<NextResponse> {
   ];
 
   const client = getINatClient();
-  const userId = session.user.id;
 
   // Get user's observations grouped by iconic taxon
   const userObsByIconic = await prisma.observation.groupBy({

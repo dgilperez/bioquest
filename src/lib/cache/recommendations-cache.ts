@@ -62,7 +62,7 @@ class RecommendationsCache {
    * Clear cache for a specific user
    */
   clearUser(userId: string): void {
-    for (const key of this.cache.keys()) {
+    for (const key of Array.from(this.cache.keys())) {
       if (key.startsWith(`recommendations:${userId}:`)) {
         this.cache.delete(key);
       }
@@ -74,7 +74,7 @@ class RecommendationsCache {
    */
   cleanup(): void {
     const now = Date.now();
-    for (const [key, entry] of this.cache.entries()) {
+    for (const [key, entry] of Array.from(this.cache.entries())) {
       if (now > entry.expiresAt) {
         this.cache.delete(key);
       }

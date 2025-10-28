@@ -48,9 +48,10 @@ async function handleGetTaxonDetails(
   { params }: { params: { taxonId: string } }
 ): Promise<NextResponse> {
   const session = await getServerSession(authOptions);
-  if (!session?.user?.id) {
+  if (!session?.user) {
     throw new UnauthorizedError('You must be logged in to access the Tree of Life');
   }
+  const userId = (session.user as any).id;
 
   const taxonId = parseInt(params.taxonId);
   if (isNaN(taxonId)) {
@@ -69,7 +70,7 @@ async function handleGetTaxonDetails(
     throw new NotFoundError(`Taxon with ID ${taxonId} not found`);
   }
 
-  const taxon = taxonResponse.results[0];
+  const taxon = taxonResponse.results[0] as any;
 
   // Get or cache taxon in database
   const cachedTaxon = await prisma.taxonNode.upsert({
@@ -114,11 +115,11 @@ async function handleGetTaxonDetails(
   const userProgress = await prisma.userTaxonProgress.findUnique({
     where: {
       userId_taxonId_regionId: {
-        userId: session.user.id,
+        userId,
         taxonId,
-        regionId: regionId || null,
+        regionId: regionId ?? null,
       },
-    },
+    } as any,
   });
 
   // Get regional data if regionId provided

@@ -1,4 +1,4 @@
-import { getINatClient } from '@/lib/inat/client';
+import { getINatClient, INatClient } from '@/lib/inat/client';
 import { prisma } from '@/lib/db/prisma';
 
 export interface LocationRecommendation {
@@ -224,7 +224,7 @@ function determineActivityLevel(recentCount: number): 'low' | 'medium' | 'high' 
  */
 async function analyzeSeasonalPatterns(
   placeId: number,
-  placeName: string,
+  _placeName: string,
   client: INatClient
 ): Promise<SeasonalInfo[]> {
   try {
@@ -232,12 +232,11 @@ async function analyzeSeasonalPatterns(
     const twoYearsAgo = new Date();
     twoYearsAgo.setFullYear(twoYearsAgo.getFullYear() - 2);
 
-    const histogramData = await client.getObservationHistogram({
-      place_id: placeId,
-      date_field: 'observed',
-      interval: 'month',
-      d1: twoYearsAgo.toISOString().split('T')[0],
-    });
+    const histogramData = await client.getPlaceObservationsHistogram(
+      placeId,
+      'observed_on',
+      'month'
+    );
 
     // Aggregate by season
     const seasonalData = {

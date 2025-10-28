@@ -8,7 +8,7 @@ import {
 } from '@/lib/errors';
 
 async function handleGetSpeciesInfo(
-  req: NextRequest,
+  _req: NextRequest,
   { params }: { params: { taxonId: string } }
 ): Promise<NextResponse> {
   const taxonId = parseInt(params.taxonId);
@@ -26,7 +26,7 @@ async function handleGetSpeciesInfo(
     throw new NotFoundError(`Species with ID ${taxonId} not found`);
   }
 
-  const taxon = taxonResponse.results[0];
+  const taxon = taxonResponse.results[0] as any;
 
   // Get observation count for rarity info
   const observationCount = await client.getTaxonObservationCount(taxonId);

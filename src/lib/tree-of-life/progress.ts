@@ -108,9 +108,9 @@ export async function updateUserTaxonProgress(
       userId_taxonId_regionId: {
         userId,
         taxonId,
-        regionId: regionId || null,
+        regionId: regionId ?? null,
       },
-    },
+    } as any,
     update: {
       observationCount: progress.observationCount,
       speciesCount: progress.speciesCount,
@@ -149,7 +149,7 @@ export async function batchUpdateTaxonProgress(
 export async function getUnobservedChildrenTaxa(
   userId: string,
   parentTaxonId: number,
-  regionId?: number,
+  _regionId?: number,
   limit: number = 20
 ): Promise<Array<{
   id: number;
