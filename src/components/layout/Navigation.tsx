@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { Home, Trophy, Eye, Target, LogOut } from 'lucide-react';
+import { Home, Trophy, Eye, Target, BarChart3, Users, LogOut } from 'lucide-react';
 import { signOut } from 'next-auth/react';
 
 export function Navigation() {
@@ -12,8 +12,10 @@ export function Navigation() {
   const links = [
     { href: '/dashboard', label: 'Dashboard', icon: Home },
     { href: '/observations', label: 'Observations', icon: Eye },
+    { href: '/stats', label: 'Statistics', icon: BarChart3 },
     { href: '/badges', label: 'Badges', icon: Trophy },
     { href: '/quests', label: 'Quests', icon: Target },
+    { href: '/leaderboards', label: 'Leaderboards', icon: Users },
   ];
 
   return (
