@@ -21,6 +21,8 @@ model User {
   name          String?
   icon          String?
   email         String?   @unique
+  location      String?   // User's primary location (city, state, country)
+  region        String?   // Normalized region code (e.g., "US-CA", "UK")
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -31,9 +33,12 @@ model User {
   observations  Observation[]
   sessions      Session[]
   accounts      Account[]
+  friendships   Friendship[] @relation("UserFriendships")
+  friendOf      Friendship[] @relation("FriendOf")
 
   @@index([inatId])
   @@index([inatUsername])
+  @@index([region])
   @@map("users")
 }
 
@@ -146,12 +151,21 @@ model UserStats {
   longestStreak         Int       @default(0)
   lastObservationDate   DateTime?
   lastSyncedAt          DateTime? // Track when we last synced to enable incremental sync
+
+  // Leaderboard stats (reset periodically)
+  weeklyPoints          Int       @default(0)
+  monthlyPoints         Int       @default(0)
+  weekStart             DateTime? // Start of current week period
+  monthStart            DateTime? // Start of current month period
+
   updatedAt             DateTime  @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([level])
   @@index([totalPoints])
+  @@index([weeklyPoints])
+  @@index([monthlyPoints])
   @@map("user_stats")
 }
 
@@ -271,17 +285,29 @@ enum QuestStatus {
 }
 
 // ============================================================================
-// Leaderboards (Future - may use materialized views instead)
+// Friendships & Social Features
 // ============================================================================
 
-// model Leaderboard {
-//   id        String   @id @default(cuid())
-//   type      String   // "global", "regional", "taxon"
-//   period    String   // "all_time", "monthly", "weekly"
-//   filter    Json?    // Additional filters
-//   data      Json     // Cached leaderboard data
-//   updatedAt DateTime @updatedAt
-//
-//   @@unique([type, period])
-//   @@map("leaderboards")
-// }
+model Friendship {
+  id        String           @id @default(cuid())
+  userId    String
+  friendId  String
+  status    FriendshipStatus @default(PENDING)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  user   User @relation("UserFriendships", fields: [userId], references: [id], onDelete: Cascade)
+  friend User @relation("FriendOf", fields: [friendId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, friendId])
+  @@index([userId])
+  @@index([friendId])
+  @@index([status])
+  @@map("friendships")
+}
+
+enum FriendshipStatus {
+  PENDING
+  ACCEPTED
+  BLOCKED
+}
