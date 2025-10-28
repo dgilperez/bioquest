@@ -6,13 +6,18 @@ import { prisma } from '@/lib/db/prisma';
 import { getUserBadges } from '@/lib/gamification/badges/unlock';
 import { BadgeCard } from '@/components/badges/BadgeCard';
 import { BadgeFilters } from '@/components/badges/BadgeFilters';
+import { Navigation } from '@/components/layout/Navigation';
 
 export const metadata: Metadata = {
   title: 'Badges',
   description: 'Your BioQuest achievements and badges',
 };
 
-export default async function BadgesPage() {
+export default async function BadgesPage({
+  searchParams,
+}: {
+  searchParams: { category?: string };
+}) {
   const session = await getServerSession(authOptions);
 
   if (!session?.user) {
@@ -28,14 +33,24 @@ export default async function BadgesPage() {
   }
 
   const { unlocked, locked } = await getUserBadges(user.id);
+  const category = searchParams.category;
+
+  // Filter badges by category if specified
+  const filteredUnlocked = category
+    ? unlocked.filter((b) => b.category === category)
+    : unlocked;
+  const filteredLocked = category
+    ? locked.filter((b) => b.category === category)
+    : locked;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-nature-50 to-white dark:from-gray-900 dark:to-gray-800">
       {/* Header */}
       <header className="border-b bg-white/80 backdrop-blur-sm dark:bg-gray-800/80">
         <div className="container mx-auto px-4 py-4">
-          <h1 className="text-2xl font-bold text-nature-600">Badge Collection</h1>
-          <p className="text-sm text-muted-foreground">
+          <h1 className="text-2xl font-bold text-nature-600 mb-4">Badge Collection</h1>
+          <Navigation />
+          <p className="text-sm text-muted-foreground mt-4">
             {unlocked.length} of {unlocked.length + locked.length} badges unlocked
           </p>
         </div>

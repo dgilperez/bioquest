@@ -1,15 +1,49 @@
 import { NextAuthOptions } from 'next-auth';
 import { PrismaAdapter } from '@next-auth/prisma-adapter';
+import CredentialsProvider from 'next-auth/providers/credentials';
 import { prisma } from '@/lib/db/prisma';
 
+// Check if we're in mock mode (when iNat credentials are not configured)
+const isMockMode = !process.env.INATURALIST_CLIENT_ID || process.env.INATURALIST_CLIENT_ID === 'your_client_id_here';
+
 export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(prisma),
+  adapter: isMockMode ? undefined : PrismaAdapter(prisma),
   providers: [
-    {
+    // Mock provider for development (when iNat OAuth not yet approved)
+    ...(isMockMode ? [
+      CredentialsProvider({
+        id: 'mock',
+        name: 'Mock User (Dev Mode)',
+        credentials: {
+          username: { label: "Username", type: "text", placeholder: "naturalist" }
+        },
+        async authorize(credentials) {
+          // In mock mode, any username works
+          const username = credentials?.username || 'test_naturalist';
+          const mockUserId = 999999; // Mock iNat ID
+
+          console.log('🎭 Mock auth - authorizing user:', username);
+
+          const user = {
+            id: mockUserId.toString(),
+            name: `${username} (Mock)`,
+            email: `${username}@mock.bioquest.dev`,
+            image: `https://api.dicebear.com/7.x/adventurer/svg?seed=${username}`,
+            inatId: mockUserId,
+            inatUsername: username,
+          };
+
+          console.log('🎭 Mock auth - returning user:', user);
+          return user;
+        },
+      })
+    ] : []),
+    // Real iNaturalist OAuth provider
+    ...(!isMockMode ? [{
       id: 'inaturalist',
       name: 'iNaturalist',
-      type: 'oauth',
-      version: '2.0',
+      type: 'oauth' as const,
+      version: '2.0' as const,
       authorization: {
         url: 'https://www.inaturalist.org/oauth/authorize',
         params: {
@@ -21,7 +55,7 @@ export const authOptions: NextAuthOptions = {
       userinfo: 'https://api.inaturalist.org/v1/users/me',
       clientId: process.env.INATURALIST_CLIENT_ID,
       clientSecret: process.env.INATURALIST_CLIENT_SECRET,
-      profile(profile) {
+      profile(profile: any) {
         // iNaturalist API returns data in 'results' array
         const user = profile.results?.[0] || profile;
         return {
@@ -33,7 +67,7 @@ export const authOptions: NextAuthOptions = {
           inatUsername: user.login,
         };
       },
-    },
+    }] : []),
   ],
   session: {
     strategy: 'jwt',
@@ -41,7 +75,7 @@ export const authOptions: NextAuthOptions = {
   },
   pages: {
     signIn: '/signin',
-    error: '/auth/error',
+    error: '/signin',  // Redirect errors back to sign-in
   },
   callbacks: {
     async jwt({ token, user, account }) {
@@ -75,6 +109,41 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
     async signIn({ user, account }) {
+      // In mock mode, credentials provider doesn't create account object
+      if (isMockMode && !account) {
+        // Still sync mock user to database
+        try {
+          const existingUser = await prisma.user.findUnique({
+            where: { inatId: (user as any).inatId },
+          });
+
+          if (!existingUser) {
+            await prisma.user.create({
+              data: {
+                inatId: (user as any).inatId,
+                inatUsername: (user as any).inatUsername,
+                name: user.name || (user as any).inatUsername,
+                icon: user.image,
+                email: user.email,
+                stats: {
+                  create: {
+                    totalObservations: 0,
+                    totalSpecies: 0,
+                    totalPoints: 0,
+                    level: 1,
+                    pointsToNextLevel: 100,
+                  },
+                },
+              },
+            });
+          }
+          return true;
+        } catch (error) {
+          console.error('Error syncing mock user:', error);
+          return false;
+        }
+      }
+
       if (!account) return false;
 
       // Sync user data with our database

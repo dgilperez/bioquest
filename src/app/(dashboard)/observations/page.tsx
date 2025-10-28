@@ -5,13 +5,18 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db/prisma';
 import { ObservationCard } from '@/components/observations/ObservationCard';
 import { ObservationFilters } from '@/components/observations/ObservationFilters';
+import { Navigation } from '@/components/layout/Navigation';
 
 export const metadata: Metadata = {
   title: 'Observations',
   description: 'Your iNaturalist observations',
 };
 
-export default async function ObservationsPage() {
+export default async function ObservationsPage({
+  searchParams,
+}: {
+  searchParams: { filter?: string };
+}) {
   const session = await getServerSession(authOptions);
 
   if (!session?.user) {
@@ -33,16 +38,30 @@ export default async function ObservationsPage() {
   }
 
   const { observations } = user;
+  const filter = searchParams.filter;
+
+  // Filter observations based on selected filter
+  const filteredObservations = filter
+    ? observations.filter((obs) => {
+        if (filter === 'legendary') return obs.rarity === 'legendary';
+        if (filter === 'rare') return obs.rarity === 'rare';
+        if (filter === 'research') return obs.qualityGrade === 'research';
+        return true;
+      })
+    : observations;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-nature-50 to-white dark:from-gray-900 dark:to-gray-800">
       {/* Header */}
       <header className="border-b bg-white/80 backdrop-blur-sm dark:bg-gray-800/80">
         <div className="container mx-auto px-4 py-4">
-          <h1 className="text-2xl font-bold text-nature-600">Observations</h1>
-          <p className="text-sm text-muted-foreground">
+          <h1 className="text-2xl font-bold text-nature-600 mb-4">Observations</h1>
+          <Navigation />
+          <p className="text-sm text-muted-foreground mt-4">
             {observations.length > 0
-              ? `Showing ${Math.min(50, observations.length)} most recent observations`
+              ? filter
+                ? `Showing ${filteredObservations.length} of ${observations.length} observations`
+                : `Showing ${Math.min(50, observations.length)} most recent observations`
               : 'No observations yet'}
           </p>
         </div>
@@ -81,11 +100,17 @@ export default async function ObservationsPage() {
           </div>
 
           {/* Observations Grid */}
-          {observations.length > 0 ? (
+          {filteredObservations.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {observations.map(observation => (
+              {filteredObservations.map(observation => (
                 <ObservationCard key={observation.id} observation={observation} />
               ))}
+            </div>
+          ) : observations.length > 0 ? (
+            <div className="text-center py-12">
+              <p className="text-lg text-muted-foreground mb-4">
+                No observations match the selected filter.
+              </p>
             </div>
           ) : (
             <div className="text-center py-12">

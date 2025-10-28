@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { syncUserObservations } from '@/lib/stats/user-stats';
+import { syncMockObservations } from '@/lib/stats/mock-sync';
+
+// Check if we're in mock mode
+const isMockMode = !process.env.INATURALIST_CLIENT_ID || process.env.INATURALIST_CLIENT_ID === 'your_client_id_here';
 
 export async function POST(req: NextRequest) {
   try {
@@ -14,11 +18,26 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { userId, inatUsername, accessToken } = body;
 
-    if (!userId || !inatUsername || !accessToken) {
+    if (!userId || !inatUsername) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    // Sync observations
+    // Use mock sync in development mode when iNat OAuth is not configured
+    if (isMockMode) {
+      console.log('🎭 Using mock data sync (iNaturalist OAuth not configured)');
+      const result = await syncMockObservations(userId, inatUsername);
+      return NextResponse.json({
+        success: true,
+        mock: true,
+        ...result,
+      });
+    }
+
+    // Real sync with iNaturalist API
+    if (!accessToken) {
+      return NextResponse.json({ error: 'Access token required' }, { status: 400 });
+    }
+
     const result = await syncUserObservations(userId, inatUsername, accessToken);
 
     return NextResponse.json({

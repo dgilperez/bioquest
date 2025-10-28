@@ -1,10 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 
 export function BadgeFilters() {
-  const [activeFilter, setActiveFilter] = useState('all');
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const activeFilter = searchParams.get('category') || 'all';
 
   const filters = [
     { id: 'all', label: 'All Badges' },
@@ -15,6 +17,16 @@ export function BadgeFilters() {
     { id: 'time', label: 'Time & Seasons' },
   ];
 
+  const handleFilterChange = (filterId: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (filterId === 'all') {
+      params.delete('category');
+    } else {
+      params.set('category', filterId);
+    }
+    router.push(`/badges?${params.toString()}`);
+  };
+
   return (
     <div className="flex flex-wrap gap-2">
       {filters.map(filter => (
@@ -22,7 +34,7 @@ export function BadgeFilters() {
           key={filter.id}
           variant={activeFilter === filter.id ? 'default' : 'outline'}
           size="sm"
-          onClick={() => setActiveFilter(filter.id)}
+          onClick={() => handleFilterChange(filter.id)}
           className={activeFilter === filter.id ? 'bg-nature-600' : ''}
         >
           {filter.label}
