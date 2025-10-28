@@ -2,7 +2,7 @@
 
 **Last Updated**: October 28, 2025
 **Current Phase**: MVP Development - Game Feel & Core Features
-**Progress**: ~60% Complete
+**Progress**: ~65% Complete
 
 ---
 
@@ -107,20 +107,41 @@
 - [x] Quest progress tracking
 - [x] Observation statistics
 
+### Educational Features ⭐ NEW
+- [x] **Species info modal** with rich educational content
+  - [x] Photo gallery with attribution
+  - [x] Wikipedia integration (summary + external link)
+  - [x] Conservation status display
+  - [x] Full taxonomic hierarchy
+  - [x] Global observation counts
+  - [x] Links to iNaturalist species page
+- [x] **Learn more button** on observation cards (Info icon)
+- [x] **API endpoint** for species data (/api/species/[taxonId])
+
+### Celebration System ⭐ NEW
+- [x] **Badge unlock ceremony** with confetti and animations
+- [x] **Level up celebration** with screen shake and particles
+- [x] **Streak milestone celebration** with bonus points display
+- [x] **Rare find notifications** via toast (top 3 rarest)
+- [x] **Sequential celebration timing** (level → badge → streak → rare)
+- [x] **URL parameter-based event system** (survives page refresh)
+- [x] **Multiple badge toast notifications** (when >1 badge unlocked)
+
 ---
 
 ## 🚧 In Progress
 
 ### Current Sprint: Polish & Community Features
-- [ ] Celebration ceremonies (level up, badge unlock) - **50% done**
+- [x] **Celebration ceremonies (level up, badge unlock)** ✅ COMPLETE
   - [x] BadgeUnlockCeremony component with confetti
   - [x] LevelUpCelebration component with screen shake
-  - [ ] Wire up to actual unlock events (trigger on real unlocks)
-  - [ ] Add sound effects
-- [ ] Observation card improvements
-  - [ ] Rarity badges on observation cards
-  - [ ] Photo gallery view
-  - [ ] Species info popup
+  - [x] Wire up to actual unlock events (trigger on sync via URL params)
+  - [x] Sequential timing for multiple celebrations
+  - [ ] Add sound effects (future enhancement)
+- [x] **Observation card improvements** ✅ COMPLETE
+  - [x] Rarity badges on observation cards
+  - [ ] Photo gallery view (future enhancement)
+  - [x] Species info popup with educational content
 
 ---
 
@@ -165,6 +186,17 @@
 - [x] API endpoint with multiple period options (all-time, weekly, monthly) ✅ COMPLETE
 
 #### 4. Advanced Stats & Analytics
+- [ ] **Tree of Life Visualization** 🌳 NEW FEATURE (See TREE_OF_LIFE_FEATURE.md)
+  - [ ] Interactive taxonomic tree navigation (Kingdom → Species)
+  - [ ] Completeness metrics per taxon (total / regional / observed)
+  - [ ] Regional filtering (province, country, continent, worldwide)
+  - [ ] Gap analysis integration (missing taxa in region)
+  - [ ] Multiple visualization options (hierarchical tree, sunburst, treemap)
+  - [ ] Quest integration for taxonomic completeness
+  - [ ] Educational content per taxon level
+  - **Phase 1 (MVP)**: List view navigation with stats
+  - **Phase 2**: D3.js interactive visualizations
+  - **Phase 3**: Phylogenetic trees, time-series, social comparison
 - [ ] **Taxonomic coverage visualization**
   - [ ] Family/order breakdown charts
   - [ ] Tree map of taxonomy
@@ -261,8 +293,9 @@
 1. ~~Hydration warning for floating particles~~ ✅ FIXED
 2. ~~Missing gray color in AnimatedStatsCard~~ ✅ FIXED
 3. ~~Icon animations too hasty~~ ✅ FIXED
-4. Celebration ceremonies not triggering automatically (need event system)
+4. ~~Celebration ceremonies not triggering automatically~~ ✅ FIXED
 5. No error boundaries for API failures
+6. Pre-existing type errors (Sentry config, INatTaxon properties)
 
 ---
 
@@ -294,6 +327,20 @@ npm run test:coverage    # Coverage report
 ## 📝 Recent Changes (Last 3 Days)
 
 ### October 28, 2025
+- ✅ **Added species info popup with educational content**
+  - SpeciesInfoModal component with photo gallery, Wikipedia integration
+  - Conservation status display with amber warning styling
+  - Full taxonomic hierarchy (kingdom → species)
+  - Global observation counts from iNaturalist
+  - API endpoint (/api/species/[taxonId]) for species data
+  - Info button on observation cards (lucide-react Info icon)
+- ✅ **Wired up celebration ceremonies to real unlock events**
+  - Badge unlock ceremony triggers via URL params after sync
+  - Sequential celebration timing (level → badge → streak → rare finds)
+  - Multiple badge toast notifications (when >1 badge unlocked)
+  - Rare find toasts for top 3 rarest discoveries
+  - URL parameter-based event system (survives page refresh)
+  - Proper Badge type properties (id, code, iconUrl, tier, etc.)
 - ✅ **Implemented rarity streak tracking system**
   - Track consecutive rare+ observations (rare, epic, legendary, mythic)
   - Database fields: currentRarityStreak, longestRarityStreak, lastRareObservationDate
