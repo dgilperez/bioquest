@@ -6,10 +6,10 @@ export default function OfflinePage() {
       <div className="text-center max-w-md">
         <div className="text-8xl mb-6">🌐</div>
         <h1 className="text-4xl font-display font-bold mb-4 bg-gradient-to-r from-nature-600 to-nature-800 bg-clip-text text-transparent">
-          You're Offline
+          You&apos;re Offline
         </h1>
         <p className="text-lg text-muted-foreground mb-6 font-body">
-          No internet connection detected. Don't worry - you can still view your cached observations and stats!
+          No internet connection detected. Don&apos;t worry - you can still view your cached observations and stats!
         </p>
 
         <div className="bg-white dark:bg-gray-800 rounded-lg border p-6 mb-6">
@@ -36,7 +36,7 @@ export default function OfflinePage() {
 
         <div className="bg-nature-100 dark:bg-nature-900/20 rounded-lg border border-nature-300 dark:border-nature-700 p-4">
           <p className="text-sm text-nature-800 dark:text-nature-200">
-            <strong>Tip:</strong> New observations and progress will sync automatically when you're back online.
+            <strong>Tip:</strong> New observations and progress will sync automatically when you&apos;re back online.
           </p>
         </div>
 

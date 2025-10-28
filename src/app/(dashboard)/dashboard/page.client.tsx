@@ -155,7 +155,7 @@ export function DashboardClient({
             Welcome back, {userName}!
           </h2>
           <p className="text-muted-foreground font-body text-lg">
-            Here's your progress as a naturalist 🌿
+            Here&apos;s your progress as a naturalist 🌿
           </p>
         </motion.div>
 

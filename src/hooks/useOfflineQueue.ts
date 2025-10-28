@@ -17,40 +17,6 @@ export function useOfflineQueue() {
     timestamp: number;
   } | null>(null);
 
-  // Update queue count on mount and when window regains focus
-  useEffect(() => {
-    const updateCount = () => setQueueCount(getQueueCount());
-
-    updateCount();
-    window.addEventListener('focus', updateCount);
-
-    return () => window.removeEventListener('focus', updateCount);
-  }, []);
-
-  // Auto-process queue when coming back online
-  useEffect(() => {
-    const handleOnline = async () => {
-      if (getQueueCount() > 0) {
-        await tryProcessQueue();
-      }
-    };
-
-    window.addEventListener('online', handleOnline);
-
-    return () => window.removeEventListener('online', handleOnline);
-  }, []);
-
-  /**
-   * Add an action to the queue
-   */
-  const addToQueue = useCallback(
-    (type: QueuedAction['type'], payload: any) => {
-      queueAction(type, payload);
-      setQueueCount(getQueueCount());
-    },
-    []
-  );
-
   /**
    * Manually trigger queue processing
    */
@@ -76,6 +42,40 @@ export function useOfflineQueue() {
       setIsProcessing(false);
     }
   }, [isProcessing]);
+
+  /**
+   * Add an action to the queue
+   */
+  const addToQueue = useCallback(
+    (type: QueuedAction['type'], payload: any) => {
+      queueAction(type, payload);
+      setQueueCount(getQueueCount());
+    },
+    []
+  );
+
+  // Update queue count on mount and when window regains focus
+  useEffect(() => {
+    const updateCount = () => setQueueCount(getQueueCount());
+
+    updateCount();
+    window.addEventListener('focus', updateCount);
+
+    return () => window.removeEventListener('focus', updateCount);
+  }, []);
+
+  // Auto-process queue when coming back online
+  useEffect(() => {
+    const handleOnline = async () => {
+      if (getQueueCount() > 0) {
+        await tryProcessQueue();
+      }
+    };
+
+    window.addEventListener('online', handleOnline);
+
+    return () => window.removeEventListener('online', handleOnline);
+  }, [tryProcessQueue]);
 
   return {
     queueCount,
