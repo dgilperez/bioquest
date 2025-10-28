@@ -3,9 +3,10 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { getRarityConfig } from '@/styles/design-tokens';
+import { Rarity } from '@/types';
 
 interface ParticleBurstProps {
-  rarity: 'common' | 'rare' | 'legendary' | 'normal';
+  rarity: Rarity;
   show: boolean;
   onComplete?: () => void;
 }
@@ -14,7 +15,7 @@ export function ParticleBurst({ rarity, show, onComplete }: ParticleBurstProps) 
   const [particles, setParticles] = useState<Array<{ id: number; angle: number; distance: number }>>([]);
 
   useEffect(() => {
-    if (show && rarity !== 'normal') {
+    if (show && rarity !== 'common') {
       const config = getRarityConfig(rarity);
       const particleCount = config.particles.count;
 
@@ -37,7 +38,7 @@ export function ParticleBurst({ rarity, show, onComplete }: ParticleBurstProps) 
     return undefined;
   }, [show, rarity, onComplete]);
 
-  if (rarity === 'normal' || !show) return null;
+  if (rarity === 'common' || !show) return null;
 
   const config = getRarityConfig(rarity);
 

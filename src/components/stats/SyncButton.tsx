@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { RefreshCw } from 'lucide-react';
-import { notifySyncComplete, notifyError, notifyMultipleBadges, notifyLevelUp, notifyMultipleQuests } from '@/lib/notifications/achievements';
+import { notifySyncComplete, notifyError, notifyMultipleBadges, notifyMultipleQuests } from '@/lib/notifications/achievements';
 
 interface SyncButtonProps {
   userId: string;

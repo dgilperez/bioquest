@@ -251,7 +251,7 @@ export function DashboardClient({
             index={2}
           />
         </div>
-        </div>
+      </motion.div>
       </motion.div>
     </>
   );

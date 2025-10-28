@@ -16,6 +16,7 @@ export interface UserStatsData {
   legendaryObservations: number;
   currentStreak: number;
   longestStreak: number;
+  lastObservationDate: Date | null;
 }
 
 /**

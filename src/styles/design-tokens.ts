@@ -14,27 +14,37 @@ export const BIOQUEST_COLORS = {
     mist: '#DCEDC8',      // Morning fog
   },
 
-  // Rarity System - Inspired by natural phenomena
+  // Rarity System - Inspired by natural phenomena (6 tiers)
   rarity: {
     common: {
       base: '#78909C',    // River stone
       glow: '#B0BEC5',
       particle: '#CFD8DC',
     },
+    uncommon: {
+      base: '#43A047',    // Forest green
+      glow: '#66BB6A',
+      particle: '#A5D6A7',
+    },
     rare: {
-      base: '#7B1FA2',    // Orchid purple
-      glow: '#BA68C8',
-      particle: '#E1BEE7',
+      base: '#5E35B1',    // Deep purple
+      glow: '#7E57C2',
+      particle: '#B39DDB',
+    },
+    epic: {
+      base: '#00ACC1',    // Cyan/aqua
+      glow: '#26C6DA',
+      particle: '#80DEEA',
     },
     legendary: {
       base: '#F57C00',    // Sunset amber
       glow: '#FFB74D',
       particle: '#FFE0B2',
     },
-    mythic: {             // New tier for "first ever" discoveries
-      base: '#0288D1',    // Bioluminescent blue
-      glow: '#4FC3F7',
-      particle: '#B3E5FC',
+    mythic: {             // "first ever" discoveries
+      base: '#C2185B',    // Deep magenta/pink
+      glow: '#EC407A',
+      particle: '#F48FB1',
     }
   },
 
@@ -159,9 +169,11 @@ export const SHADOWS = {
   xl: '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)',
   glow: {
     common: '0 0 20px rgba(120, 144, 156, 0.3)',
-    rare: '0 0 30px rgba(123, 31, 162, 0.4)',
+    uncommon: '0 0 25px rgba(67, 160, 71, 0.35)',
+    rare: '0 0 30px rgba(94, 53, 177, 0.4)',
+    epic: '0 0 35px rgba(0, 172, 193, 0.45)',
     legendary: '0 0 40px rgba(245, 124, 0, 0.5)',
-    mythic: '0 0 50px rgba(2, 136, 209, 0.6)',
+    mythic: '0 0 50px rgba(194, 24, 91, 0.6)',
   }
 } as const;
 
@@ -208,11 +220,23 @@ export const PARTICLE_CONFIGS = {
     spread: 50,
     lifetime: 1000,
   },
+  uncommon: {
+    count: 35,
+    colors: [BIOQUEST_COLORS.rarity.uncommon.base, BIOQUEST_COLORS.rarity.uncommon.glow],
+    spread: 65,
+    lifetime: 1250,
+  },
   rare: {
     count: 50,
     colors: [BIOQUEST_COLORS.rarity.rare.base, BIOQUEST_COLORS.rarity.rare.glow],
     spread: 80,
     lifetime: 1500,
+  },
+  epic: {
+    count: 75,
+    colors: [BIOQUEST_COLORS.rarity.epic.base, BIOQUEST_COLORS.rarity.epic.glow],
+    spread: 100,
+    lifetime: 1750,
   },
   legendary: {
     count: 100,
@@ -229,9 +253,8 @@ export const PARTICLE_CONFIGS = {
 } as const;
 
 // Helper function to get rarity config
-export function getRarityConfig(rarity: 'common' | 'rare' | 'legendary' | 'mythic' | 'normal') {
-  // Map 'normal' to 'common' for consistency
-  const rarityKey = rarity === 'normal' ? 'common' : rarity;
+export function getRarityConfig(rarity: 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary' | 'mythic') {
+  const rarityKey = rarity;
   return {
     colors: BIOQUEST_COLORS.rarity[rarityKey],
     particles: PARTICLE_CONFIGS[rarityKey],

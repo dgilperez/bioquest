@@ -2,14 +2,15 @@
 
 import { motion } from 'framer-motion';
 import { getRarityConfig } from '@/styles/design-tokens';
+import { Rarity } from '@/types';
 
 interface RarityShimmerProps {
-  rarity: 'common' | 'rare' | 'legendary' | 'normal';
+  rarity: Rarity;
   onComplete?: () => void;
 }
 
 export function RarityShimmer({ rarity, onComplete }: RarityShimmerProps) {
-  if (rarity === 'normal') return null;
+  if (rarity === 'common') return null;
 
   const config = getRarityConfig(rarity);
 

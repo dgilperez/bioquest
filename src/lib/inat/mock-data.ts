@@ -74,13 +74,13 @@ export function generateMockObservations(count: number = 50) {
       qualityGrade = 'casual';
     }
 
-    // Determine rarity (70% normal, 25% rare, 5% legendary)
+    // Determine rarity (70% common, 25% rare, 5% legendary)
     let rarity: Rarity;
     let globalCount: number;
     let regionalCount: number;
     const rarityRoll = Math.random();
     if (rarityRoll < 0.70) {
-      rarity = 'normal';
+      rarity = 'common';
       globalCount = Math.floor(Math.random() * 10000) + 1000;
       regionalCount = Math.floor(Math.random() * 1000) + 100;
     } else if (rarityRoll < 0.95) {
