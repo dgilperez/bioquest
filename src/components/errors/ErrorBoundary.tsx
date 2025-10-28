@@ -25,6 +25,17 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    // Import Sentry dynamically to avoid issues
+    import('@sentry/nextjs').then((Sentry) => {
+      Sentry.withScope((scope) => {
+        scope.setContext('errorInfo', {
+          componentStack: errorInfo.componentStack,
+        });
+        scope.setTag('error_boundary', 'react');
+        Sentry.captureException(error);
+      });
+    });
+
     console.error('ErrorBoundary caught error:', error, errorInfo);
   }
 

@@ -1,4 +1,5 @@
 import { INatObservation, INatTaxon } from '@/types';
+import { INatError, RateLimitError, ErrorCode, logError } from '@/lib/errors';
 
 export class INatAPIError extends Error {
   constructor(
@@ -83,21 +84,65 @@ export class INatClient {
       });
 
       if (!response.ok) {
-        throw new INatAPIError(
+        const responseText = await response.text();
+
+        // Handle rate limiting specifically
+        if (response.status === 429) {
+          const error = new RateLimitError('iNaturalist rate limit exceeded', {
+            endpoint: url,
+            statusCode: response.status,
+          });
+          logError(error);
+          throw error;
+        }
+
+        // Handle auth errors
+        if (response.status === 401 || response.status === 403) {
+          const error = new INatError(
+            `iNaturalist authentication failed: ${response.statusText}`,
+            ErrorCode.INAT_AUTH_FAILED,
+            { endpoint: url, statusCode: response.status }
+          );
+          logError(error);
+          throw error;
+        }
+
+        // Generic API error
+        const error = new INatError(
           `iNaturalist API error: ${response.statusText}`,
-          response.status,
-          await response.text()
+          ErrorCode.INAT_GENERIC,
+          { endpoint: url, statusCode: response.status, response: responseText }
         );
+        logError(error);
+        throw error;
       }
 
       return await response.json();
     } catch (error) {
-      if (error instanceof INatAPIError) {
+      // Re-throw if already INatError or RateLimitError
+      if (error instanceof INatError || error instanceof RateLimitError) {
         throw error;
       }
-      throw new INatAPIError(
-        `Failed to fetch from iNaturalist: ${error instanceof Error ? error.message : 'Unknown error'}`
+
+      // Handle network errors
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        const netError = new INatError(
+          'Network error connecting to iNaturalist',
+          ErrorCode.API_NETWORK,
+          { endpoint: url, originalError: error.message }
+        );
+        logError(netError);
+        throw netError;
+      }
+
+      // Generic error
+      const genericError = new INatError(
+        `Failed to fetch from iNaturalist: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        ErrorCode.INAT_GENERIC,
+        { endpoint: url }
       );
+      logError(genericError);
+      throw genericError;
     }
   }
 
