@@ -1,10 +1,22 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
+import { Outfit, Space_Grotesk } from 'next/font/google';
 import './globals.css';
 import { SessionProvider } from '@/components/auth/SessionProvider';
 import { Toaster } from '@/components/notifications/Toaster';
 
-const inter = Inter({ subsets: ['latin'] });
+// Display font - Bold, adventurous for headlines
+const outfit = Outfit({
+  subsets: ['latin'],
+  variable: '--font-display',
+  display: 'swap',
+});
+
+// Body font - Clean, readable for content
+const spaceGrotesk = Space_Grotesk({
+  subsets: ['latin'],
+  variable: '--font-body',
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
   title: {
@@ -51,8 +63,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={inter.className}>
+    <html lang="en" suppressHydrationWarning className={`${outfit.variable} ${spaceGrotesk.variable}`}>
+      <body className="font-body antialiased">
         <SessionProvider>
           {children}
           <Toaster />
