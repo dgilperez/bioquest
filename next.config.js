@@ -168,6 +168,16 @@ const nextConfig = {
       bodySizeLimit: '2mb',
     },
   },
+  webpack: (config, { isServer }) => {
+    // Suppress critical dependency warnings from Prisma/OpenTelemetry and Sentry
+    config.ignoreWarnings = [
+      { module: /node_modules\/@prisma\/instrumentation/ },
+      { module: /node_modules\/@opentelemetry\/instrumentation/ },
+      { module: /node_modules\/require-in-the-middle/ },
+      { message: /Critical dependency: the request of a dependency is an expression/ },
+    ];
+    return config;
+  },
 };
 
 module.exports = withPWA(nextConfig);
