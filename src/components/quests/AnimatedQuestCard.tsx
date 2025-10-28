@@ -14,32 +14,35 @@ interface AnimatedQuestCardProps {
   index?: number;
 }
 
-const questTypeColors = {
+const questTypeColors: Record<string, { bg: string; glow: string }> = {
   daily: { bg: 'from-blue-500 to-blue-600', glow: '0 0 20px rgba(59, 130, 246, 0.3)' },
   weekly: { bg: 'from-purple-500 to-purple-600', glow: '0 0 20px rgba(168, 85, 247, 0.3)' },
   monthly: { bg: 'from-yellow-500 to-yellow-600', glow: '0 0 20px rgba(234, 179, 8, 0.3)' },
   personal: { bg: 'from-green-500 to-green-600', glow: '0 0 20px rgba(34, 197, 94, 0.3)' },
+  event: { bg: 'from-red-500 to-red-600', glow: '0 0 20px rgba(239, 68, 68, 0.3)' },
 };
 
-const questTypeIcons = {
+const questTypeIcons: Record<string, string> = {
   daily: '📅',
   weekly: '📆',
   monthly: '🗓️',
   personal: '🎯',
+  event: '🎉',
 };
 
-const questTypeLabels = {
+const questTypeLabels: Record<string, string> = {
   daily: 'Daily Quest',
   weekly: 'Weekly Quest',
   monthly: 'Monthly Quest',
   personal: 'Personal Quest',
+  event: 'Special Event',
 };
 
 export function AnimatedQuestCard({ quest, progress, status, index = 0 }: AnimatedQuestCardProps) {
   const isCompleted = status === 'completed';
   const isExpired = status === 'expired';
   const isActive = status === 'active';
-  const typeConfig = questTypeColors[quest.type];
+  const typeConfig = questTypeColors[quest.type] || questTypeColors.daily;
 
   // Calculate time remaining
   const now = new Date();
@@ -146,7 +149,7 @@ export function AnimatedQuestCard({ quest, progress, status, index = 0 }: Animat
                   }
             }
           >
-            {isCompleted ? '✓' : questTypeIcons[quest.type]}
+            {isCompleted ? '✓' : (questTypeIcons[quest.type] || '📅')}
           </motion.div>
           <div>
             <motion.p
@@ -155,7 +158,7 @@ export function AnimatedQuestCard({ quest, progress, status, index = 0 }: Animat
               transition={{ delay: index * 0.05 }}
               className="text-xs font-medium font-display text-gray-500 dark:text-gray-400 uppercase tracking-wider"
             >
-              {questTypeLabels[quest.type]}
+              {questTypeLabels[quest.type] || 'Quest'}
             </motion.p>
             <motion.h3
               initial={{ opacity: 0, y: 5 }}

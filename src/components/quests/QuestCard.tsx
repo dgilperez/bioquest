@@ -8,25 +8,28 @@ interface QuestCardProps {
   status: QuestStatus;
 }
 
-const questTypeColors = {
+const questTypeColors: Record<string, string> = {
   daily: 'from-blue-500 to-blue-600',
   weekly: 'from-purple-500 to-purple-600',
   monthly: 'from-yellow-500 to-yellow-600',
   personal: 'from-green-500 to-green-600',
+  event: 'from-red-500 to-red-600',
 };
 
-const questTypeIcons = {
+const questTypeIcons: Record<string, string> = {
   daily: '📅',
   weekly: '📆',
   monthly: '🗓️',
   personal: '🎯',
+  event: '🎉',
 };
 
-const questTypeLabels = {
+const questTypeLabels: Record<string, string> = {
   daily: 'Daily Quest',
   weekly: 'Weekly Quest',
   monthly: 'Monthly Quest',
   personal: 'Personal Quest',
+  event: 'Special Event',
 };
 
 export function QuestCard({ quest, progress, status }: QuestCardProps) {
@@ -67,14 +70,14 @@ export function QuestCard({ quest, progress, status }: QuestCardProps) {
               'text-3xl w-12 h-12 flex items-center justify-center rounded-full',
               isCompleted && 'bg-green-200 dark:bg-green-900/40',
               isExpired && 'bg-gray-200 dark:bg-gray-700',
-              isActive && `bg-gradient-to-br ${questTypeColors[quest.type]}`
+              isActive && `bg-gradient-to-br ${questTypeColors[quest.type] || questTypeColors.daily}`
             )}
           >
-            {isCompleted ? '✓' : questTypeIcons[quest.type]}
+            {isCompleted ? '✓' : (questTypeIcons[quest.type] || '📅')}
           </div>
           <div>
             <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-              {questTypeLabels[quest.type]}
+              {questTypeLabels[quest.type] || 'Quest'}
             </p>
             <h3 className="text-lg font-semibold">{quest.title}</h3>
           </div>
@@ -106,7 +109,7 @@ export function QuestCard({ quest, progress, status }: QuestCardProps) {
             <div
               className={cn(
                 'h-full rounded-full transition-all duration-500',
-                `bg-gradient-to-r ${questTypeColors[quest.type]}`
+                `bg-gradient-to-r ${questTypeColors[quest.type] || questTypeColors.daily}`
               )}
               style={{ width: `${progress}%` }}
             />

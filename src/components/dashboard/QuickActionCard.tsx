@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { ReactNode } from 'react';
 
 interface QuickActionCardProps {
   href: string;

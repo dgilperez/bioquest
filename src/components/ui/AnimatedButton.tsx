@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { ReactNode } from 'react';
-import { buttonPress, buttonHover } from '@/lib/animations/variants';
+import { buttonHover } from '@/lib/animations/variants';
 
 interface AnimatedButtonProps {
   children: ReactNode;

@@ -2,8 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { CountUp } from '@/components/animations/CountUp';
-import { cardHover, staggerItem } from '@/lib/animations/variants';
-import { BIOQUEST_COLORS } from '@/styles/design-tokens';
+import { staggerItem } from '@/lib/animations/variants';
 
 interface AnimatedStatsCardProps {
   title: string;

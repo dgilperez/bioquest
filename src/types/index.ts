@@ -59,8 +59,8 @@ export interface INatTaxon {
 // Gamification Types
 // ============================================================================
 
-export type Rarity = 'normal' | 'rare' | 'legendary';
-export type RarityLevel = 'normal' | 'rare' | 'legendary';
+export type Rarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary' | 'mythic';
+export type RarityLevel = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary' | 'mythic';
 
 export interface ObservationRarity {
   observationId: number;
@@ -128,7 +128,7 @@ export interface UserBadge {
   progress?: number; // 0-100 for multi-tier badges
 }
 
-export type QuestType = 'daily' | 'weekly' | 'monthly' | 'personal';
+export type QuestType = 'daily' | 'weekly' | 'monthly' | 'personal' | 'event';
 export type QuestStatus = 'active' | 'completed' | 'expired';
 
 export interface Quest {
@@ -138,11 +138,8 @@ export interface Quest {
   type: QuestType;
   startDate: Date;
   endDate: Date;
-  criteria: Record<string, unknown>; // Quest-specific criteria
-  reward: {
-    points?: number;
-    badge?: string;
-  };
+  criteria: any; // Quest-specific criteria (JsonValue from Prisma)
+  reward: any; // Reward details (JsonValue from Prisma)
 }
 
 export interface UserQuest {
@@ -153,7 +150,7 @@ export interface UserQuest {
   status: QuestStatus;
   progress: number; // 0-100
   startedAt: Date;
-  completedAt?: Date;
+  completedAt: Date | null;
 }
 
 // ============================================================================

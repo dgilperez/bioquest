@@ -4,7 +4,6 @@ import { motion } from 'framer-motion';
 import { Badge, BadgeDefinition, BadgeTier } from '@/types';
 import { cn } from '@/lib/utils';
 import { staggerItem } from '@/lib/animations/variants';
-import { BIOQUEST_COLORS } from '@/styles/design-tokens';
 
 interface AnimatedBadgeCardProps {
   badge: Badge | BadgeDefinition;
@@ -165,16 +164,16 @@ export function AnimatedBadgeCard({ badge, isUnlocked, index = 0, onClick }: Ani
             </motion.p>
           )}
 
-          {isUnlocked && 'unlockedAt' in badge && badge.unlockedAt && (
+          {isUnlocked && 'unlockedAt' in badge && badge.unlockedAt ? (
             <motion.p
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: index * 0.05 + 0.2 }}
               className="text-xs text-white/70 mt-2"
             >
-              Unlocked {new Date(badge.unlockedAt).toLocaleDateString()}
+              Unlocked {new Date(badge.unlockedAt as Date).toLocaleDateString()}
             </motion.p>
-          )}
+          ) : null}
         </div>
       </div>
 

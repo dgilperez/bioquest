@@ -34,6 +34,7 @@ export function ParticleBurst({ rarity, show, onComplete }: ParticleBurstProps) 
 
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, [show, rarity, onComplete]);
 
   if (rarity === 'normal' || !show) return null;

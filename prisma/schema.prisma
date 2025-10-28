@@ -95,7 +95,7 @@ model Observation {
   location        String?
   placeGuess      String?
   iconicTaxon     String?
-  rarity          Rarity   @default(normal)
+  rarity          Rarity   @default(common)
   globalCount     Int?
   regionalCount   Int?
   isFirstGlobal   Boolean  @default(false)
@@ -120,9 +120,12 @@ enum QualityGrade {
 }
 
 enum Rarity {
-  normal
+  common
+  uncommon
   rare
+  epic
   legendary
+  mythic
 }
 
 // ============================================================================

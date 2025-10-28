@@ -8,18 +8,13 @@ import { BadgeFilters } from '@/components/badges/BadgeFilters';
 import { Navigation } from '@/components/layout/Navigation';
 import { BadgesClient } from './page.client';
 import { AnimatedStatsCard } from '@/components/stats/AnimatedStatsCard';
-import { CountUp } from '@/components/animations/CountUp';
 
 export const metadata: Metadata = {
   title: 'Badges',
   description: 'Your BioQuest achievements and badges',
 };
 
-export default async function BadgesPage({
-  searchParams,
-}: {
-  searchParams: { category?: string };
-}) {
+export default async function BadgesPage() {
   const session = await getServerSession(authOptions);
 
   if (!session?.user) {
@@ -35,15 +30,6 @@ export default async function BadgesPage({
   }
 
   const { unlocked, locked } = await getUserBadges(user.id);
-  const category = searchParams.category;
-
-  // Filter badges by category if specified
-  const filteredUnlocked = category
-    ? unlocked.filter((b) => b.category === category)
-    : unlocked;
-  const filteredLocked = category
-    ? locked.filter((b) => b.category === category)
-    : locked;
 
   const totalBadges = unlocked.length + locked.length;
   const progressPercent = totalBadges > 0 ? Math.round((unlocked.length / totalBadges) * 100) : 0;

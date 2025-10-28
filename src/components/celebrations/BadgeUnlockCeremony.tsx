@@ -3,7 +3,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useEffect } from 'react';
 import confetti from 'canvas-confetti';
-import { Badge } from '@/lib/gamification/badges/badges';
+import { Badge } from '@/types';
 
 interface BadgeUnlockCeremonyProps {
   badge: Badge | null;
@@ -62,6 +62,7 @@ export function BadgeUnlockCeremony({ badge, onClose }: BadgeUnlockCeremonyProps
 
       return () => clearInterval(interval);
     }
+    return undefined;
   }, [badge]);
 
   return (
@@ -142,7 +143,7 @@ export function BadgeUnlockCeremony({ badge, onClose }: BadgeUnlockCeremonyProps
                   }}
                   className="text-8xl mb-6"
                 >
-                  {badge.icon}
+                  {badge.iconUrl || '🏆'}
                 </motion.div>
 
                 {/* Badge Name */}
@@ -152,7 +153,7 @@ export function BadgeUnlockCeremony({ badge, onClose }: BadgeUnlockCeremonyProps
                   transition={{ delay: 0.8 }}
                   className="text-2xl font-display font-bold mb-2"
                 >
-                  {badge.title}
+                  {badge.name}
                 </motion.h3>
 
                 {/* Badge Description */}
@@ -180,7 +181,7 @@ export function BadgeUnlockCeremony({ badge, onClose }: BadgeUnlockCeremonyProps
                       : 'bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300'
                   }`}
                 >
-                  {badge.tier.toUpperCase()} TIER
+                  {badge.tier?.toUpperCase() || 'BRONZE'} TIER
                 </motion.div>
 
                 {/* Close Button */}

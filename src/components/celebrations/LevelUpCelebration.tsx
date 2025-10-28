@@ -81,6 +81,7 @@ export function LevelUpCelebration({
       const timer = setTimeout(onClose, 4000);
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, [show, onClose]);
 
   return (

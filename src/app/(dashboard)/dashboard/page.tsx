@@ -69,6 +69,9 @@ export default async function DashboardPage() {
           totalSpecies={stats.totalSpecies}
           rareObservations={stats.rareObservations}
           legendaryObservations={stats.legendaryObservations}
+          currentStreak={stats.currentStreak}
+          longestStreak={stats.longestStreak}
+          lastObservationDate={stats.lastObservationDate}
         />
       </main>
     </div>

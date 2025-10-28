@@ -18,6 +18,7 @@ export function SyncIndicator({ isVisible }: SyncIndicatorProps) {
       const timeout = setTimeout(() => setShow(false), 1000);
       return () => clearTimeout(timeout);
     }
+    return undefined;
   }, [isVisible]);
 
   return (

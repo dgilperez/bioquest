@@ -3,7 +3,8 @@ import { getINatClient } from '@/lib/inat/client';
 import { checkAndUnlockBadges } from '@/lib/gamification/badges/unlock';
 import { updateAllQuestProgress } from '@/lib/gamification/quests/progress';
 import { assignAvailableQuestsToUser } from '@/lib/gamification/quests/generation';
-import { Badge, Quest } from '@/types';
+import { calculateStreak, StreakMilestone } from '@/lib/gamification/streaks';
+import { Badge, Quest, Rarity } from '@/types';
 
 export interface UserStatsData {
   totalObservations: number;
@@ -51,6 +52,16 @@ export interface CompletedQuest {
   pointsEarned: number;
 }
 
+export interface RareFind {
+  observationId: number;
+  taxonName: string;
+  commonName?: string;
+  rarity: Rarity;
+  bonusPoints: number;
+  isFirstGlobal: boolean;
+  isFirstRegional: boolean;
+}
+
 export interface SyncResult {
   newObservations: number;
   newBadges: Badge[];
@@ -59,6 +70,14 @@ export interface SyncResult {
   newLevel?: number;
   levelTitle?: string;
   oldLevel?: number;
+  streakMilestone?: StreakMilestone;
+  streakData?: {
+    currentStreak: number;
+    longestStreak: number;
+    streakAtRisk: boolean;
+    hoursUntilBreak: number;
+  };
+  rareFinds: RareFind[];
 }
 
 export async function syncUserObservations(
@@ -102,6 +121,41 @@ export async function syncUserObservations(
     // Calculate level
     const { level, pointsToNextLevel } = calculateLevel(totalPoints);
 
+    // Calculate streaks
+    const observations = await prisma.observation.findMany({
+      where: { userId },
+      select: { observedOn: true },
+      orderBy: { observedOn: 'desc' },
+    });
+
+    const streakResult = calculateStreak(
+      observations,
+      currentStats?.currentStreak || 0,
+      currentStats?.longestStreak || 0
+    );
+
+    // Get rare finds (uncommon or rarer)
+    const rareObservations = await prisma.observation.findMany({
+      where: {
+        userId,
+        rarity: {
+          in: ['uncommon', 'rare', 'epic', 'legendary', 'mythic'],
+        },
+      },
+      orderBy: { observedOn: 'desc' },
+      take: 10, // Last 10 rare finds
+    });
+
+    const rareFinds: RareFind[] = rareObservations.map(obs => ({
+      observationId: obs.id,
+      taxonName: obs.taxonName || obs.speciesGuess || 'Unknown',
+      commonName: obs.commonName || undefined,
+      rarity: obs.rarity as Rarity,
+      bonusPoints: obs.pointsAwarded || 0,
+      isFirstGlobal: obs.isFirstGlobal,
+      isFirstRegional: obs.isFirstRegional,
+    }));
+
     // Update stats and track sync time
     const syncTime = new Date();
     await prisma.userStats.upsert({
@@ -112,6 +166,9 @@ export async function syncUserObservations(
         totalPoints,
         level,
         pointsToNextLevel,
+        currentStreak: streakResult.currentStreak,
+        longestStreak: streakResult.longestStreak,
+        lastObservationDate: streakResult.lastObservationDate,
         lastSyncedAt: syncTime,
         updatedAt: syncTime,
       },
@@ -122,6 +179,9 @@ export async function syncUserObservations(
         totalPoints,
         level,
         pointsToNextLevel,
+        currentStreak: streakResult.currentStreak,
+        longestStreak: streakResult.longestStreak,
+        lastObservationDate: streakResult.lastObservationDate,
         lastSyncedAt: syncTime,
       },
     });
@@ -156,6 +216,14 @@ export async function syncUserObservations(
       newLevel: leveledUp ? level : undefined,
       levelTitle: leveledUp ? getLevelTitle(level) : undefined,
       oldLevel,
+      streakMilestone: streakResult.milestoneReached,
+      streakData: {
+        currentStreak: streakResult.currentStreak,
+        longestStreak: streakResult.longestStreak,
+        streakAtRisk: streakResult.streakAtRisk,
+        hoursUntilBreak: streakResult.hoursUntilBreak,
+      },
+      rareFinds,
     };
   } catch (error) {
     console.error('Error syncing observations:', error);

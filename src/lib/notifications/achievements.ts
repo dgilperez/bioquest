@@ -101,15 +101,17 @@ export function notifySuccess(message: string) {
  * Show quest completion notification
  */
 export function notifyQuestComplete(quest: Quest, pointsEarned: number) {
-  const questTypeEmoji = {
+  const questTypeEmoji: Record<string, string> = {
     daily: '📅',
     weekly: '📆',
     monthly: '🗓️',
     personal: '🎯',
-  }[quest.type];
+    event: '🎉',
+  };
+  const emoji = questTypeEmoji[quest.type] || '📋';
 
   toast.success('Quest Completed!', {
-    description: `${questTypeEmoji} ${quest.title} - Earned ${pointsEarned} points!`,
+    description: `${emoji} ${quest.title} - Earned ${pointsEarned} points!`,
     duration: 6000,
   });
 }

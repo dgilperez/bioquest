@@ -3,10 +3,10 @@
 import { motion, useAnimation } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { Observation } from '@prisma/client';
+import { Rarity } from '@/types';
 import { RarityShimmer } from '@/components/animations/RarityShimmer';
 import { ParticleBurst } from '@/components/animations/ParticleBurst';
 import { getRarityConfig } from '@/styles/design-tokens';
-import { cardReveal } from '@/lib/animations/variants';
 
 interface AnimatedObservationCardProps {
   observation: Observation;
@@ -24,8 +24,8 @@ export function AnimatedObservationCard({
   const [showParticles, setShowParticles] = useState(false);
   const controls = useAnimation();
 
-  const rarity = (observation.rarity || 'normal') as 'common' | 'rare' | 'legendary' | 'normal';
-  const config = rarity !== 'normal' ? getRarityConfig(rarity) : null;
+  const rarity = (observation.rarity || 'common') as Rarity;
+  const config = rarity !== 'common' ? getRarityConfig(rarity) : null;
 
   useEffect(() => {
     if (isNew) {
@@ -45,8 +45,8 @@ export function AnimatedObservationCard({
 
         setRevealed(true);
 
-        // Shimmer and particles for rare+ items
-        if (rarity !== 'normal') {
+        // Shimmer and particles for uncommon+ items
+        if (rarity !== 'common') {
           await new Promise((resolve) => setTimeout(resolve, 300));
           setShowShimmer(true);
 
@@ -59,16 +59,22 @@ export function AnimatedObservationCard({
     }
   }, [isNew, index, controls, rarity]);
 
-  const rarityColors = {
-    normal: 'border-gray-200 dark:border-gray-700',
-    rare: 'border-purple-300 dark:border-purple-700',
+  const rarityColors: Record<string, string> = {
+    common: 'border-gray-200 dark:border-gray-700',
+    uncommon: 'border-green-300 dark:border-green-700',
+    rare: 'border-indigo-300 dark:border-indigo-700',
+    epic: 'border-cyan-400 dark:border-cyan-600',
     legendary: 'border-yellow-400 dark:border-yellow-600',
+    mythic: 'border-purple-400 dark:border-purple-600',
   };
 
-  const rarityBadgeColors = {
-    normal: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300',
-    rare: 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300',
+  const rarityBadgeColors: Record<string, string> = {
+    common: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300',
+    uncommon: 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300',
+    rare: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300',
+    epic: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900 dark:text-cyan-300',
     legendary: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300',
+    mythic: 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300',
   };
 
   return (
@@ -105,14 +111,18 @@ export function AnimatedObservationCard({
       <div className="backface-hidden relative">
         <div className="p-4">
           {/* Rarity Badge */}
-          {rarity !== 'normal' && (
+          {rarity !== 'common' && (
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ delay: index * 0.1 + 0.5, type: 'spring' }}
               className={`absolute top-2 right-2 px-3 py-1 rounded-full text-xs font-bold ${rarityBadgeColors[rarity]} z-10`}
             >
-              {rarity === 'legendary' ? '✨ LEGENDARY' : '💎 RARE'}
+              {rarity === 'mythic' && '💎 MYTHIC'}
+              {rarity === 'legendary' && '✨ LEGENDARY'}
+              {rarity === 'epic' && '🌟 EPIC'}
+              {rarity === 'rare' && '💠 RARE'}
+              {rarity === 'uncommon' && '🔷 UNCOMMON'}
             </motion.div>
           )}
 

@@ -3,7 +3,10 @@ import { Outfit, Space_Grotesk } from 'next/font/google';
 import './globals.css';
 import { SessionProvider } from '@/components/auth/SessionProvider';
 import { AutoSyncProvider } from '@/components/sync/AutoSyncProvider';
+import { InstallPrompt } from '@/components/pwa/InstallPrompt';
+import { OfflineIndicator } from '@/components/pwa/OfflineIndicator';
 import { Toaster } from '@/components/notifications/Toaster';
+import { SyncStatus } from '@/components/sync/SyncStatus';
 
 // Display font - Bold, adventurous for headlines
 const outfit = Outfit({
@@ -70,6 +73,9 @@ export default function RootLayout({
           <AutoSyncProvider>
             {children}
             <Toaster />
+            <InstallPrompt />
+            <OfflineIndicator />
+            <SyncStatus />
           </AutoSyncProvider>
         </SessionProvider>
       </body>
