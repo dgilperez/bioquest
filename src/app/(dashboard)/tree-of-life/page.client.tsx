@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { TaxonCard } from '@/components/tree-of-life/TaxonCard';
+import { GapAnalysis } from '@/components/tree-of-life/GapAnalysis';
 import { ChevronLeft, Home, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -227,6 +228,14 @@ export function TreeOfLifeClient() {
         <div className="p-6 rounded-xl border-2 border-red-500 bg-red-50 dark:bg-red-950/20">
           <p className="text-red-700 dark:text-red-300">{error}</p>
         </div>
+      )}
+
+      {/* Gap Analysis - Show when viewing a specific taxon */}
+      {!isLoading && !error && currentTaxonId !== null && (
+        <GapAnalysis
+          taxonId={currentTaxonId}
+          taxonName={currentTaxonName}
+        />
       )}
 
       {/* Taxa grid */}
