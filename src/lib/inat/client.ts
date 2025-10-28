@@ -60,7 +60,7 @@ export class INatClient {
     this.requestTimestamps.push(now);
   }
 
-  private async request<T>(endpoint: string, options?: RequestInit): Promise<T> {
+  async request<T>(endpoint: string, options?: RequestInit): Promise<T> {
     await this.enforceRateLimit();
 
     const url = `${INatClient.BASE_URL}${endpoint}`;

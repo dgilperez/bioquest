@@ -36,6 +36,7 @@ model User {
   friendships   Friendship[] @relation("UserFriendships")
   friendOf      Friendship[] @relation("FriendOf")
   trips         Trip[]
+  taxonProgress UserTaxonProgress[]
 
   @@index([inatId])
   @@index([inatUsername])
@@ -482,4 +483,97 @@ enum TripAchievementType {
   weather_warrior      // Trip in challenging conditions
   species_surge        // 20+ species in one trip
   photo_master         // All observations have 3+ photos
+}
+
+// ============================================================================
+// Tree of Life - Taxonomic Exploration
+// ============================================================================
+
+// Cached taxon nodes from iNaturalist taxonomy
+model TaxonNode {
+  id               Int       @id // iNaturalist taxon ID
+  name             String
+  rank             String    // kingdom, phylum, class, order, family, genus, species
+  parentId         Int?      // Parent taxon ID
+  ancestorIds      String?   // JSON array of ancestor IDs [kingdom, phylum, class, ...]
+
+  // Metadata
+  commonName       String?
+  iconicTaxonName  String?   // Animalia, Plantae, etc.
+  isActive         Boolean   @default(true)
+
+  // Global stats (cached from iNat)
+  globalObsCount   Int       @default(0)
+  globalSpeciesCount Int?    // Number of species under this taxon
+
+  // Cache metadata
+  cachedAt         DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  // Relations
+  userProgress     UserTaxonProgress[]
+  regionalData     RegionalTaxonData[]
+
+  @@index([rank])
+  @@index([parentId])
+  @@index([iconicTaxonName])
+  @@index([cachedAt])
+  @@map("taxon_nodes")
+}
+
+// User's progress per taxon (species observed, completeness %)
+model UserTaxonProgress {
+  id               String    @id @default(cuid())
+  userId           String
+  taxonId          Int
+  rank             String    // Level at which we're tracking (order, family, etc.)
+
+  // Observation counts
+  observationCount Int       @default(0)
+  speciesCount     Int       @default(0)  // Unique species observed under this taxon
+
+  // Completeness tracking
+  regionId         Int?      // iNat place ID for region (null = worldwide)
+  completionPercent Float    @default(0.0) // % of regional species observed
+
+  // Metadata
+  lastObservedAt   DateTime?
+  updatedAt        DateTime  @updatedAt
+
+  // Relations
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  taxon            TaxonNode @relation(fields: [taxonId], references: [id])
+
+  @@unique([userId, taxonId, regionId])
+  @@index([userId])
+  @@index([taxonId])
+  @@index([completionPercent])
+  @@map("user_taxon_progress")
+}
+
+// Regional taxon statistics (cached from iNat)
+model RegionalTaxonData {
+  id                  String    @id @default(cuid())
+  placeId             Int       // iNaturalist place ID
+  placeName           String
+  taxonId             Int
+  rank                String
+
+  // Regional statistics
+  rgObservationCount  Int       @default(0) // Research-grade observations in region
+  speciesCount        Int       @default(0) // Species observed in region
+  observerCount       Int       @default(0) // Number of unique observers
+
+  // Cache metadata
+  cachedAt            DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  // Relations
+  taxon               TaxonNode @relation(fields: [taxonId], references: [id])
+
+  @@unique([placeId, taxonId])
+  @@index([placeId])
+  @@index([taxonId])
+  @@index([cachedAt])
+  @@map("regional_taxon_data")
 }

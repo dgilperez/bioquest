@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { Home, Trophy, Eye, Target, BarChart3, Users, LogOut, Compass } from 'lucide-react';
+import { Home, Trophy, Eye, Target, BarChart3, Users, LogOut, Compass, Network } from 'lucide-react';
 import { signOut } from 'next-auth/react';
 
 export function Navigation() {
@@ -13,6 +13,7 @@ export function Navigation() {
     { href: '/dashboard', label: 'Dashboard', icon: Home },
     { href: '/explore', label: 'Explore', icon: Compass },
     { href: '/observations', label: 'Observations', icon: Eye },
+    { href: '/tree-of-life', label: 'Tree of Life', icon: Network },
     { href: '/stats', label: 'Statistics', icon: BarChart3 },
     { href: '/badges', label: 'Badges', icon: Trophy },
     { href: '/quests', label: 'Quests', icon: Target },
