@@ -1,5 +1,6 @@
 import { Observation } from '@prisma/client';
-import { getRarityEmoji, getRarityLabel, getRarityColor } from '@/lib/gamification/rarity';
+import { getRarityEmoji, getRarityLabel } from '@/lib/gamification/rarity';
+import { getRarityConfig } from '@/styles/design-tokens';
 import { formatRelativeTime } from '@/lib/utils';
 import { ExternalLink } from 'lucide-react';
 
@@ -8,7 +9,7 @@ interface ObservationCardProps {
 }
 
 export function ObservationCard({ observation }: ObservationCardProps) {
-  const rarityColor = getRarityColor(observation.rarity);
+  const config = getRarityConfig(observation.rarity);
   const rarityLabel = getRarityLabel(observation.rarity);
   const rarityEmoji = getRarityEmoji(observation.rarity);
 
@@ -35,7 +36,7 @@ export function ObservationCard({ observation }: ObservationCardProps) {
 
         {/* Rarity Badge */}
         <div className="flex items-center gap-2">
-          <span className={`font-semibold ${rarityColor}`}>
+          <span className="font-semibold" style={{ color: config.colors.base }}>
             {rarityEmoji} {rarityLabel}
           </span>
           {observation.isFirstGlobal && (

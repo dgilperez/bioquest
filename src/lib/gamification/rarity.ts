@@ -189,83 +189,31 @@ export async function classifyObservationsRarity(
 }
 
 /**
- * Get rarity display configuration
+ * Get rarity display labels and emojis
+ * Note: For colors and styling, use getRarityConfig from @/styles/design-tokens
  */
-export interface RarityConfig {
-  label: string;
-  emoji: string;
-  color: string;
-  gradient: string;
-  glow: string;
-}
-
-export function getRarityConfig(rarity: Rarity): RarityConfig {
+export function getRarityLabel(rarity: Rarity): string {
   switch (rarity) {
-    case 'mythic':
-      return {
-        label: 'Mythic',
-        emoji: '💎',
-        color: 'text-purple-600 dark:text-purple-400',
-        gradient: 'from-purple-600 via-pink-500 to-purple-600',
-        glow: '0 0 30px rgba(168, 85, 247, 0.6)',
-      };
-    case 'legendary':
-      return {
-        label: 'Legendary',
-        emoji: '✨',
-        color: 'text-yellow-500 dark:text-yellow-400',
-        gradient: 'from-yellow-400 via-yellow-500 to-yellow-600',
-        glow: '0 0 25px rgba(234, 179, 8, 0.5)',
-      };
-    case 'epic':
-      return {
-        label: 'Epic',
-        emoji: '🌟',
-        color: 'text-cyan-500 dark:text-cyan-400',
-        gradient: 'from-blue-400 via-cyan-400 to-blue-500',
-        glow: '0 0 20px rgba(6, 182, 212, 0.4)',
-      };
-    case 'rare':
-      return {
-        label: 'Rare',
-        emoji: '💠',
-        color: 'text-indigo-500 dark:text-indigo-400',
-        gradient: 'from-indigo-400 via-purple-500 to-indigo-600',
-        glow: '0 0 15px rgba(99, 102, 241, 0.3)',
-      };
-    case 'uncommon':
-      return {
-        label: 'Uncommon',
-        emoji: '🔷',
-        color: 'text-green-600 dark:text-green-400',
-        gradient: 'from-green-400 via-teal-400 to-green-500',
-        glow: '0 0 10px rgba(34, 197, 94, 0.2)',
-      };
+    case 'mythic': return 'Mythic';
+    case 'legendary': return 'Legendary';
+    case 'epic': return 'Epic';
+    case 'rare': return 'Rare';
+    case 'uncommon': return 'Uncommon';
     case 'common':
-    default:
-      return {
-        label: 'Common',
-        emoji: '⚪',
-        color: 'text-gray-500 dark:text-gray-400',
-        gradient: 'from-gray-300 to-gray-400',
-        glow: 'none',
-      };
+    default: return 'Common';
   }
 }
 
-/**
- * Legacy compatibility functions (for existing code)
- */
-export function getRarityColor(rarity: Rarity): string {
-  return getRarityConfig(rarity).color;
-}
-
-export function getRarityLabel(rarity: Rarity): string {
-  return getRarityConfig(rarity).label;
-}
-
 export function getRarityEmoji(rarity: Rarity): string {
-  return getRarityConfig(rarity).emoji;
+  switch (rarity) {
+    case 'mythic': return '💎';
+    case 'legendary': return '✨';
+    case 'epic': return '🌟';
+    case 'rare': return '💠';
+    case 'uncommon': return '🔷';
+    case 'common':
+    default: return '⚪';
+  }
 }
 
 /**
