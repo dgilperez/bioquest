@@ -4,6 +4,7 @@ import { checkAndUnlockBadges } from '@/lib/gamification/badges/unlock';
 import { updateAllQuestProgress } from '@/lib/gamification/quests/progress';
 import { assignAvailableQuestsToUser } from '@/lib/gamification/quests/generation';
 import { calculateStreak, StreakMilestone } from '@/lib/gamification/streaks';
+import { initializeUserPeriods } from '@/lib/leaderboards/reset';
 import { Badge, Quest, Rarity } from '@/types';
 
 export interface UserStatsData {
@@ -186,6 +187,11 @@ export async function syncUserObservations(
         lastSyncedAt: syncTime,
       },
     });
+
+    // Initialize weekly/monthly periods if this is the first sync
+    if (!currentStats || !currentStats.weekStart || !currentStats.monthStart) {
+      await initializeUserPeriods(userId);
+    }
 
     // Assign available quests to user
     await assignAvailableQuestsToUser(userId);
