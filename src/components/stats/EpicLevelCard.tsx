@@ -1,6 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import { useState, useEffect } from 'react';
 import { CountUp } from '@/components/animations/CountUp';
 import { EpicXPBar } from './EpicXPBar';
 
@@ -11,12 +12,33 @@ interface EpicLevelCardProps {
   pointsToNextLevel: number;
 }
 
+interface Particle {
+  id: number;
+  startX: number;
+  endX: number;
+  duration: number;
+  delay: number;
+}
+
 export function EpicLevelCard({
   level,
   levelTitle,
   totalPoints,
   pointsToNextLevel,
 }: EpicLevelCardProps) {
+  const [particles, setParticles] = useState<Particle[]>([]);
+
+  useEffect(() => {
+    // Generate particles only on client side to avoid hydration mismatch
+    const newParticles = [...Array(15)].map((_, i) => ({
+      id: i,
+      startX: Math.random() * 100,
+      endX: Math.random() * 100,
+      duration: 3 + Math.random() * 3,
+      delay: Math.random() * 5,
+    }));
+    setParticles(newParticles);
+  }, []);
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.9, y: 20 }}
@@ -48,27 +70,24 @@ export function EpicLevelCard({
 
       {/* Floating Particles */}
       <div className="absolute inset-0 overflow-hidden">
-        {[...Array(15)].map((_, i) => (
+        {particles.map((particle) => (
           <motion.div
-            key={i}
+            key={particle.id}
             className="absolute w-2 h-2 bg-white/30 rounded-full"
             initial={{
-              x: Math.random() * 100 + '%',
+              x: `${particle.startX}%`,
               y: '120%',
             }}
             animate={{
-              y: [' 120%', '-20%'],
-              x: [
-                Math.random() * 100 + '%',
-                (Math.random() * 100 + '%'),
-              ],
+              y: ['120%', '-20%'],
+              x: [`${particle.startX}%`, `${particle.endX}%`],
               opacity: [0, 1, 0],
               scale: [0, 1.5, 0],
             }}
             transition={{
-              duration: 3 + Math.random() * 3,
+              duration: particle.duration,
               repeat: Infinity,
-              delay: Math.random() * 5,
+              delay: particle.delay,
               ease: 'easeOut',
             }}
           />

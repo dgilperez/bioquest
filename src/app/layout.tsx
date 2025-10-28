@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Outfit, Space_Grotesk } from 'next/font/google';
 import './globals.css';
 import { SessionProvider } from '@/components/auth/SessionProvider';
+import { AutoSyncProvider } from '@/components/sync/AutoSyncProvider';
 import { Toaster } from '@/components/notifications/Toaster';
 
 // Display font - Bold, adventurous for headlines
@@ -66,8 +67,10 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning className={`${outfit.variable} ${spaceGrotesk.variable}`}>
       <body className="font-body antialiased">
         <SessionProvider>
-          {children}
-          <Toaster />
+          <AutoSyncProvider>
+            {children}
+            <Toaster />
+          </AutoSyncProvider>
         </SessionProvider>
       </body>
     </html>

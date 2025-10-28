@@ -69,18 +69,24 @@ export async function syncUserObservations(
   const client = getINatClient(accessToken);
 
   try {
-    // Get current stats
+    // Get current stats and last sync time
     const currentStats = await prisma.userStats.findUnique({
       where: { userId },
     });
 
     const oldObservationCount = currentStats?.totalObservations || 0;
     const oldLevel = currentStats?.level || 1;
+    const lastSyncedAt = currentStats?.lastSyncedAt;
 
-    // Get first page of observations
+    // Determine if this is an incremental sync or full sync
+    const isIncrementalSync = !!lastSyncedAt;
+
+    // Get observations (incremental if possible)
     const response = await client.getUserObservations(inatUsername, {
       per_page: 200,
       page: 1,
+      // Use updated_since for incremental sync to get only new/updated observations
+      updated_since: isIncrementalSync ? lastSyncedAt.toISOString() : undefined,
     });
 
     const { total_results } = response;
@@ -96,7 +102,8 @@ export async function syncUserObservations(
     // Calculate level
     const { level, pointsToNextLevel } = calculateLevel(totalPoints);
 
-    // Update stats
+    // Update stats and track sync time
+    const syncTime = new Date();
     await prisma.userStats.upsert({
       where: { userId },
       update: {
@@ -105,7 +112,8 @@ export async function syncUserObservations(
         totalPoints,
         level,
         pointsToNextLevel,
-        updatedAt: new Date(),
+        lastSyncedAt: syncTime,
+        updatedAt: syncTime,
       },
       create: {
         userId,
@@ -114,6 +122,7 @@ export async function syncUserObservations(
         totalPoints,
         level,
         pointsToNextLevel,
+        lastSyncedAt: syncTime,
       },
     });
 

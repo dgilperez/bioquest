@@ -25,6 +25,8 @@ export interface GetObservationsOptions {
   place_id?: number;
   d1?: string; // date from (YYYY-MM-DD)
   d2?: string; // date to (YYYY-MM-DD)
+  updated_since?: string; // ISO 8601 timestamp - for incremental sync
+  id_above?: number; // fetch observations with ID > this value
 }
 
 export class INatClient {
@@ -133,6 +135,12 @@ export class INatClient {
     }
     if (options.d2) {
       params.append('d2', options.d2);
+    }
+    if (options.updated_since) {
+      params.append('updated_since', options.updated_since);
+    }
+    if (options.id_above) {
+      params.append('id_above', options.id_above.toString());
     }
 
     return this.request(`/observations?${params.toString()}`);

@@ -4,9 +4,11 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db/prisma';
 import { getUserBadges } from '@/lib/gamification/badges/unlock';
-import { BadgeCard } from '@/components/badges/BadgeCard';
 import { BadgeFilters } from '@/components/badges/BadgeFilters';
 import { Navigation } from '@/components/layout/Navigation';
+import { BadgesClient } from './page.client';
+import { AnimatedStatsCard } from '@/components/stats/AnimatedStatsCard';
+import { CountUp } from '@/components/animations/CountUp';
 
 export const metadata: Metadata = {
   title: 'Badges',
@@ -43,15 +45,20 @@ export default async function BadgesPage({
     ? locked.filter((b) => b.category === category)
     : locked;
 
+  const totalBadges = unlocked.length + locked.length;
+  const progressPercent = totalBadges > 0 ? Math.round((unlocked.length / totalBadges) * 100) : 0;
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-nature-50 to-white dark:from-gray-900 dark:to-gray-800">
       {/* Header */}
-      <header className="border-b bg-white/80 backdrop-blur-sm dark:bg-gray-800/80">
+      <header className="sticky top-0 z-50 border-b bg-white/80 backdrop-blur-sm dark:bg-gray-800/80">
         <div className="container mx-auto px-4 py-4">
-          <h1 className="text-2xl font-bold text-nature-600 mb-4">Badge Collection</h1>
+          <h1 className="text-4xl font-display font-bold bg-gradient-to-r from-nature-600 to-nature-800 bg-clip-text text-transparent mb-4">
+            Badge Collection
+          </h1>
           <Navigation />
-          <p className="text-sm text-muted-foreground mt-4">
-            {unlocked.length} of {unlocked.length + locked.length} badges unlocked
+          <p className="text-sm text-muted-foreground font-body mt-4">
+            {unlocked.length} of {totalBadges} badges unlocked
           </p>
         </div>
       </header>
@@ -61,60 +68,41 @@ export default async function BadgesPage({
         <div className="space-y-8">
           {/* Stats Overview */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="rounded-lg border bg-white dark:bg-gray-800 p-4">
-              <p className="text-sm text-muted-foreground">Total</p>
-              <p className="text-2xl font-bold">{unlocked.length + locked.length}</p>
-            </div>
-            <div className="rounded-lg border bg-gradient-to-br from-green-500/10 to-green-600/10 border-green-200 dark:border-green-800 p-4">
-              <p className="text-sm text-muted-foreground">Unlocked</p>
-              <p className="text-2xl font-bold text-green-600">{unlocked.length}</p>
-            </div>
-            <div className="rounded-lg border bg-white dark:bg-gray-800 p-4">
-              <p className="text-sm text-muted-foreground">Locked</p>
-              <p className="text-2xl font-bold text-gray-400">{locked.length}</p>
-            </div>
-            <div className="rounded-lg border bg-gradient-to-br from-yellow-500/10 to-yellow-600/10 border-yellow-200 dark:border-yellow-800 p-4">
-              <p className="text-sm text-muted-foreground">Progress</p>
-              <p className="text-2xl font-bold text-yellow-600">
-                {Math.round((unlocked.length / (unlocked.length + locked.length)) * 100)}%
-              </p>
-            </div>
+            <AnimatedStatsCard
+              title="Total"
+              value={totalBadges}
+              icon="🏆"
+              color="gray"
+              index={0}
+            />
+            <AnimatedStatsCard
+              title="Unlocked"
+              value={unlocked.length}
+              icon="✨"
+              color="green"
+              index={1}
+            />
+            <AnimatedStatsCard
+              title="Locked"
+              value={locked.length}
+              icon="🔒"
+              color="gray"
+              index={2}
+            />
+            <AnimatedStatsCard
+              title="Progress"
+              value={progressPercent}
+              icon="📊"
+              color="yellow"
+              index={3}
+            />
           </div>
 
           {/* Filters */}
           <BadgeFilters />
 
-          {/* Unlocked Badges */}
-          {unlocked.length > 0 && (
-            <section>
-              <h2 className="text-xl font-semibold mb-4">🏆 Unlocked Badges</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {unlocked.map(badge => (
-                  <BadgeCard key={badge.id} badge={badge} isUnlocked={true} />
-                ))}
-              </div>
-            </section>
-          )}
-
-          {/* Locked Badges */}
-          {locked.length > 0 && (
-            <section>
-              <h2 className="text-xl font-semibold mb-4 text-muted-foreground">
-                🔒 Locked Badges
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {locked.map(badge => (
-                  <BadgeCard key={badge.code} badge={badge} isUnlocked={false} />
-                ))}
-              </div>
-            </section>
-          )}
-
-          {unlocked.length === 0 && locked.length === 0 && (
-            <div className="text-center py-12 text-muted-foreground">
-              <p className="text-lg">No badges yet! Start observing to unlock achievements.</p>
-            </div>
-          )}
+          {/* Badge Collections */}
+          <BadgesClient unlocked={unlocked} locked={locked} />
         </div>
       </main>
     </div>

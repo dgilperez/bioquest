@@ -4,7 +4,7 @@
   "private": true,
   "description": "Gamified iNaturalist companion app - Transform biodiversity observation into an engaging game",
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev -p 3001",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",

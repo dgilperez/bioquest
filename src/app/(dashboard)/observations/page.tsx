@@ -3,9 +3,10 @@ import { redirect } from 'next/navigation';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db/prisma';
-import { ObservationCard } from '@/components/observations/ObservationCard';
 import { ObservationFilters } from '@/components/observations/ObservationFilters';
 import { Navigation } from '@/components/layout/Navigation';
+import { ObservationsClient } from './page.client';
+import { AnimatedStatsCard } from '@/components/stats/AnimatedStatsCard';
 
 export const metadata: Metadata = {
   title: 'Observations',
@@ -53,11 +54,13 @@ export default async function ObservationsPage({
   return (
     <div className="min-h-screen bg-gradient-to-b from-nature-50 to-white dark:from-gray-900 dark:to-gray-800">
       {/* Header */}
-      <header className="border-b bg-white/80 backdrop-blur-sm dark:bg-gray-800/80">
+      <header className="sticky top-0 z-50 border-b bg-white/80 backdrop-blur-sm dark:bg-gray-800/80">
         <div className="container mx-auto px-4 py-4">
-          <h1 className="text-2xl font-bold text-nature-600 mb-4">Observations</h1>
+          <h1 className="text-4xl font-display font-bold bg-gradient-to-r from-nature-600 to-nature-800 bg-clip-text text-transparent mb-4">
+            Observations
+          </h1>
           <Navigation />
-          <p className="text-sm text-muted-foreground mt-4">
+          <p className="text-sm text-muted-foreground font-body mt-4">
             {observations.length > 0
               ? filter
                 ? `Showing ${filteredObservations.length} of ${observations.length} observations`
@@ -75,50 +78,38 @@ export default async function ObservationsPage({
 
           {/* Stats Bar */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="rounded-lg border bg-white dark:bg-gray-800 p-4">
-              <p className="text-sm text-muted-foreground">Total</p>
-              <p className="text-2xl font-bold">{observations.length}</p>
-            </div>
-            <div className="rounded-lg border bg-gradient-to-br from-purple-500/10 to-purple-600/10 border-purple-200 dark:border-purple-800 p-4">
-              <p className="text-sm text-muted-foreground">Rare</p>
-              <p className="text-2xl font-bold text-purple-600">
-                {observations.filter(o => o.rarity === 'rare').length}
-              </p>
-            </div>
-            <div className="rounded-lg border bg-gradient-to-br from-yellow-500/10 to-yellow-600/10 border-yellow-200 dark:border-yellow-800 p-4">
-              <p className="text-sm text-muted-foreground">Legendary</p>
-              <p className="text-2xl font-bold text-yellow-600">
-                {observations.filter(o => o.rarity === 'legendary').length}
-              </p>
-            </div>
-            <div className="rounded-lg border bg-gradient-to-br from-green-500/10 to-green-600/10 border-green-200 dark:border-green-800 p-4">
-              <p className="text-sm text-muted-foreground">Research Grade</p>
-              <p className="text-2xl font-bold text-green-600">
-                {observations.filter(o => o.qualityGrade === 'research').length}
-              </p>
-            </div>
+            <AnimatedStatsCard
+              title="Total"
+              value={observations.length}
+              icon="📸"
+              color="blue"
+              index={0}
+            />
+            <AnimatedStatsCard
+              title="Rare"
+              value={observations.filter(o => o.rarity === 'rare').length}
+              icon="💜"
+              color="purple"
+              index={1}
+            />
+            <AnimatedStatsCard
+              title="Legendary"
+              value={observations.filter(o => o.rarity === 'legendary').length}
+              icon="⭐"
+              color="yellow"
+              index={2}
+            />
+            <AnimatedStatsCard
+              title="Research Grade"
+              value={observations.filter(o => o.qualityGrade === 'research').length}
+              icon="🔬"
+              color="green"
+              index={3}
+            />
           </div>
 
           {/* Observations Grid */}
-          {filteredObservations.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredObservations.map(observation => (
-                <ObservationCard key={observation.id} observation={observation} />
-              ))}
-            </div>
-          ) : observations.length > 0 ? (
-            <div className="text-center py-12">
-              <p className="text-lg text-muted-foreground mb-4">
-                No observations match the selected filter.
-              </p>
-            </div>
-          ) : (
-            <div className="text-center py-12">
-              <p className="text-lg text-muted-foreground mb-4">
-                No observations yet. Click the Sync button on the dashboard to fetch your observations!
-              </p>
-            </div>
-          )}
+          <ObservationsClient observations={filteredObservations} hasObservations={observations.length > 0} />
         </div>
       </main>
     </div>

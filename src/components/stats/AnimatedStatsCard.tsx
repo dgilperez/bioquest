@@ -9,7 +9,7 @@ interface AnimatedStatsCardProps {
   title: string;
   value: number;
   icon: string;
-  color: 'blue' | 'green' | 'purple' | 'yellow';
+  color: 'blue' | 'green' | 'purple' | 'yellow' | 'gray';
   index?: number;
 }
 
@@ -38,6 +38,12 @@ const colorConfig = {
     text: 'text-yellow-600 dark:text-yellow-400',
     glow: '0 0 20px rgba(234, 179, 8, 0.3)',
   },
+  gray: {
+    bg: 'from-gray-500/10 to-gray-600/10',
+    border: 'border-gray-200 dark:border-gray-800',
+    text: 'text-gray-600 dark:text-gray-400',
+    glow: '0 0 20px rgba(107, 114, 128, 0.3)',
+  },
 };
 
 export function AnimatedStatsCard({ title, value, icon, color, index = 0 }: AnimatedStatsCardProps) {
@@ -59,9 +65,16 @@ export function AnimatedStatsCard({ title, value, icon, color, index = 0 }: Anim
       className={`rounded-lg border ${config.border} bg-gradient-to-br ${config.bg} p-6 cursor-pointer`}
     >
       <motion.div
-        initial={{ rotate: 0 }}
-        whileHover={{ rotate: [0, -10, 10, -10, 0], transition: { duration: 0.5 } }}
         className="text-4xl mb-3"
+        whileHover={{
+          rotate: [0, -3, 3, -3, 0],
+          scale: [1, 1.1, 1.1, 1.1, 1],
+          transition: {
+            duration: 0.8,
+            ease: 'easeInOut',
+            times: [0, 0.2, 0.4, 0.6, 1],
+          },
+        }}
       >
         {icon}
       </motion.div>
