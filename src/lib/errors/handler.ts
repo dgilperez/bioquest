@@ -9,7 +9,7 @@ import { AppError, ErrorCode, ErrorContext } from './types';
  * Log error to console and Sentry
  */
 export function logError(error: Error | AppError, context?: ErrorContext): void {
-  // Always log to console in development
+  // Always log to console in dev
   if (process.env.NODE_ENV === 'development') {
     console.error('[Error Handler]', {
       name: error.name,
