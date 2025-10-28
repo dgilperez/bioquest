@@ -38,7 +38,7 @@ async function handleGetStartingTaxa(_req: NextRequest): Promise<NextResponse> {
     { id: 47158, name: 'Aves', iconicName: 'Aves' }, // Birds
     { id: 47119, name: 'Mammalia', iconicName: 'Mammalia' },
     { id: 47178, name: 'Reptilia', iconicName: 'Reptilia' },
-    { id: 47119, name: 'Amphibia', iconicName: 'Amphibia' },
+    { id: 20978, name: 'Amphibia', iconicName: 'Amphibia' },
     { id: 47120, name: 'Insecta', iconicName: 'Insecta' },
     { id: 54960, name: 'Chromista', iconicName: 'Chromista' }, // Kelp, diatoms, etc.
     { id: 48460, name: 'Protozoa', iconicName: 'Protozoa' },
