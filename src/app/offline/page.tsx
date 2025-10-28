@@ -1,9 +1,4 @@
-import { Metadata } from 'next';
-
-export const metadata: Metadata = {
-  title: 'Offline - BioQuest',
-  description: 'You are currently offline',
-};
+'use client';
 
 export default function OfflinePage() {
   return (
