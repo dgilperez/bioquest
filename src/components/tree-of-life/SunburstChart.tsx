@@ -76,9 +76,9 @@ export function SunburstChart({
         return color(d.data.name);
       })
       .attr('fill-opacity', (d: any) =>
-        arcVisible(d.current) ? (d.children ? 0.8 : 0.6) : 0
+        arcVisible(d) ? (d.children ? 0.8 : 0.6) : 0
       )
-      .attr('d', (d: any) => arc(d.current))
+      .attr('d', (d: any) => arc(d))
       .style('cursor', 'pointer')
       .on('click', (_event: any, d: any) => {
         if (onNodeClick) {
@@ -109,7 +109,7 @@ export function SunburstChart({
       .on('mouseleave', function() {
         d3.select(this)
           .attr('fill-opacity', (d: any) =>
-            arcVisible(d.current) ? (d.children ? 0.8 : 0.6) : 0
+            arcVisible(d) ? (d.children ? 0.8 : 0.6) : 0
           );
 
         tooltip.style('opacity', 0);
@@ -123,8 +123,8 @@ export function SunburstChart({
       .selectAll('text')
       .data((root as any).descendants().filter((d: any) => d.depth && (d.y0 + d.y1) / 2 * (d.x1 - d.x0) > 10))
       .join('text')
-      .attr('fill-opacity', (d: any) => +labelVisible(d.current))
-      .attr('transform', (d: any) => labelTransform(d.current))
+      .attr('fill-opacity', (d: any) => +labelVisible(d))
+      .attr('transform', (d: any) => labelTransform(d))
       .text((d: any) => d.data.commonName || d.data.name);
 
     // Create tooltip

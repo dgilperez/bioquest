@@ -52,6 +52,9 @@ async function handleGetTaxonDetails(
     throw new UnauthorizedError('You must be logged in to access the Tree of Life');
   }
   const userId = (session.user as any).id;
+  if (!userId) {
+    throw new UnauthorizedError('User ID not found in session');
+  }
 
   const taxonId = parseInt(params.taxonId);
   if (isNaN(taxonId)) {

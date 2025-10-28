@@ -82,10 +82,20 @@ export const authOptions: NextAuthOptions = {
       // Initial sign in - need to get database user ID
       if (account && user) {
         // Look up the database user ID from inatId
-        const dbUser = await prisma.user.findUnique({
-          where: { inatId: (user as any).inatId },
-          select: { id: true },
-        });
+        // Retry a few times in case user is being created concurrently
+        let dbUser = null;
+        for (let i = 0; i < 3; i++) {
+          dbUser = await prisma.user.findUnique({
+            where: { inatId: (user as any).inatId },
+            select: { id: true },
+          });
+          if (dbUser) break;
+          await new Promise(resolve => setTimeout(resolve, 100)); // Wait 100ms before retry
+        }
+
+        if (!dbUser) {
+          console.error('Failed to find user in database after sign in:', (user as any).inatId);
+        }
 
         return {
           ...token,
