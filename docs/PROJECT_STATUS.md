@@ -266,6 +266,11 @@ npm run test:coverage    # Coverage report
 ## 📝 Recent Changes (Last 3 Days)
 
 ### October 28, 2025
+- ✅ **Integrated iNaturalist histogram API for seasonal recommendations**
+  - Real seasonal patterns from 2-year observation data
+  - Month-to-season aggregation with peak activity calculation
+  - Fallback mock data for development/errors
+  - Dynamic seasonal ordering (current season first)
 - ✅ Added game feel animations throughout app
 - ✅ Implemented auto-sync on page load
 - ✅ Fixed hydration errors
@@ -273,6 +278,9 @@ npm run test:coverage    # Coverage report
 - ✅ Added sync indicator component
 - ✅ Implemented incremental sync with `updated_since`
 - ✅ Changed dev port to 3001
+- ✅ Fixed ESLint warnings (apostrophe escaping, useCallback deps)
+- ✅ Installed missing test dependency (@testing-library/dom)
+- ✅ All tests passing (31/31)
 
 ### October 27, 2025
 - ✅ Created animated badge cards
