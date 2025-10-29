@@ -2,12 +2,26 @@ import { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import Link from 'next/link';
-import { Network, List, Map } from 'lucide-react';
+import { prisma } from '@/lib/db/prisma';
+import { AdventureClient } from './page.client';
 
 export const metadata: Metadata = {
   title: 'Adventure',
   description: 'Explore biodiversity and plan your next adventure',
+};
+
+// Iconic taxa IDs from iNaturalist
+const ICONIC_TAXA_IDS = {
+  Animalia: 1,       // Animals
+  Plantae: 47126,    // Plants
+  Fungi: 47170,      // Fungi
+  Mollusca: 47115,   // Mollusks
+  Arachnida: 47119,  // Arachnids
+  Insecta: 47158,    // Insects
+  Aves: 3,           // Birds
+  Mammalia: 40151,   // Mammals
+  Reptilia: 26036,   // Reptiles
+  Amphibia: 20978,   // Amphibians
 };
 
 export default async function AdventurePage() {
@@ -17,59 +31,104 @@ export default async function AdventurePage() {
     redirect('/signin');
   }
 
+  // Get user from database
+  const user = await prisma.user.findUnique({
+    where: { email: session.user.email! },
+  });
+
+  if (!user) {
+    redirect('/signin');
+  }
+
+  // Get user's progress for iconic taxa
+  const iconicTaxaProgress = await Promise.all(
+    Object.entries(ICONIC_TAXA_IDS).map(async ([name, id]) => {
+      // Get user's observations for this taxon (simplified - just count observations with this taxon)
+      const observations = await prisma.observation.findMany({
+        where: {
+          userId: user.id,
+          taxonId: id,
+        },
+        select: {
+          id: true,
+          taxonId: true,
+        },
+      });
+
+      // Count unique species (simplified)
+      const uniqueTaxonIds = new Set(observations.map(obs => obs.taxonId));
+
+      // Get taxon node for global species count
+      const taxonNode = await prisma.taxonNode.findUnique({
+        where: { id },
+        select: {
+          rank: true,
+          globalSpeciesCount: true,
+        },
+      });
+
+      const totalSpeciesGlobal = taxonNode?.globalSpeciesCount || 100000; // Fallback estimate
+      const speciesCount = uniqueTaxonIds.size;
+      const completionPercent = totalSpeciesGlobal > 0 ? (speciesCount / totalSpeciesGlobal) * 100 : 0;
+
+      return {
+        id,
+        name,
+        rank: taxonNode?.rank || 'kingdom',
+        speciesCount,
+        observationCount: observations.length,
+        completionPercent,
+        totalSpeciesGlobal,
+      };
+    })
+  );
+
+  // Sort by most progress first
+  iconicTaxaProgress.sort((a, b) => b.speciesCount - a.speciesCount);
+
+  // Get active trips (planned and in_progress)
+  const activeTrips = await prisma.trip.findMany({
+    where: {
+      userId: user.id,
+      status: {
+        in: ['planned', 'in_progress'],
+      },
+    },
+    include: {
+      place: {
+        select: {
+          displayName: true,
+        },
+      },
+      targetSpecies: {
+        select: {
+          spotted: true,
+        },
+      },
+    },
+    orderBy: [
+      {
+        status: 'desc', // in_progress first
+      },
+      {
+        plannedDate: 'asc',
+      },
+    ],
+    take: 10,
+  });
+
+  // Transform trips to match client interface (convert Date to string)
+  const transformedTrips = activeTrips.map(trip => ({
+    ...trip,
+    plannedDate: trip.plannedDate ? trip.plannedDate.toISOString() : null,
+  }));
+
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-4xl font-display font-bold mb-4 bg-gradient-to-r from-nature-600 to-nature-800 bg-clip-text text-transparent">
-          Adventure
-        </h1>
-        <p className="text-lg text-muted-foreground mb-8">
-          Explore the tree of life, discover new species, and plan your next naturalist adventure
-        </p>
-
-        {/* Quick Links Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Link
-            href="/tree-of-life"
-            className="p-6 rounded-lg border border-border bg-card hover:bg-accent transition-colors"
-          >
-            <Network className="h-12 w-12 text-nature-600 mb-4" />
-            <h3 className="text-xl font-semibold mb-2">Tree of Life</h3>
-            <p className="text-sm text-muted-foreground">
-              Explore taxonomic groups and track your completeness
-            </p>
-          </Link>
-
-          <Link
-            href="/stats/life-list"
-            className="p-6 rounded-lg border border-border bg-card hover:bg-accent transition-colors"
-          >
-            <List className="h-12 w-12 text-nature-600 mb-4" />
-            <h3 className="text-xl font-semibold mb-2">Life List</h3>
-            <p className="text-sm text-muted-foreground">
-              Browse your complete species checklist
-            </p>
-          </Link>
-
-          <Link
-            href="/trips"
-            className="p-6 rounded-lg border border-border bg-card hover:bg-accent transition-colors"
-          >
-            <Map className="h-12 w-12 text-nature-600 mb-4" />
-            <h3 className="text-xl font-semibold mb-2">Trips</h3>
-            <p className="text-sm text-muted-foreground">
-              Plan your next observation adventure
-            </p>
-          </Link>
-        </div>
-
-        <div className="mt-8 p-4 rounded-lg bg-nature-100 dark:bg-nature-900/20 border border-nature-200 dark:border-nature-800">
-          <p className="text-sm text-nature-700 dark:text-nature-300">
-            🚧 <strong>Phase 3 Enhancement Coming:</strong> This page will soon display tree of life
-            completeness metrics, gap analysis, and integrated trip planning.
-          </p>
-        </div>
-      </div>
+      <AdventureClient
+        iconicTaxaProgress={iconicTaxaProgress.slice(0, 6)} // Top 6 iconic taxa
+        activeTrips={transformedTrips}
+      />
     </div>
   );
 }
