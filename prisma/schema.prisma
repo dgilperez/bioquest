@@ -181,6 +181,10 @@ model UserStats {
   @@index([totalPoints])
   @@index([weeklyPoints])
   @@index([monthlyPoints])
+  // Composite indexes for leaderboard queries (sort + filter)
+  @@index([weeklyPoints, userId])
+  @@index([monthlyPoints, userId])
+  @@index([totalPoints, userId])
   @@map("user_stats")
 }
 
