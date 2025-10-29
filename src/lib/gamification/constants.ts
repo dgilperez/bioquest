@@ -160,14 +160,11 @@ export const SYNC_CONFIG = {
   /** Safety margin for rate limiting (use 90% of limit) */
   RATE_LIMIT_MARGIN: 0.9,
 
-  /** For initial sync of large accounts, only fetch recent observations */
-  INITIAL_SYNC_MONTHS: 6, // Only sync last 6 months on first sync
-
-  /** Maximum observations to process in one sync operation */
+  /** Maximum observations to process in one sync operation (respects rate limits) */
   MAX_OBSERVATIONS_PER_SYNC: 1000,
 
-  /** Skip rarity classification for observations older than this (months) */
-  SKIP_RARITY_AFTER_MONTHS: 12,
+  /** For large backlogs, process this many at a time and let user trigger next batch */
+  CHUNK_SIZE: 1000,
 } as const;
 
 // ============================================================================

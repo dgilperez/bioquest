@@ -39,24 +39,13 @@ export async function fetchUserObservations({
   let totalResults = 0;
   const perPage = SYNC_CONFIG.OBSERVATIONS_PER_PAGE;
 
-  // OPTIMIZATION: For first sync on large accounts, only fetch recent observations
-  // This prevents initial 10k observation sync from taking 5+ minutes
-  let dateFilter: string | undefined;
-  if (!isIncrementalSync) {
-    const monthsAgo = new Date();
-    monthsAgo.setMonth(monthsAgo.getMonth() - SYNC_CONFIG.INITIAL_SYNC_MONTHS);
-    dateFilter = monthsAgo.toISOString().split('T')[0];
-    console.log(`First sync: fetching observations since ${dateFilter} (last ${SYNC_CONFIG.INITIAL_SYNC_MONTHS} months)`);
-  }
-
-  console.log(`Starting ${isIncrementalSync ? 'incremental' : 'initial'} sync for ${inatUsername}...`);
+  console.log(`Starting ${isIncrementalSync ? 'incremental' : 'full'} sync for ${inatUsername}...`);
 
   do {
     const response = await client.getUserObservations(inatUsername, {
       per_page: perPage,
       page: currentPage,
       updated_since: isIncrementalSync ? lastSyncedAt.toISOString() : undefined,
-      d1: dateFilter, // Filter by date for initial sync
     });
 
     allObservations = allObservations.concat(response.results);

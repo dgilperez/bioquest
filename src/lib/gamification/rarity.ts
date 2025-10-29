@@ -144,47 +144,19 @@ export async function classifyObservationsRarity(
   const { SYNC_CONFIG } = await import('./constants');
   const client = getINatClient(accessToken);
 
-  // OPTIMIZATION 1: Skip rarity classification for old observations to reduce API calls
-  // For large accounts with 10k+ observations, we don't need rarity for 5-year-old obs
-  const cutoffDate = new Date();
-  cutoffDate.setMonth(cutoffDate.getMonth() - SYNC_CONFIG.SKIP_RARITY_AFTER_MONTHS);
-
-  const recentObs = observations.filter(obs => {
-    const obsDate = new Date(obs.observed_on);
-    return obsDate >= cutoffDate;
-  });
-
-  const skippedCount = observations.length - recentObs.length;
-  if (skippedCount > 0) {
-    console.log(`Skipping rarity classification for ${skippedCount} observations older than ${SYNC_CONFIG.SKIP_RARITY_AFTER_MONTHS} months`);
-
-    // Mark old observations as common (no API calls needed)
-    for (const obs of observations) {
-      if (!recentObs.includes(obs)) {
-        results.set(obs.id, {
-          rarity: 'common',
-          globalCount: 0,
-          isFirstGlobal: false,
-          isFirstRegional: false,
-          bonusPoints: 0,
-        });
-      }
-    }
-  }
-
-  // OPTIMIZATION 2: Extract unique taxonIds to avoid duplicate API calls
+  // OPTIMIZATION 1: Extract unique taxonIds to avoid duplicate API calls
   // Before: 1000 observations with 50 unique species = 2000 API calls
   // After: 1000 observations with 50 unique species = 100 API calls (20x reduction!)
   const uniqueTaxonIds = new Set<number>();
   const taxonCountCache = new Map<number, { global: number; regional?: number }>();
 
-  for (const obs of recentObs) {
+  for (const obs of observations) {
     if (obs.taxon?.id) {
       uniqueTaxonIds.add(obs.taxon.id);
     }
   }
 
-  console.log(`Fetching rarity for ${uniqueTaxonIds.size} unique taxa (from ${recentObs.length} recent observations, skipped ${skippedCount})`);
+  console.log(`Fetching rarity for ${uniqueTaxonIds.size} unique taxa (from ${observations.length} observations)`);
 
   // OPTIMIZATION 2: Batch fetch counts for unique taxa only
   const BATCH_SIZE = SYNC_CONFIG.RARITY_BATCH_SIZE;
@@ -221,8 +193,8 @@ export async function classifyObservationsRarity(
     }
   }
 
-  // OPTIMIZATION 3: Map cached results to observations (no API calls!)
-  for (const obs of recentObs) {
+  // OPTIMIZATION 2: Map cached results to observations (no API calls!)
+  for (const obs of observations) {
     if (!obs.taxon?.id) {
       results.set(obs.id, {
         rarity: 'common',
