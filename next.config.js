@@ -178,6 +178,24 @@ const nextConfig = {
     ];
     return config;
   },
+  // RFC-0001: Navigation restructure redirects
+  async redirects() {
+    return [
+      {
+        source: '/dashboard',
+        destination: '/quest',
+        permanent: false,
+      },
+      {
+        source: '/explore',
+        destination: '/quest',
+        permanent: false,
+      },
+      // Note: /observations, /badges, /stats, /quests, /leaderboards, /tree-of-life, /trips
+      // are kept at their original routes for now (Phase 1)
+      // They will be moved in future phases as needed
+    ];
+  },
 };
 
 module.exports = withPWA(nextConfig);
