@@ -1,37 +1,10 @@
 import { Rarity, INatObservation } from '@/types';
 import { getINatClient } from '@/lib/inat/client';
-
-/**
- * Enhanced 6-tier rarity system based on global observation counts
- *
- * Thresholds designed to create meaningful progression and excitement:
- * - Mythic: Ultra-rare, almost never seen (< 10)
- * - Legendary: Extremely rare, special finds (< 100)
- * - Epic: Very rare, notable discoveries (< 500)
- * - Rare: Uncommon species worth celebrating (< 2000)
- * - Uncommon: Less common, still interesting (< 10000)
- * - Common: Regularly observed (>= 10000)
- */
-const RARITY_THRESHOLDS = {
-  MYTHIC: 10,      // < 10 observations globally - almost extinct or newly discovered!
-  LEGENDARY: 100,   // < 100 observations - extremely rare
-  EPIC: 500,        // < 500 observations - very rare
-  RARE: 2000,       // < 2000 observations - rare
-  UNCOMMON: 10000,  // < 10000 observations - uncommon
-  // >= 10000 = COMMON
-};
-
-/**
- * Bonus points for each rarity tier
- */
-const RARITY_BONUS_POINTS = {
-  mythic: 2000,
-  legendary: 500,
-  epic: 250,
-  rare: 100,
-  uncommon: 25,
-  common: 0,
-};
+import {
+  RARITY_THRESHOLDS,
+  RARITY_BONUS_POINTS,
+  FIRST_OBSERVATION_BONUSES
+} from './constants';
 
 export interface RarityResult {
   rarity: Rarity;
@@ -67,12 +40,12 @@ function calculateBonusPoints(
 
   // Massive bonus for first global observation ever!
   if (isFirstGlobal) {
-    bonus = Math.max(bonus, 5000);
+    bonus = Math.max(bonus, FIRST_OBSERVATION_BONUSES.FIRST_GLOBAL);
   }
 
   // Significant bonus for first regional (but not as much as global)
   if (isFirstRegional && !isFirstGlobal) {
-    bonus = Math.max(bonus, 1000);
+    bonus = Math.max(bonus, FIRST_OBSERVATION_BONUSES.FIRST_REGIONAL);
   }
 
   return bonus;
@@ -166,9 +139,10 @@ export async function classifyObservationsRarity(
   placeId?: number
 ): Promise<Map<number, RarityResult>> {
   const results = new Map<number, RarityResult>();
+  const { SYNC_CONFIG } = await import('./constants');
 
   // Process in batches to respect rate limits
-  const BATCH_SIZE = 10;
+  const BATCH_SIZE = SYNC_CONFIG.RARITY_BATCH_SIZE;
   for (let i = 0; i < observations.length; i += BATCH_SIZE) {
     const batch = observations.slice(i, i + BATCH_SIZE);
 
@@ -181,7 +155,7 @@ export async function classifyObservationsRarity(
 
     // Small delay between batches
     if (i + BATCH_SIZE < observations.length) {
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise(resolve => setTimeout(resolve, SYNC_CONFIG.RARITY_BATCH_DELAY_MS));
     }
   }
 

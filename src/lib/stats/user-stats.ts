@@ -7,6 +7,17 @@ import { calculateStreak, StreakMilestone } from '@/lib/gamification/streaks';
 import { updateStreaks } from '@/lib/gamification/streak-tracking';
 import { initializeUserPeriods } from '@/lib/leaderboards/reset';
 import { Badge, Quest, Rarity } from '@/types';
+import {
+  POINTS_CONFIG,
+  SYNC_CONFIG,
+  LEVEL_CONFIG,
+  getLevelTitle as getTitle,
+  isRarityTracked,
+  pointsForLevel
+} from '@/lib/gamification/constants';
+
+// Re-export for backward compatibility
+export { getLevelTitle } from '@/lib/gamification/constants';
 
 export interface UserStatsData {
   totalObservations: number;
@@ -39,8 +50,8 @@ export async function getUserStats(userId: string): Promise<UserStatsData> {
         totalObservations: 0,
         totalSpecies: 0,
         totalPoints: 0,
-        level: 1,
-        pointsToNextLevel: 100,
+        level: LEVEL_CONFIG.STARTING_LEVEL,
+        pointsToNextLevel: LEVEL_CONFIG.BASE_POINTS,
       },
     });
     return newStats;
@@ -109,7 +120,7 @@ export async function syncUserObservations(
     let allObservations: any[] = [];
     let currentPage = 1;
     let totalResults = 0;
-    const perPage = 200;
+    const perPage = SYNC_CONFIG.OBSERVATIONS_PER_PAGE;
 
     console.log(`Starting ${isIncrementalSync ? 'incremental' : 'full'} sync for ${inatUsername}...`);
 
@@ -134,7 +145,7 @@ export async function syncUserObservations(
 
       // Small delay between pages to be nice to the API
       if (allObservations.length < totalResults) {
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, SYNC_CONFIG.PAGE_DELAY_MS));
       }
     } while (allObservations.length < totalResults);
 
@@ -183,7 +194,7 @@ export async function syncUserObservations(
       }
 
       // Calculate base points
-      let obsPoints = 10; // Base points per observation
+      let obsPoints = POINTS_CONFIG.BASE_OBSERVATION_POINTS;
 
       // Classify rarity (only for observations with taxon)
       let rarity: Rarity = 'common';
@@ -204,7 +215,7 @@ export async function syncUserObservations(
           obsPoints += bonusPoints;
 
           // Track rare finds for reporting
-          if (['uncommon', 'rare', 'epic', 'legendary', 'mythic'].includes(rarity)) {
+          if (isRarityTracked(rarity)) {
             rareFindsToReport.push({
               observationId: inatObs.id,
               taxonName: inatObs.taxon.name,
@@ -223,12 +234,12 @@ export async function syncUserObservations(
 
       // Research grade bonus
       if (inatObs.quality_grade === 'research') {
-        obsPoints += 25;
+        obsPoints += POINTS_CONFIG.RESEARCH_GRADE_BONUS;
       }
 
       // Photo bonus (max 3 photos)
       const photoCount = inatObs.photos?.length || 0;
-      const photoBonus = Math.min(photoCount, 3) * 5;
+      const photoBonus = Math.min(photoCount, POINTS_CONFIG.MAX_PHOTO_BONUS) * POINTS_CONFIG.PHOTO_POINTS;
       obsPoints += photoBonus;
 
       totalPoints += obsPoints;
@@ -409,7 +420,7 @@ export async function syncUserObservations(
       completedQuests,
       leveledUp,
       newLevel: leveledUp ? level : undefined,
-      levelTitle: leveledUp ? getLevelTitle(level) : undefined,
+      levelTitle: leveledUp ? getTitle(level) : undefined,
       oldLevel,
       streakMilestone: streakResult.milestoneReached,
       streakData: {
@@ -418,7 +429,7 @@ export async function syncUserObservations(
         streakAtRisk: streakResult.streakAtRisk,
         hoursUntilBreak: streakResult.hoursUntilBreak,
       },
-      rareFinds: rareFindsToReport.slice(0, 10), // Return top 10 rare finds
+      rareFinds: rareFindsToReport.slice(0, SYNC_CONFIG.MAX_RARE_FINDS_TO_REPORT),
     };
   } catch (error) {
     console.error('Error syncing observations:', error);
@@ -428,36 +439,23 @@ export async function syncUserObservations(
 
 /**
  * Calculate user level based on total points
- * Uses a simple exponential curve: points needed = 100 * (level ^ 1.5)
+ * Uses a simple exponential curve: points needed = BASE_POINTS * (level ^ EXPONENT)
  */
 export function calculateLevel(totalPoints: number): {
   level: number;
   pointsToNextLevel: number;
 } {
-  let level = 1;
+  let level = LEVEL_CONFIG.STARTING_LEVEL;
   let pointsNeeded = 0;
 
   while (pointsNeeded <= totalPoints) {
     level++;
-    pointsNeeded = Math.floor(100 * Math.pow(level, 1.5));
+    pointsNeeded = pointsForLevel(level);
   }
 
   level--; // Go back one level since we exceeded
-  pointsNeeded = Math.floor(100 * Math.pow(level + 1, 1.5));
+  pointsNeeded = pointsForLevel(level + 1);
   const pointsToNextLevel = pointsNeeded - totalPoints;
 
   return { level, pointsToNextLevel };
-}
-
-/**
- * Get level title based on level number
- */
-export function getLevelTitle(level: number): string {
-  if (level < 5) return 'Novice Naturalist';
-  if (level < 10) return 'Amateur Naturalist';
-  if (level < 15) return 'Field Naturalist';
-  if (level < 20) return 'Expert Naturalist';
-  if (level < 30) return 'Master Naturalist';
-  if (level < 40) return 'Elite Naturalist';
-  return 'Legendary Naturalist';
 }

@@ -1,4 +1,5 @@
 import { INatObservation, PointsCalculation } from '@/types';
+import { POINTS_CONFIG } from './constants';
 
 /**
  * Calculate points for an observation with all bonuses
@@ -8,13 +9,13 @@ export function calculateObservationPoints(
   isNewSpeciesForUser: boolean,
   rarityBonusPoints: number
 ): PointsCalculation {
-  const basePoints = 10;
+  const basePoints = POINTS_CONFIG.BASE_OBSERVATION_POINTS;
 
   const bonuses = {
-    newSpecies: isNewSpeciesForUser ? 50 : 0,
+    newSpecies: isNewSpeciesForUser ? POINTS_CONFIG.NEW_SPECIES_BONUS : 0,
     rarity: rarityBonusPoints,
-    researchGrade: observation.quality_grade === 'research' ? 25 : 0,
-    photos: Math.min(observation.photos?.length || 0, 3) * 5,
+    researchGrade: observation.quality_grade === 'research' ? POINTS_CONFIG.RESEARCH_GRADE_BONUS : 0,
+    photos: Math.min(observation.photos?.length || 0, POINTS_CONFIG.MAX_PHOTO_BONUS) * POINTS_CONFIG.PHOTO_POINTS,
   };
 
   const totalPoints = basePoints + Object.values(bonuses).reduce((sum, val) => sum + val, 0);

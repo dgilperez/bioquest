@@ -4,6 +4,8 @@
  * Tracks user observation streaks to encourage daily/weekly engagement
  */
 
+import { STREAK_MILESTONES, STREAK_CONFIG } from './constants';
+
 export interface StreakResult {
   currentStreak: number;
   longestStreak: number;
@@ -20,21 +22,6 @@ export interface StreakMilestone {
   bonusPoints: number;
   badgeCode?: string;
 }
-
-/**
- * Streak milestones with rewards
- */
-export const STREAK_MILESTONES: StreakMilestone[] = [
-  { days: 3, title: '3-Day Streak', bonusPoints: 25 },
-  { days: 7, title: 'Week Warrior', bonusPoints: 100, badgeCode: 'daily_naturalist' },
-  { days: 14, title: 'Fortnight Champion', bonusPoints: 200 },
-  { days: 30, title: 'Monthly Master', bonusPoints: 500, badgeCode: 'dedicated_observer' },
-  { days: 60, title: '2-Month Marvel', bonusPoints: 1000 },
-  { days: 100, title: 'Centurion', bonusPoints: 2000 },
-  { days: 365, title: 'Year-Long Legend', bonusPoints: 10000 },
-  { days: 730, title: 'Two-Year Titan', bonusPoints: 25000 },
-  { days: 1000, title: 'Millennium Naturalist', bonusPoints: 50000 },
-];
 
 /**
  * Calculate streak information for a user
@@ -195,7 +182,7 @@ export function getStreakMessage(streakResult: StreakResult): string {
     return 'Start your streak today! 🌱';
   }
 
-  if (streakAtRisk && hoursUntilBreak < 6) {
+  if (streakAtRisk && hoursUntilBreak < STREAK_CONFIG.URGENT_WARNING_HOURS) {
     return `🚨 ${currentStreak} day streak expires in ${Math.floor(hoursUntilBreak)}h!`;
   }
 
