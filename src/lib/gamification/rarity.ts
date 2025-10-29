@@ -132,6 +132,8 @@ export async function classifyObservationRarity(
 
 /**
  * Batch classify multiple observations (more efficient)
+ * OPTIMIZATION: Deduplicates taxa before making API calls
+ * Reduces 2000 API calls to ~100 for 1000 observations
  */
 export async function classifyObservationsRarity(
   observations: INatObservation[],
@@ -140,23 +142,118 @@ export async function classifyObservationsRarity(
 ): Promise<Map<number, RarityResult>> {
   const results = new Map<number, RarityResult>();
   const { SYNC_CONFIG } = await import('./constants');
+  const client = getINatClient(accessToken);
 
-  // Process in batches to respect rate limits
+  // OPTIMIZATION 1: Extract unique taxonIds to avoid duplicate API calls
+  // Before: 1000 observations with 50 unique species = 2000 API calls
+  // After: 1000 observations with 50 unique species = 100 API calls (20x reduction!)
+  const uniqueTaxonIds = new Set<number>();
+  const taxonCountCache = new Map<number, { global: number; regional?: number }>();
+
+  for (const obs of observations) {
+    if (obs.taxon?.id) {
+      uniqueTaxonIds.add(obs.taxon.id);
+    }
+  }
+
+  console.log(`Fetching rarity for ${uniqueTaxonIds.size} unique taxa (from ${observations.length} observations)`);
+
+  // OPTIMIZATION 2: Batch fetch counts for unique taxa only
   const BATCH_SIZE = SYNC_CONFIG.RARITY_BATCH_SIZE;
-  for (let i = 0; i < observations.length; i += BATCH_SIZE) {
-    const batch = observations.slice(i, i + BATCH_SIZE);
+  const taxonIdArray = Array.from(uniqueTaxonIds);
+
+  for (let i = 0; i < taxonIdArray.length; i += BATCH_SIZE) {
+    const batch = taxonIdArray.slice(i, i + BATCH_SIZE);
 
     await Promise.all(
-      batch.map(async obs => {
-        const result = await classifyObservationRarity(obs, accessToken, placeId);
-        results.set(obs.id, result);
+      batch.map(async taxonId => {
+        try {
+          // Fetch global count
+          const globalCount = await client.getTaxonObservationCount(taxonId);
+
+          // Fetch regional count if place specified
+          let regionalCount: number | undefined;
+          if (placeId) {
+            regionalCount = await client.getTaxonObservationCount(taxonId, placeId);
+          }
+
+          // Cache the counts
+          taxonCountCache.set(taxonId, { global: globalCount, regional: regionalCount });
+        } catch (error) {
+          console.error(`Error fetching counts for taxon ${taxonId}:`, error);
+          // Cache error state to avoid retries
+          taxonCountCache.set(taxonId, { global: 0 });
+        }
       })
     );
 
-    // Small delay between batches
-    if (i + BATCH_SIZE < observations.length) {
+    // Small delay between batches to respect rate limits
+    if (i + BATCH_SIZE < taxonIdArray.length) {
       await new Promise(resolve => setTimeout(resolve, SYNC_CONFIG.RARITY_BATCH_DELAY_MS));
     }
+  }
+
+  // OPTIMIZATION 3: Map cached results to observations (no API calls!)
+  for (const obs of observations) {
+    if (!obs.taxon?.id) {
+      results.set(obs.id, {
+        rarity: 'common',
+        globalCount: 0,
+        isFirstGlobal: false,
+        isFirstRegional: false,
+        bonusPoints: 0,
+      });
+      continue;
+    }
+
+    const counts = taxonCountCache.get(obs.taxon.id);
+    if (!counts) {
+      // Shouldn't happen, but handle gracefully
+      results.set(obs.id, {
+        rarity: 'common',
+        globalCount: 0,
+        isFirstGlobal: false,
+        isFirstRegional: false,
+        bonusPoints: 0,
+      });
+      continue;
+    }
+
+    // Determine global rarity
+    const globalRarity = determineRarityTier(counts.global);
+    const isFirstGlobal = counts.global === 1;
+
+    // Determine regional rarity if available
+    let regionalRarity: Rarity | undefined;
+    let isFirstRegional = false;
+    if (counts.regional !== undefined) {
+      regionalRarity = determineRarityTier(counts.regional);
+      isFirstRegional = counts.regional === 1;
+    }
+
+    // Use the higher rarity (more impressive) of global vs regional
+    let finalRarity = globalRarity;
+    if (regionalRarity) {
+      const regionalIndex = ['common', 'uncommon', 'rare', 'epic', 'legendary', 'mythic'].indexOf(regionalRarity);
+      const globalIndex = ['common', 'uncommon', 'rare', 'epic', 'legendary', 'mythic'].indexOf(globalRarity);
+
+      if (regionalIndex > globalIndex) {
+        finalRarity = regionalRarity;
+      }
+    }
+
+    // Calculate bonus points
+    const bonusPoints = calculateBonusPoints(finalRarity, isFirstGlobal, isFirstRegional);
+
+    results.set(obs.id, {
+      rarity: finalRarity,
+      globalCount: counts.global,
+      regionalCount: counts.regional,
+      regionalRarity,
+      isFirstGlobal,
+      isFirstRegional,
+      bonusPoints,
+    });
   }
 
   return results;
