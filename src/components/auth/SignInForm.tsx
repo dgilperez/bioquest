@@ -33,7 +33,7 @@ export function SignInForm() {
         const result = await signIn('mock', {
           username,
           redirect: true,
-          callbackUrl: 'http://localhost:3001/dashboard',
+          callbackUrl: '/dashboard',
         });
 
         if (result?.error) {

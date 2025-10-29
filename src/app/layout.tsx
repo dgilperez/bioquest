@@ -41,6 +41,12 @@ export const metadata: Metadata = {
   authors: [{ name: 'BioQuest Team' }],
   creator: 'BioQuest',
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'),
+  viewport: {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 5,
+    userScalable: true,
+  },
   openGraph: {
     type: 'website',
     locale: 'en_US',
