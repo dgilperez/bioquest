@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 interface AutoSyncProps {
   userId: string;
@@ -11,10 +12,34 @@ interface AutoSyncProps {
 
 export function AutoSync({ userId, inatUsername, accessToken, lastSyncedAt }: AutoSyncProps) {
   const hasSynced = useRef(false);
+  const [isCheckingProgress, setIsCheckingProgress] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
     // Prevent double sync (React StrictMode)
     if (hasSynced.current) return;
+
+    const checkExistingSync = async () => {
+      try {
+        // Check if sync is already in progress
+        const progressRes = await fetch('/api/sync/progress');
+        const progressData = await progressRes.json();
+
+        if (progressData.status === 'syncing') {
+          console.log('Auto-sync: Sync already in progress, not triggering new one');
+          // Dispatch event so progress UI shows up
+          window.dispatchEvent(new Event('sync-started'));
+          setIsCheckingProgress(false);
+          hasSynced.current = true;
+          return;
+        }
+
+        setIsCheckingProgress(false);
+      } catch (error) {
+        console.error('Error checking sync progress:', error);
+        setIsCheckingProgress(false);
+      }
+    };
 
     const shouldSync = () => {
       // Always sync if never synced before
@@ -28,8 +53,11 @@ export function AutoSync({ userId, inatUsername, accessToken, lastSyncedAt }: Au
     };
 
     const triggerSync = async () => {
-      if (!shouldSync()) {
-        console.log('Auto-sync: Not needed (last sync was recent)');
+      // First check if sync is already running
+      await checkExistingSync();
+
+      if (hasSynced.current || !shouldSync()) {
+        console.log('Auto-sync: Not needed');
         return;
       }
 
@@ -55,8 +83,9 @@ export function AutoSync({ userId, inatUsername, accessToken, lastSyncedAt }: Au
           const result = await response.json();
           console.log('Auto-sync completed:', result);
 
-          // Refresh the page to show new data
-          window.location.reload();
+          // Don't reload - let the progress UI handle completion
+          // User will see celebration, then we refresh
+          router.refresh();
         }
       } catch (error) {
         console.error('Auto-sync error:', error);
@@ -70,7 +99,7 @@ export function AutoSync({ userId, inatUsername, accessToken, lastSyncedAt }: Au
     return () => {
       clearTimeout(timeout);
     };
-  }, [userId, inatUsername, accessToken, lastSyncedAt]);
+  }, [userId, inatUsername, accessToken, lastSyncedAt, router]);
 
   // This component renders nothing
   return null;

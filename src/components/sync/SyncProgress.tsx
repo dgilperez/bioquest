@@ -33,8 +33,16 @@ export function SyncProgress() {
         // Stop polling if sync is completed or errored
         if (data.status === 'completed' || data.status === 'error') {
           setIsPolling(false);
-          // Auto-hide after 5 seconds
-          setTimeout(() => setProgress(null), 5000);
+
+          // If completed successfully, refresh after showing success for 3 seconds
+          if (data.status === 'completed') {
+            setTimeout(() => {
+              window.location.reload();
+            }, 3000);
+          } else {
+            // Error: just hide after 5 seconds
+            setTimeout(() => setProgress(null), 5000);
+          }
         } else if (data.status === 'syncing') {
           setIsPolling(true);
         }
