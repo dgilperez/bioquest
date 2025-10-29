@@ -2,8 +2,8 @@ import { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import Link from 'next/link';
-import { Eye } from 'lucide-react';
+import { prisma } from '@/lib/db/prisma';
+import { JournalClient } from './page.client';
 
 export const metadata: Metadata = {
   title: 'Journal',
@@ -17,38 +17,81 @@ export default async function JournalPage() {
     redirect('/signin');
   }
 
+  // Get user from database
+  const user = await prisma.user.findUnique({
+    where: { email: session.user.email! },
+  });
+
+  if (!user) {
+    redirect('/signin');
+  }
+
+  // Get recent observations (last 6)
+  const recentObservations = await prisma.observation.findMany({
+    where: {
+      userId: user.id,
+    },
+    orderBy: {
+      observedOn: 'desc',
+    },
+    take: 6,
+    select: {
+      id: true,
+      taxonName: true,
+      observedOn: true,
+      location: true,
+      photosCount: true,
+    },
+  });
+
+  // Calculate stats
+  const now = new Date();
+  const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+  const startOfYear = new Date(now.getFullYear(), 0, 1);
+
+  const [totalObservations, thisWeek, thisMonth, thisYear] = await Promise.all([
+    prisma.observation.count({ where: { userId: user.id } }),
+    prisma.observation.count({
+      where: {
+        userId: user.id,
+        observedOn: { gte: oneWeekAgo },
+      },
+    }),
+    prisma.observation.count({
+      where: {
+        userId: user.id,
+        observedOn: { gte: oneMonthAgo },
+      },
+    }),
+    prisma.observation.count({
+      where: {
+        userId: user.id,
+        observedOn: { gte: startOfYear },
+      },
+    }),
+  ]);
+
+  // Transform observations to match client interface
+  const transformedObservations = recentObservations.map((obs) => ({
+    id: obs.id.toString(),
+    taxonName: obs.taxonName || 'Unknown',
+    observedAt: obs.observedOn.toISOString(),
+    place: obs.location,
+    photoUrl: obs.photosCount > 0 ? 'has-photo' : null,
+  }));
+
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-4xl font-display font-bold mb-4 bg-gradient-to-r from-nature-600 to-nature-800 bg-clip-text text-transparent">
-          Journal
-        </h1>
-        <p className="text-lg text-muted-foreground mb-8">
-          Your field journal of all observations in chronological order
-        </p>
-
-        {/* Quick Link to Observations */}
-        <div className="grid grid-cols-1 gap-6">
-          <Link
-            href="/observations"
-            className="p-6 rounded-lg border border-border bg-card hover:bg-accent transition-colors"
-          >
-            <Eye className="h-12 w-12 text-nature-600 mb-4" />
-            <h3 className="text-xl font-semibold mb-2">All Observations</h3>
-            <p className="text-sm text-muted-foreground">
-              Browse your complete observation history
-            </p>
-          </Link>
-        </div>
-
-        <div className="mt-8 p-4 rounded-lg bg-nature-100 dark:bg-nature-900/20 border border-nature-200 dark:border-nature-800">
-          <p className="text-sm text-nature-700 dark:text-nature-300">
-            🚧 <strong>Phase 1 Note:</strong> This page currently links to the observations page.
-            In future phases, it will display a diary-style chronological feed with observation
-            details, patterns, and accumulation charts.
-          </p>
-        </div>
-      </div>
+      <JournalClient
+        recentObservations={transformedObservations}
+        stats={{
+          totalObservations,
+          thisWeek,
+          thisMonth,
+          thisYear,
+        }}
+      />
     </div>
   );
 }
