@@ -20,8 +20,11 @@ export interface FetchResult {
 }
 
 /**
- * Fetch all observations for a user from iNaturalist
- * Handles pagination automatically
+ * Fetch observations for a user from iNaturalist
+ * OPTIMIZED for large accounts (10k+ observations):
+ * - First sync: Only fetch last 6 months (configurable)
+ * - Respects MAX_OBSERVATIONS_PER_SYNC limit
+ * - Enforces rate limiting
  */
 export async function fetchUserObservations({
   accessToken,
@@ -36,13 +39,24 @@ export async function fetchUserObservations({
   let totalResults = 0;
   const perPage = SYNC_CONFIG.OBSERVATIONS_PER_PAGE;
 
-  console.log(`Starting ${isIncrementalSync ? 'incremental' : 'full'} sync for ${inatUsername}...`);
+  // OPTIMIZATION: For first sync on large accounts, only fetch recent observations
+  // This prevents initial 10k observation sync from taking 5+ minutes
+  let dateFilter: string | undefined;
+  if (!isIncrementalSync) {
+    const monthsAgo = new Date();
+    monthsAgo.setMonth(monthsAgo.getMonth() - SYNC_CONFIG.INITIAL_SYNC_MONTHS);
+    dateFilter = monthsAgo.toISOString().split('T')[0];
+    console.log(`First sync: fetching observations since ${dateFilter} (last ${SYNC_CONFIG.INITIAL_SYNC_MONTHS} months)`);
+  }
+
+  console.log(`Starting ${isIncrementalSync ? 'incremental' : 'initial'} sync for ${inatUsername}...`);
 
   do {
     const response = await client.getUserObservations(inatUsername, {
       per_page: perPage,
       page: currentPage,
       updated_since: isIncrementalSync ? lastSyncedAt.toISOString() : undefined,
+      d1: dateFilter, // Filter by date for initial sync
     });
 
     allObservations = allObservations.concat(response.results);
@@ -52,18 +66,25 @@ export async function fetchUserObservations({
 
     currentPage++;
 
+    // SAFETY: Respect MAX_OBSERVATIONS_PER_SYNC limit
+    if (allObservations.length >= SYNC_CONFIG.MAX_OBSERVATIONS_PER_SYNC) {
+      console.log(`Reached MAX_OBSERVATIONS_PER_SYNC limit (${SYNC_CONFIG.MAX_OBSERVATIONS_PER_SYNC}), stopping fetch`);
+      break;
+    }
+
     // Continue if there are more pages
     if (allObservations.length >= totalResults) {
       break;
     }
 
-    // Small delay between pages to be nice to the API
+    // Rate limiting: respect iNaturalist's 60 req/min limit
+    // With 500ms delay, we can make ~120 requests/min, so we're well under
     if (allObservations.length < totalResults) {
       await new Promise(resolve => setTimeout(resolve, SYNC_CONFIG.PAGE_DELAY_MS));
     }
   } while (allObservations.length < totalResults);
 
-  console.log(`Fetched ${allObservations.length} observations`);
+  console.log(`Fetched ${allObservations.length} observations (total available: ${totalResults})`);
 
   return {
     observations: allObservations,

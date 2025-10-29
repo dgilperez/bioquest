@@ -153,6 +153,21 @@ export const SYNC_CONFIG = {
 
   /** Max rare finds to report in sync result */
   MAX_RARE_FINDS_TO_REPORT: 10,
+
+  /** iNaturalist API rate limit (requests per minute) */
+  INAT_RATE_LIMIT: 60,
+
+  /** Safety margin for rate limiting (use 90% of limit) */
+  RATE_LIMIT_MARGIN: 0.9,
+
+  /** For initial sync of large accounts, only fetch recent observations */
+  INITIAL_SYNC_MONTHS: 6, // Only sync last 6 months on first sync
+
+  /** Maximum observations to process in one sync operation */
+  MAX_OBSERVATIONS_PER_SYNC: 1000,
+
+  /** Skip rarity classification for observations older than this (months) */
+  SKIP_RARITY_AFTER_MONTHS: 12,
 } as const;
 
 // ============================================================================
