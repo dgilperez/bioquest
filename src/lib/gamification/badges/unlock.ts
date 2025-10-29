@@ -9,6 +9,7 @@ export interface BadgeUnlockResult {
 
 /**
  * Check and unlock eligible badges for a user
+ * Optimized to batch database operations instead of N+1 queries
  */
 export async function checkAndUnlockBadges(userId: string): Promise<BadgeUnlockResult[]> {
   const results: BadgeUnlockResult[] = [];
@@ -30,7 +31,22 @@ export async function checkAndUnlockBadges(userId: string): Promise<BadgeUnlockR
   // Get already unlocked badge codes
   const unlockedBadgeCodes = new Set(user.badges.map(ub => ub.badge.code));
 
-  // Check each badge definition
+  // OPTIMIZATION: Pre-ensure all badges exist in database (batch operation)
+  await ensureAllBadgesExist();
+
+  // OPTIMIZATION: Fetch all badges at once instead of per-definition
+  const allBadges = await prisma.badge.findMany({
+    where: {
+      code: {
+        in: BADGE_DEFINITIONS.map(d => d.code)
+      }
+    }
+  });
+  const badgesByCode = new Map(allBadges.map(b => [b.code, b as Badge]));
+
+  // Check which badges to unlock
+  const badgesToUnlock: Badge[] = [];
+
   for (const badgeDef of BADGE_DEFINITIONS) {
     // Skip if already unlocked
     if (unlockedBadgeCodes.has(badgeDef.code)) {
@@ -39,10 +55,25 @@ export async function checkAndUnlockBadges(userId: string): Promise<BadgeUnlockR
 
     // Check if criteria met
     if (await isBadgeCriteriaMet(badgeDef.criteria, user.stats, user.observations)) {
-      // Unlock the badge
-      const badge = await ensureBadgeExists(badgeDef);
-      await unlockBadgeForUser(userId, badge.id);
+      const badge = badgesByCode.get(badgeDef.code);
+      if (badge) {
+        badgesToUnlock.push(badge);
+      }
+    }
+  }
 
+  // OPTIMIZATION: Batch unlock all eligible badges at once
+  if (badgesToUnlock.length > 0) {
+    await prisma.userBadge.createMany({
+      data: badgesToUnlock.map(badge => ({
+        userId,
+        badgeId: badge.id,
+        progress: 100,
+      })),
+    });
+
+    // Add to results
+    for (const badge of badgesToUnlock) {
       results.push({
         badge,
         isNewlyUnlocked: true,
@@ -51,6 +82,35 @@ export async function checkAndUnlockBadges(userId: string): Promise<BadgeUnlockR
   }
 
   return results;
+}
+
+/**
+ * Ensure all badge definitions exist in database (batch operation)
+ * This is more efficient than checking one-by-one
+ */
+async function ensureAllBadgesExist(): Promise<void> {
+  const existingBadges = await prisma.badge.findMany({
+    select: { code: true }
+  });
+  const existingCodes = new Set(existingBadges.map(b => b.code));
+
+  const missingBadges = BADGE_DEFINITIONS.filter(def => !existingCodes.has(def.code));
+
+  if (missingBadges.length > 0) {
+    await prisma.badge.createMany({
+      data: missingBadges.map(def => ({
+        code: def.code,
+        name: def.name,
+        description: def.description,
+        category: def.category,
+        tier: def.tier || null,
+        iconUrl: def.iconUrl || null,
+        criteria: def.criteria as any,
+        isSecret: def.isSecret,
+        sortOrder: 0,
+      })),
+    });
+  }
 }
 
 /**
@@ -143,45 +203,6 @@ async function isBadgeCriteriaMet(
   return true;
 }
 
-/**
- * Ensure badge exists in database, create if not
- */
-async function ensureBadgeExists(badgeDef: BadgeDefinition): Promise<Badge> {
-  const existing = await prisma.badge.findUnique({
-    where: { code: badgeDef.code },
-  });
-
-  if (existing) return existing as Badge;
-
-  const created = await prisma.badge.create({
-    data: {
-      code: badgeDef.code,
-      name: badgeDef.name,
-      description: badgeDef.description,
-      category: badgeDef.category,
-      tier: badgeDef.tier || null,
-      iconUrl: badgeDef.iconUrl || null,
-      criteria: badgeDef.criteria as any, // Prisma Json type
-      isSecret: badgeDef.isSecret,
-      sortOrder: 0,
-    },
-  });
-
-  return created as Badge;
-}
-
-/**
- * Unlock a badge for a user
- */
-async function unlockBadgeForUser(userId: string, badgeId: string): Promise<void> {
-  await prisma.userBadge.create({
-    data: {
-      userId,
-      badgeId,
-      progress: 100,
-    },
-  });
-}
 
 /**
  * Get all badges for a user (unlocked and locked)

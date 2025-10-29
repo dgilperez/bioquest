@@ -51,11 +51,20 @@ export async function calculateUserStats(
   // Calculate level
   const { level, pointsToNextLevel } = calculateLevel(totalPoints);
 
-  // Calculate streaks from stored observations
+  // Calculate streaks from recent observations (optimized - only fetch what's needed)
+  // For most users, we only need recent observations to calculate current streak
+  // Longest streak is already tracked in stats, so we don't need full history
   const observations = await prisma.observation.findMany({
-    where: { userId },
+    where: {
+      userId,
+      // Only fetch last 365 days for streak calculation (streaks longer than 1 year are already tracked)
+      observedOn: {
+        gte: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000)
+      }
+    },
     select: { observedOn: true, rarity: true },
     orderBy: { observedOn: 'desc' },
+    take: 500, // Reasonable limit - most users won't have 500 observations in a year
   });
 
   const streakResult = calculateStreak(

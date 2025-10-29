@@ -118,6 +118,12 @@ model Observation {
   @@index([taxonId])
   @@index([rarity])
   @@index([observedOn])
+  // Composite indexes for common query patterns
+  @@index([userId, createdAt])
+  @@index([userId, iconicTaxon])
+  @@index([userId, qualityGrade])
+  @@index([userId, rarity])
+  @@index([userId, observedOn])
   @@map("observations")
 }
 

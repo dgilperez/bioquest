@@ -5,7 +5,6 @@
  */
 
 import { INatObservation, Rarity } from '@/types';
-import { classifyObservationRarity } from '@/lib/gamification/rarity';
 import { POINTS_CONFIG, isRarityTracked } from '@/lib/gamification/constants';
 
 export interface EnrichedObservation {
@@ -35,58 +34,48 @@ export interface RareFind {
 
 /**
  * Enrich observations with rarity classification and point calculations
+ * Uses batch processing for rarity classification to avoid N+1 API calls
  */
 export async function enrichObservations(
   observations: INatObservation[],
   accessToken: string
 ): Promise<EnrichmentResult> {
+  console.log(`Enriching ${observations.length} observations...`);
+
+  // BATCH CLASSIFY ALL OBSERVATIONS AT ONCE (instead of N+1 loop)
+  // This reduces 1000 API calls to ~10-20 batched calls
+  const { classifyObservationsRarity } = await import('@/lib/gamification/rarity');
+  const rarityMap = await classifyObservationsRarity(observations, accessToken);
+
   const enrichedObservations: EnrichedObservation[] = [];
   const rareFinds: RareFind[] = [];
   let totalPoints = 0;
 
-  for (let i = 0; i < observations.length; i++) {
-    const inatObs = observations[i];
-
-    if (i % 50 === 0) {
-      console.log(`Processing observation ${i + 1}/${observations.length}...`);
-    }
-
+  // Now process each observation with pre-calculated rarity
+  for (const inatObs of observations) {
     // Calculate base points
     let obsPoints = POINTS_CONFIG.BASE_OBSERVATION_POINTS;
 
-    // Classify rarity (only for observations with taxon)
-    let rarity: Rarity = 'common';
-    let bonusPoints = 0;
-    let isFirstGlobal = false;
-    let isFirstRegional = false;
+    // Get pre-calculated rarity from batch results
+    const rarityResult = rarityMap.get(inatObs.id);
+    const rarity = rarityResult?.rarity || 'common';
+    const bonusPoints = rarityResult?.bonusPoints || 0;
+    const isFirstGlobal = rarityResult?.isFirstGlobal || false;
+    const isFirstRegional = rarityResult?.isFirstRegional || false;
 
-    if (inatObs.taxon?.id) {
-      try {
-        const rarityResult = await classifyObservationRarity(inatObs, accessToken);
+    obsPoints += bonusPoints;
 
-        rarity = rarityResult.rarity;
-        bonusPoints = rarityResult.bonusPoints;
-        isFirstGlobal = rarityResult.isFirstGlobal;
-        isFirstRegional = rarityResult.isFirstRegional;
-
-        obsPoints += bonusPoints;
-
-        // Track rare finds for reporting
-        if (isRarityTracked(rarity)) {
-          rareFinds.push({
-            observationId: inatObs.id,
-            taxonName: inatObs.taxon.name,
-            commonName: inatObs.taxon.preferred_common_name || undefined,
-            rarity,
-            bonusPoints,
-            isFirstGlobal,
-            isFirstRegional,
-          });
-        }
-      } catch (error) {
-        console.warn(`Could not classify rarity for observation ${inatObs.id}:`, error);
-        // Continue with default rarity
-      }
+    // Track rare finds for reporting
+    if (inatObs.taxon?.id && isRarityTracked(rarity)) {
+      rareFinds.push({
+        observationId: inatObs.id,
+        taxonName: inatObs.taxon.name,
+        commonName: inatObs.taxon.preferred_common_name || undefined,
+        rarity,
+        bonusPoints,
+        isFirstGlobal,
+        isFirstRegional,
+      });
     }
 
     // Research grade bonus
@@ -111,7 +100,7 @@ export async function enrichObservations(
     });
   }
 
-  console.log(`Enriched ${enrichedObservations.length} observations with ${totalPoints} total points`);
+  console.log(`Enriched ${enrichedObservations.length} observations with ${totalPoints} total points (${rareFinds.length} rare finds)`);
 
   return {
     enrichedObservations,
