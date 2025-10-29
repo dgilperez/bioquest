@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { Navigation } from '@/components/layout/Navigation';
 import { SyncButton } from '@/components/stats/SyncButton';
 import { SyncProgress } from '@/components/sync/SyncProgress';
+import { ErrorBoundary } from '@/components/errors/ErrorBoundary';
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -52,7 +53,11 @@ export default async function DashboardLayout({
       </header>
 
       {/* Main Content */}
-      <main>{children}</main>
+      <main>
+        <ErrorBoundary>
+          {children}
+        </ErrorBoundary>
+      </main>
 
       {/* Sync Progress Toast */}
       <SyncProgress />
