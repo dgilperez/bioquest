@@ -198,6 +198,7 @@ export async function syncMockObservations(
         currentRarityStreak,
         longestRarityStreak,
         lastRareObservationDate,
+        lastSyncedAt: new Date(), // Critical: Update sync timestamp
         updatedAt: new Date(),
       },
       create: {
@@ -212,6 +213,7 @@ export async function syncMockObservations(
         currentRarityStreak,
         longestRarityStreak,
         lastRareObservationDate,
+        lastSyncedAt: new Date(), // Critical: Set initial sync timestamp
       },
     });
 

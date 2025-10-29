@@ -78,9 +78,10 @@ export function AutoSync({ userId, inatUsername, accessToken, lastSyncedAt }: Au
           const result = await response.json();
           console.log('Auto-sync completed:', result);
 
-          // Don't reload - let the progress UI handle completion
-          // User will see celebration, then we refresh
-          router.refresh();
+          // Wait a moment for DB to update, then refresh
+          setTimeout(() => {
+            router.refresh();
+          }, 1000);
         }
       } catch (error) {
         console.error('Auto-sync error:', error);
