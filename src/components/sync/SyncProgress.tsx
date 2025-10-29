@@ -34,13 +34,13 @@ export function SyncProgress() {
         if (data.status === 'completed' || data.status === 'error') {
           setIsPolling(false);
 
-          // If completed successfully, refresh after showing success for 3 seconds
+          // Hide the toast after showing the message
           if (data.status === 'completed') {
-            setTimeout(() => {
-              window.location.reload();
-            }, 3000);
+            // Hide success message after 3 seconds
+            // Note: AutoSync component handles data refresh via router.refresh()
+            setTimeout(() => setProgress(null), 3000);
           } else {
-            // Error: just hide after 5 seconds
+            // Error: hide after 5 seconds
             setTimeout(() => setProgress(null), 5000);
           }
         } else if (data.status === 'syncing') {
@@ -51,13 +51,12 @@ export function SyncProgress() {
       }
     };
 
-    // Start polling
+    // Only poll when actively syncing
     if (isPolling) {
       interval = setInterval(pollProgress, 2000); // Poll every 2 seconds
+      // Initial poll when polling starts
+      pollProgress();
     }
-
-    // Initial poll
-    pollProgress();
 
     return () => {
       if (interval) clearInterval(interval);
