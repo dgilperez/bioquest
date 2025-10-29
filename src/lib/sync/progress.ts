@@ -1,8 +1,11 @@
 /**
  * Sync Progress Tracking
  *
- * Manages progress state for long-running sync operations
+ * Manages progress state for long-running sync operations.
+ * Now persisted in database to survive page reloads.
  */
+
+import { prisma } from '@/lib/db/prisma';
 
 export interface SyncProgress {
   userId: string;
@@ -17,82 +20,121 @@ export interface SyncProgress {
   startedAt?: Date;
   completedAt?: Date;
   error?: string;
+  lastObservationDate?: Date | null;
 }
 
-// In-memory progress store (in production, use Redis or similar)
-const progressStore = new Map<string, SyncProgress>();
-
-export function initProgress(userId: string, totalObservations: number): void {
-  progressStore.set(userId, {
-    userId,
-    status: 'syncing',
-    phase: 'fetching',
-    currentStep: 0,
-    totalSteps: 4, // fetching, enriching, storing, calculating
-    message: 'Starting sync...',
-    observationsProcessed: 0,
-    observationsTotal: totalObservations,
-    startedAt: new Date(),
+export async function initProgress(userId: string, totalObservations: number): Promise<void> {
+  await prisma.syncProgress.upsert({
+    where: { userId },
+    create: {
+      userId,
+      status: 'syncing',
+      phase: 'fetching',
+      currentStep: 0,
+      totalSteps: 4,
+      message: 'Starting sync...',
+      observationsProcessed: 0,
+      observationsTotal: totalObservations,
+      startedAt: new Date(),
+    },
+    update: {
+      status: 'syncing',
+      phase: 'fetching',
+      currentStep: 0,
+      totalSteps: 4,
+      message: 'Starting sync...',
+      observationsProcessed: 0,
+      observationsTotal: totalObservations,
+      error: null,
+      completedAt: null,
+      startedAt: new Date(),
+    },
   });
 }
 
-export function updateProgress(
+export async function updateProgress(
   userId: string,
   updates: Partial<Omit<SyncProgress, 'userId'>>
-): void {
-  const current = progressStore.get(userId);
+): Promise<void> {
+  const current = await prisma.syncProgress.findUnique({ where: { userId } });
   if (!current) return;
-
-  const updated = { ...current, ...updates };
 
   // Calculate estimated time remaining
-  if (updated.startedAt && updated.observationsProcessed > 0) {
-    const elapsed = Date.now() - updated.startedAt.getTime();
-    const rate = updated.observationsProcessed / (elapsed / 1000); // obs per second
-    const remaining = updated.observationsTotal - updated.observationsProcessed;
-    updated.estimatedTimeRemaining = remaining / rate;
+  let estimatedTimeRemaining = updates.estimatedTimeRemaining;
+  if (!estimatedTimeRemaining && current.observationsProcessed > 0) {
+    const elapsed = Date.now() - current.startedAt.getTime();
+    const processed = updates.observationsProcessed ?? current.observationsProcessed;
+    if (processed > 0) {
+      const rate = processed / (elapsed / 1000);
+      const remaining = current.observationsTotal - processed;
+      estimatedTimeRemaining = Math.round(remaining / rate);
+    }
   }
 
-  progressStore.set(userId, updated);
+  await prisma.syncProgress.update({
+    where: { userId },
+    data: {
+      ...updates,
+      estimatedTimeRemaining,
+    },
+  });
 }
 
-export function getProgress(userId: string): SyncProgress | null {
-  return progressStore.get(userId) || null;
+export async function getProgress(userId: string): Promise<SyncProgress | null> {
+  const progress = await prisma.syncProgress.findUnique({ where: { userId } });
+  if (!progress) return null;
+
+  return {
+    userId: progress.userId,
+    status: progress.status as any,
+    phase: progress.phase as any,
+    currentStep: progress.currentStep,
+    totalSteps: progress.totalSteps,
+    message: progress.message,
+    observationsProcessed: progress.observationsProcessed,
+    observationsTotal: progress.observationsTotal,
+    estimatedTimeRemaining: progress.estimatedTimeRemaining ?? undefined,
+    startedAt: progress.startedAt,
+    completedAt: progress.completedAt ?? undefined,
+    error: progress.error ?? undefined,
+    lastObservationDate: progress.lastObservationDate,
+  };
 }
 
-export function completeProgress(userId: string): void {
-  const current = progressStore.get(userId);
+export async function completeProgress(userId: string): Promise<void> {
+  const current = await prisma.syncProgress.findUnique({ where: { userId } });
   if (!current) return;
 
-  progressStore.set(userId, {
-    ...current,
-    status: 'completed',
-    phase: 'done',
-    currentStep: current.totalSteps,
-    message: 'Sync completed successfully!',
-    observationsProcessed: current.observationsTotal,
-    completedAt: new Date(),
+  await prisma.syncProgress.update({
+    where: { userId },
+    data: {
+      status: 'completed',
+      phase: 'done',
+      currentStep: current.totalSteps,
+      message: 'Sync completed successfully!',
+      observationsProcessed: current.observationsTotal,
+      completedAt: new Date(),
+    },
   });
 
-  // Clean up after 5 minutes
-  setTimeout(() => {
-    progressStore.delete(userId);
+  // Clean up after 5 minutes (optional, can keep for history)
+  setTimeout(async () => {
+    await prisma.syncProgress.delete({ where: { userId } }).catch(() => {});
   }, 5 * 60 * 1000);
 }
 
-export function errorProgress(userId: string, error: string): void {
-  const current = progressStore.get(userId);
-  if (!current) return;
-
-  progressStore.set(userId, {
-    ...current,
-    status: 'error',
-    message: 'Sync failed',
-    error,
-    completedAt: new Date(),
+export async function errorProgress(userId: string, error: string): Promise<void> {
+  await prisma.syncProgress.updateMany({
+    where: { userId },
+    data: {
+      status: 'error',
+      message: 'Sync failed',
+      error,
+      completedAt: new Date(),
+    },
   });
 }
 
-export function clearProgress(userId: string): void {
-  progressStore.delete(userId);
+export async function clearProgress(userId: string): Promise<void> {
+  await prisma.syncProgress.delete({ where: { userId } }).catch(() => {});
 }

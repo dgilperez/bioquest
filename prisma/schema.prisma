@@ -15,16 +15,17 @@ datasource db {
 // ============================================================================
 
 model User {
-  id            String    @id @default(cuid())
-  inatId        Int       @unique
-  inatUsername  String    @unique
-  name          String?
-  icon          String?
-  email         String?   @unique
-  location      String?   // User's primary location (city, state, country)
-  region        String?   // Normalized region code (e.g., "US-CA", "UK")
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id                  String    @id @default(cuid())
+  inatId              Int       @unique
+  inatUsername        String    @unique
+  name                String?
+  icon                String?
+  email               String?   @unique
+  location            String?   // User's primary location (city, state, country)
+  region              String?   // Normalized region code (e.g., "US-CA", "UK")
+  onboardingCompleted Boolean   @default(false) // Track if user completed onboarding
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
 
   // Relations
   stats         UserStats?
@@ -37,6 +38,7 @@ model User {
   friendOf      Friendship[] @relation("FriendOf")
   trips         Trip[]
   taxonProgress UserTaxonProgress[]
+  syncProgress  SyncProgress?
 
   @@index([inatId])
   @@index([inatUsername])
@@ -586,4 +588,31 @@ model RegionalTaxonData {
   @@index([taxonId])
   @@index([cachedAt])
   @@map("regional_taxon_data")
+}
+
+// ============================================================================
+// Sync Progress Tracking (Persistent)
+// ============================================================================
+
+model SyncProgress {
+  userId                 String      @id
+  status                 String      // 'idle' | 'syncing' | 'completed' | 'error'
+  phase                  String      // 'fetching' | 'enriching' | 'storing' | 'calculating' | 'done'
+  currentStep            Int         @default(0)
+  totalSteps             Int         @default(4)
+  message                String      @default("")
+  observationsProcessed  Int         @default(0)
+  observationsTotal      Int         @default(0)
+  estimatedTimeRemaining Int?        // seconds
+  error                  String?
+  lastObservationDate    DateTime?   // Last observation date synced (resume point)
+  startedAt              DateTime    @default(now())
+  updatedAt              DateTime    @updatedAt
+  completedAt            DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+  @@index([updatedAt])
+  @@map("sync_progress")
 }

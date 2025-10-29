@@ -15,7 +15,7 @@ export async function GET() {
   }
 
   const userId = (session.user as any).id;
-  const progress = getProgress(userId);
+  const progress = await getProgress(userId);
 
   if (!progress) {
     return NextResponse.json({
