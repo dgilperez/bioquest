@@ -3,9 +3,10 @@ import { redirect } from 'next/navigation';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db/prisma';
-import { getUserStats, getLevelTitle } from '@/lib/stats/user-stats';
-import { DashboardClient } from '../dashboard/page.client';
+import { generateAllQuests, assignAvailableQuestsToUser } from '@/lib/gamification/quests/generation';
+import { updateQuestProgress } from '@/lib/gamification/quests/progress';
 import { AutoSync } from '@/components/sync/AutoSync';
+import { QuestLandingClient } from './page.client';
 
 export const metadata: Metadata = {
   title: 'Quest',
@@ -34,8 +35,44 @@ export default async function QuestPage() {
     redirect('/onboarding');
   }
 
-  const stats = user.stats || (await getUserStats(user.id));
-  const levelTitle = getLevelTitle(stats.level);
+  // Ensure quests are generated and assigned
+  await generateAllQuests();
+  await assignAvailableQuestsToUser(user.id);
+
+  // Get user's active quests
+  const activeQuests = await prisma.userQuest.findMany({
+    where: {
+      userId: user.id,
+      status: 'active',
+    },
+    include: {
+      quest: true,
+    },
+    orderBy: {
+      quest: {
+        type: 'asc',
+      },
+    },
+  });
+
+  // Calculate progress for each quest
+  const questsWithProgress = await Promise.all(
+    activeQuests.map(async (userQuest) => {
+      const progressData = await updateQuestProgress(user.id, userQuest.quest.id);
+      return {
+        quest: userQuest.quest,
+        progress: progressData?.newProgress || 0,
+        status: userQuest.status as 'active' | 'completed' | 'expired',
+      };
+    })
+  );
+
+  // Get top 3 quests: 1 daily, 1 weekly, 1 monthly
+  const dailyQuest = questsWithProgress.find(q => q.quest.type === 'daily');
+  const weeklyQuest = questsWithProgress.find(q => q.quest.type === 'weekly');
+  const monthlyQuest = questsWithProgress.find(q => q.quest.type === 'monthly');
+
+  const topQuests = [dailyQuest, weeklyQuest, monthlyQuest].filter(Boolean) as typeof questsWithProgress;
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -44,25 +81,12 @@ export default async function QuestPage() {
         userId={user.id}
         inatUsername={(session.user as any).inatUsername}
         accessToken={(session as any).accessToken}
-        lastSyncedAt={stats.lastSyncedAt}
+        lastSyncedAt={user.stats?.lastSyncedAt || null}
       />
 
-      {/* TODO: Replace with proper Quest landing page in Phase 2 */}
-      <DashboardClient
-        userName={session.user.name || (session.user as any).inatUsername}
-        level={stats.level}
-        levelTitle={levelTitle}
-        totalPoints={stats.totalPoints}
-        pointsToNextLevel={stats.pointsToNextLevel}
-        totalObservations={stats.totalObservations}
-        totalSpecies={stats.totalSpecies}
-        rareObservations={stats.rareObservations}
-        legendaryObservations={stats.legendaryObservations}
-        currentStreak={stats.currentStreak}
-        longestStreak={stats.longestStreak}
-        lastObservationDate={stats.lastObservationDate}
-        currentRarityStreak={stats.currentRarityStreak}
-        longestRarityStreak={stats.longestRarityStreak}
+      <QuestLandingClient
+        topQuests={topQuests}
+        totalActiveQuests={activeQuests.length}
       />
     </div>
   );
