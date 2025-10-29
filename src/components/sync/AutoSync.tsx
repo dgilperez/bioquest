@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 
 interface AutoSyncProps {
@@ -12,7 +12,6 @@ interface AutoSyncProps {
 
 export function AutoSync({ userId, inatUsername, accessToken, lastSyncedAt }: AutoSyncProps) {
   const hasSynced = useRef(false);
-  const [isCheckingProgress, setIsCheckingProgress] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
@@ -29,15 +28,11 @@ export function AutoSync({ userId, inatUsername, accessToken, lastSyncedAt }: Au
           console.log('Auto-sync: Sync already in progress, not triggering new one');
           // Dispatch event so progress UI shows up
           window.dispatchEvent(new Event('sync-started'));
-          setIsCheckingProgress(false);
           hasSynced.current = true;
           return;
         }
-
-        setIsCheckingProgress(false);
       } catch (error) {
         console.error('Error checking sync progress:', error);
-        setIsCheckingProgress(false);
       }
     };
 
