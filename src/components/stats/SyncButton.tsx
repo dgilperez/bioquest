@@ -18,6 +18,10 @@ export function SyncButton({ userId, inatUsername, accessToken }: SyncButtonProp
 
   const handleSync = async () => {
     setIsSyncing(true);
+
+    // Trigger progress polling
+    window.dispatchEvent(new Event('sync-started'));
+
     try {
       const response = await fetch('/api/sync', {
         method: 'POST',

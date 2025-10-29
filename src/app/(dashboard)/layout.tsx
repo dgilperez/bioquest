@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { Navigation } from '@/components/layout/Navigation';
 import { SyncButton } from '@/components/stats/SyncButton';
+import { SyncProgress } from '@/components/sync/SyncProgress';
 
 export default async function DashboardLayout({
   children,
@@ -41,6 +42,9 @@ export default async function DashboardLayout({
 
       {/* Main Content */}
       <main>{children}</main>
+
+      {/* Sync Progress Toast */}
+      <SyncProgress />
     </div>
   );
 }

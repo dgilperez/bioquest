@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { getProgress } from '@/lib/sync/progress';
@@ -7,14 +7,15 @@ import { getProgress } from '@/lib/sync/progress';
  * GET /api/sync/progress
  * Poll this endpoint to get real-time sync progress
  */
-export async function GET(req: NextRequest) {
+export async function GET() {
   const session = await getServerSession(authOptions);
 
-  if (!session?.user?.id) {
+  if (!session?.user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const progress = getProgress(session.user.id);
+  const userId = (session.user as any).id;
+  const progress = getProgress(userId);
 
   if (!progress) {
     return NextResponse.json({

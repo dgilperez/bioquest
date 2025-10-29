@@ -20,6 +20,7 @@ export interface UserStatsData {
   lastObservationDate: Date | null;
   currentRarityStreak: number;
   longestRarityStreak: number;
+  lastSyncedAt: Date | null;
 }
 
 /**
@@ -94,6 +95,7 @@ export async function syncUserObservations(
   const { storeObservations } = await import('@/lib/sync/store-observations');
   const { calculateUserStats, updateUserStatsInDB } = await import('@/lib/sync/calculate-stats');
   const { checkAchievements, manageLeaderboards } = await import('@/lib/sync/check-achievements');
+  const { initProgress, updateProgress, completeProgress, errorProgress } = await import('@/lib/sync/progress');
 
   try {
     // Get current stats and last sync time
@@ -105,11 +107,27 @@ export async function syncUserObservations(
     const oldLevel = currentStats?.level || 1;
     const lastSyncedAt = currentStats?.lastSyncedAt;
 
+    // Initialize progress tracking (estimate total based on last sync)
+    const estimatedTotal = lastSyncedAt ? 100 : 1000; // Conservative estimate
+    initProgress(userId, estimatedTotal);
+
     // Step 1: Fetch observations from iNaturalist
+    updateProgress(userId, {
+      phase: 'fetching',
+      currentStep: 1,
+      message: 'Fetching observations from iNaturalist...',
+    });
+
     const { observations } = await fetchUserObservations({
       accessToken,
       inatUsername,
       lastSyncedAt: lastSyncedAt || undefined,
+    });
+
+    // Update total now that we know the real count
+    updateProgress(userId, {
+      observationsTotal: observations.length,
+      message: `Found ${observations.length} observations to process`,
     });
 
     // Step 2: Update user location if we have observations
@@ -121,15 +139,38 @@ export async function syncUserObservations(
     }
 
     // Step 3: Enrich observations with rarity and points
+    updateProgress(userId, {
+      phase: 'enriching',
+      currentStep: 2,
+      message: 'Classifying rarity and calculating points...',
+    });
+
     const { enrichedObservations, totalPoints, rareFinds } = await enrichObservations(
       observations,
       accessToken
     );
 
+    updateProgress(userId, {
+      observationsProcessed: observations.length,
+      message: `Classified ${observations.length} observations (${rareFinds.length} rare finds)`,
+    });
+
     // Step 4: Store observations in database
+    updateProgress(userId, {
+      phase: 'storing',
+      currentStep: 3,
+      message: 'Saving to database...',
+    });
+
     await storeObservations(userId, enrichedObservations);
 
     // Step 5: Calculate stats (species, level, streaks)
+    updateProgress(userId, {
+      phase: 'calculating',
+      currentStep: 4,
+      message: 'Calculating statistics and achievements...',
+    });
+
     const stats = await calculateUserStats(
       {
         userId,
@@ -160,6 +201,9 @@ export async function syncUserObservations(
 
     console.log(`Sync complete: ${newObservations} new observations, level ${stats.level}, ${newBadges.length} new badges`);
 
+    // Mark sync as completed
+    completeProgress(userId);
+
     return {
       newObservations,
       newBadges,
@@ -179,6 +223,7 @@ export async function syncUserObservations(
     };
   } catch (error) {
     console.error('Error syncing observations:', error);
+    errorProgress(userId, error instanceof Error ? error.message : 'Unknown error');
     throw error;
   }
 }

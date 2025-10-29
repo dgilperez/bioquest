@@ -5,6 +5,7 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db/prisma';
 import { getUserStats, getLevelTitle } from '@/lib/stats/user-stats';
 import { DashboardClient } from './page.client';
+import { AutoSync } from '@/components/sync/AutoSync';
 
 export const metadata: Metadata = {
   title: 'Dashboard',
@@ -33,6 +34,14 @@ export default async function DashboardPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      {/* Auto-sync component */}
+      <AutoSync
+        userId={user.id}
+        inatUsername={(session.user as any).inatUsername}
+        accessToken={(session as any).accessToken}
+        lastSyncedAt={stats.lastSyncedAt}
+      />
+
       <DashboardClient
         userName={session.user.name || (session.user as any).inatUsername}
         level={stats.level}
