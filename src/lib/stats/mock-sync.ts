@@ -33,7 +33,27 @@ export async function syncMockObservations(
   userId: string,
   _inatUsername: string
 ): Promise<MockSyncResult> {
+  // Import progress tracking
+  const { initProgress, updateProgress, completeProgress, errorProgress } = await import('@/lib/sync/progress');
+
   try {
+    // Helper function to add realistic delays for demo purposes
+    const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+    // Initialize progress tracking
+    const mockObsCount = 50;
+    await initProgress(userId, mockObsCount);
+
+    await updateProgress(userId, {
+      phase: 'fetching',
+      message: 'Generating mock observations...',
+      observationsProcessed: 0,
+      observationsTotal: mockObsCount,
+    });
+
+    // Add delay to make progress visible (1 second)
+    await delay(1000);
+
     // Get current stats
     const currentStats = await prisma.userStats.findUnique({
       where: { userId },
@@ -42,11 +62,29 @@ export async function syncMockObservations(
     const oldObservationCount = currentStats?.totalObservations || 0;
     const oldLevel = currentStats?.level || 1;
 
+    await updateProgress(userId, {
+      phase: 'enriching',
+      message: 'Classifying mock observations...',
+      observationsProcessed: 10,
+    });
+
+    // Add delay (2 seconds)
+    await delay(2000);
+
     // Generate mock observations (50 observations with variety)
     const mockObservations = generateMockObservations(50);
 
     // Get total species count
     const totalSpecies = getMockSpeciesCount();
+
+    await updateProgress(userId, {
+      phase: 'storing',
+      message: 'Saving mock observations...',
+      observationsProcessed: 25,
+    });
+
+    // Add delay (2 seconds)
+    await delay(2000);
 
     // Calculate points
     let totalPoints = 0;
@@ -189,6 +227,15 @@ export async function syncMockObservations(
         pointsEarned: qp.quest.reward.points || 0,
       }));
 
+    await updateProgress(userId, {
+      phase: 'calculating',
+      message: 'Checking badges and quests...',
+      observationsProcessed: 45,
+    });
+
+    // Add delay (2 seconds)
+    await delay(2000);
+
     // Check for badge unlocks
     const badgeResults = await checkAndUnlockBadges(userId);
     const newBadges = badgeResults
@@ -198,6 +245,18 @@ export async function syncMockObservations(
     // Check if leveled up
     const leveledUp = level > oldLevel;
     const newObservations = mockObservations.length - oldObservationCount;
+
+    // Update to 100% before completing
+    await updateProgress(userId, {
+      observationsProcessed: mockObsCount,
+      message: 'Finalizing...',
+    });
+
+    // Small delay before completion
+    await delay(500);
+
+    // Complete progress
+    await completeProgress(userId);
 
     return {
       newObservations,
@@ -210,6 +269,8 @@ export async function syncMockObservations(
     };
   } catch (error) {
     console.error('Error syncing mock observations:', error);
+    // Mark progress as error
+    await errorProgress(userId, error instanceof Error ? error.message : 'Unknown error');
     throw error;
   }
 }

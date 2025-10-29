@@ -118,13 +118,29 @@ export function OnboardingClient({
   const startSync = async () => {
     setIsSyncing(true);
     try {
-      await fetch('/api/sync', {
+      const response = await fetch('/api/sync', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId, inatUsername, accessToken }),
       });
+
+      if (!response.ok) {
+        const error = await response.json();
+        console.error('Sync API error:', error);
+        // Show error to user
+        alert(`Failed to start sync: ${error.error || 'Unknown error'}`);
+        setIsSyncing(false);
+        setStep('welcome'); // Go back to welcome screen
+        return;
+      }
+
+      const result = await response.json();
+      console.log('Sync started successfully:', result);
     } catch (error) {
       console.error('Failed to start sync:', error);
+      alert('Failed to connect to sync service. Please try again.');
+      setIsSyncing(false);
+      setStep('welcome'); // Go back to welcome screen
     }
   };
 
