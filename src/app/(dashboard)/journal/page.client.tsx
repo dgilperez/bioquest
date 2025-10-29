@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Eye, Calendar, TrendingUp, ArrowRight } from 'lucide-react';
+import { Eye, Calendar, TrendingUp, ArrowRight, Camera, Search, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface Observation {
@@ -102,8 +102,12 @@ export function JournalClient({ recentObservations, stats }: JournalClientProps)
                 className="p-4 rounded-lg border bg-card hover:shadow-lg transition-all group"
               >
                 <div className="flex items-start gap-3">
-                  <div className="flex-shrink-0 w-16 h-16 bg-nature-100 dark:bg-nature-900/30 rounded-lg flex items-center justify-center text-2xl">
-                    {obs.photoUrl ? '📷' : '🔍'}
+                  <div className="flex-shrink-0 w-16 h-16 bg-nature-100 dark:bg-nature-900/30 rounded-lg flex items-center justify-center">
+                    {obs.photoUrl ? (
+                      <Camera className="h-8 w-8 text-nature-600" />
+                    ) : (
+                      <Search className="h-8 w-8 text-nature-600" />
+                    )}
                   </div>
                   <div className="flex-1 min-w-0">
                     <h3 className="font-semibold truncate group-hover:text-nature-600 transition-colors">
@@ -117,8 +121,9 @@ export function JournalClient({ recentObservations, stats }: JournalClientProps)
                       })}
                     </p>
                     {obs.place && (
-                      <p className="text-xs text-muted-foreground truncate mt-1">
-                        📍 {obs.place}
+                      <p className="text-xs text-muted-foreground flex items-center gap-1 truncate mt-1">
+                        <MapPin className="h-3 w-3" />
+                        {obs.place}
                       </p>
                     )}
                   </div>

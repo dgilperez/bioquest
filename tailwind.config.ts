@@ -47,28 +47,68 @@ const config: Config = {
           DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))',
         },
-        // BioQuest custom colors
+        // BioQuest custom colors - inspired by logo palette
         nature: {
-          50: '#f0fdf4',
-          100: '#dcfce7',
-          200: '#bbf7d0',
-          300: '#86efac',
-          400: '#4ade80',
-          500: '#22c55e',
-          600: '#16a34a',
-          700: '#15803d',
-          800: '#166534',
-          900: '#14532d',
+          50: '#f5ead8',   // Warm cream
+          100: '#e8dcc4',  // Light beige
+          200: '#c8d5a7',  // Pale sage
+          300: '#a8c686',  // Light green
+          400: '#6a8b4d',  // Medium forest green
+          500: '#588157',  // Forest green
+          600: '#3a5a40',  // Deep forest
+          700: '#2d4a33',  // Dark forest
+          800: '#1f3326',  // Very dark green
+          900: '#14221a',  // Almost black green
         },
+        // Earth tones from logo
+        earth: {
+          50: '#fef5e7',
+          100: '#f5ead8',
+          200: '#d9b89c',
+          300: '#c17c4d',
+          400: '#a0522d',
+          500: '#8b4513',
+          600: '#6d3610',
+        },
+        // Teal accents from logo
+        teal: {
+          50: '#e6f7f5',
+          100: '#b3e5df',
+          200: '#80d3c9',
+          300: '#4d9b94',
+          400: '#2a7c76',
+          500: '#1f5d58',
+          600: '#164440',
+        },
+        // Mushroom burgundy
+        mushroom: {
+          50: '#fce8ea',
+          100: '#f5c5ca',
+          200: '#d98f95',
+          300: '#a24b4f',
+          400: '#8b4049',
+          500: '#6d3238',
+          600: '#4f242a',
+        },
+        // Purple accent
+        flora: {
+          50: '#f3ecf5',
+          100: '#ddc9e3',
+          200: '#b99ac4',
+          300: '#6b4e71',
+          400: '#543d5a',
+          500: '#3d2c42',
+        },
+        // Rarity colors updated to match theme
         legendary: {
-          DEFAULT: '#fbbf24',
-          light: '#fef3c7',
-          dark: '#b45309',
+          DEFAULT: '#c17c4d', // Warm orange-brown from logo
+          light: '#f5ead8',
+          dark: '#8b4513',
         },
         rare: {
-          DEFAULT: '#8b5cf6',
-          light: '#ede9fe',
-          dark: '#6d28d9',
+          DEFAULT: '#6b4e71', // Purple from logo
+          light: '#f3ecf5',
+          dark: '#3d2c42',
         },
       },
       borderRadius: {

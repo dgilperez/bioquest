@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Loader2, Sparkles, Trophy, Target, BarChart3, CheckCircle2 } from 'lucide-react';
+import Image from 'next/image';
 
 interface OnboardingClientProps {
   userId: string;
@@ -171,11 +172,19 @@ export function OnboardingClient({
           >
             <div className="max-w-2xl text-center text-white space-y-8">
               <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: 0.2, type: 'spring' }}
+                initial={{ scale: 0, rotate: -180 }}
+                animate={{ scale: 1, rotate: 0 }}
+                transition={{ delay: 0.2, type: 'spring', duration: 0.8 }}
+                className="flex justify-center"
               >
-                <Sparkles className="w-24 h-24 mx-auto text-yellow-400" />
+                <Image
+                  src="/images/logo.png"
+                  alt="BioQuest Logo"
+                  width={140}
+                  height={140}
+                  priority
+                  className="drop-shadow-2xl"
+                />
               </motion.div>
 
               <motion.h1

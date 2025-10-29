@@ -4,24 +4,11 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db/prisma';
 import { AdventureClient } from './page.client';
+import { getIconicTaxaProgress } from '@/lib/stats/iconic-taxa';
 
 export const metadata: Metadata = {
   title: 'Adventure',
   description: 'Explore biodiversity and plan your next adventure',
-};
-
-// Iconic taxa IDs from iNaturalist
-const ICONIC_TAXA_IDS = {
-  Animalia: 1,       // Animals
-  Plantae: 47126,    // Plants
-  Fungi: 47170,      // Fungi
-  Mollusca: 47115,   // Mollusks
-  Arachnida: 47119,  // Arachnids
-  Insecta: 47158,    // Insects
-  Aves: 3,           // Birds
-  Mammalia: 40151,   // Mammals
-  Reptilia: 26036,   // Reptiles
-  Amphibia: 20978,   // Amphibians
 };
 
 export default async function AdventurePage() {
@@ -40,51 +27,8 @@ export default async function AdventurePage() {
     redirect('/signin');
   }
 
-  // Get user's progress for iconic taxa
-  const iconicTaxaProgress = await Promise.all(
-    Object.entries(ICONIC_TAXA_IDS).map(async ([name, id]) => {
-      // Get user's observations for this taxon (simplified - just count observations with this taxon)
-      const observations = await prisma.observation.findMany({
-        where: {
-          userId: user.id,
-          taxonId: id,
-        },
-        select: {
-          id: true,
-          taxonId: true,
-        },
-      });
-
-      // Count unique species (simplified)
-      const uniqueTaxonIds = new Set(observations.map(obs => obs.taxonId));
-
-      // Get taxon node for global species count
-      const taxonNode = await prisma.taxonNode.findUnique({
-        where: { id },
-        select: {
-          rank: true,
-          globalSpeciesCount: true,
-        },
-      });
-
-      const totalSpeciesGlobal = taxonNode?.globalSpeciesCount || 100000; // Fallback estimate
-      const speciesCount = uniqueTaxonIds.size;
-      const completionPercent = totalSpeciesGlobal > 0 ? (speciesCount / totalSpeciesGlobal) * 100 : 0;
-
-      return {
-        id,
-        name,
-        rank: taxonNode?.rank || 'kingdom',
-        speciesCount,
-        observationCount: observations.length,
-        completionPercent,
-        totalSpeciesGlobal,
-      };
-    })
-  );
-
-  // Sort by most progress first
-  iconicTaxaProgress.sort((a, b) => b.speciesCount - a.speciesCount);
+  // Get user's progress for iconic taxa (optimized - no N+1 queries)
+  const iconicTaxaProgress = await getIconicTaxaProgress(user.id);
 
   // Get active trips (planned and in_progress)
   const activeTrips = await prisma.trip.findMany({

@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { redirect } from 'next/navigation';
+import Image from 'next/image';
 
 export default async function Home() {
   const session = await getServerSession(authOptions);
@@ -17,6 +18,16 @@ export default async function Home() {
       <div className="z-10 w-full max-w-4xl space-y-12">
         {/* Hero Section */}
         <div className="text-center space-y-6">
+          <div className="flex justify-center mb-8">
+            <Image
+              src="/images/logo.png"
+              alt="BioQuest Logo"
+              width={160}
+              height={160}
+              priority
+              className="drop-shadow-2xl"
+            />
+          </div>
           <h1 className="text-5xl md:text-6xl font-bold tracking-tight">
             Welcome to <span className="text-nature-600">BioQuest</span>
           </h1>

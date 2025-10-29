@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Trophy, TrendingUp, Users, Award, ArrowRight, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge, BadgeTier } from '@/types';
+import { getXPToNextLevel, getLevelProgress } from '@/lib/gamification/levels';
 
 interface UserStats {
   level: number;
@@ -42,11 +43,9 @@ export function ProfileClient({
   totalBadgesAvailable,
   leaderboardRank,
 }: ProfileClientProps) {
-  // Calculate XP progress to next level
-  const currentLevelXP = userStats.level * 1000; // Simplified XP calculation
-  const nextLevelXP = (userStats.level + 1) * 1000;
-  const xpProgress = ((userStats.totalPoints - currentLevelXP) / (nextLevelXP - currentLevelXP)) * 100;
-  const xpToNextLevel = nextLevelXP - userStats.totalPoints;
+  // Calculate XP progress to next level using proper level config
+  const xpProgress = getLevelProgress(userStats.level, userStats.totalPoints);
+  const xpToNextLevel = getXPToNextLevel(userStats.level, userStats.totalPoints);
 
   return (
     <div className="space-y-8">
@@ -203,7 +202,9 @@ export function ProfileClient({
                 className="p-4 rounded-lg border bg-card hover:bg-accent transition-colors group"
               >
                 <div className="flex flex-col items-center text-center">
-                  <div className="text-4xl mb-2">🏆</div>
+                  <div className="w-12 h-12 mb-2 flex items-center justify-center rounded-full bg-nature-100 dark:bg-nature-900/30">
+                    <Award className="h-6 w-6 text-nature-600" />
+                  </div>
                   <h3 className="font-semibold text-sm mb-1 group-hover:text-nature-600 transition-colors">
                     {badge.name}
                   </h3>

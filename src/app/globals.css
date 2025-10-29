@@ -4,48 +4,83 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 142 76% 36%;
-    --primary-foreground: 144 81% 96%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 142 76% 36%;
-    --radius: 0.5rem;
+    /* Warm cream background from logo */
+    --background: 40 45% 92%;
+    --foreground: 115 30% 20%;
+
+    /* Cards with subtle warmth */
+    --card: 40 50% 96%;
+    --card-foreground: 115 30% 20%;
+
+    --popover: 40 50% 96%;
+    --popover-foreground: 115 30% 20%;
+
+    /* Forest green primary (from fern spirals) */
+    --primary: 115 40% 35%;
+    --primary-foreground: 40 50% 96%;
+
+    /* Warm teal secondary (from logo accents) */
+    --secondary: 175 40% 40%;
+    --secondary-foreground: 40 50% 96%;
+
+    /* Muted with cream tones */
+    --muted: 40 35% 88%;
+    --muted-foreground: 115 20% 45%;
+
+    /* Warm teal accent */
+    --accent: 175 45% 45%;
+    --accent-foreground: 40 50% 96%;
+
+    /* Burgundy destructive (from mushrooms) */
+    --destructive: 355 45% 45%;
+    --destructive-foreground: 40 50% 96%;
+
+    /* Soft borders */
+    --border: 40 30% 82%;
+    --input: 40 30% 82%;
+
+    /* Forest green ring */
+    --ring: 115 40% 35%;
+
+    /* Slightly increased radius for organic feel */
+    --radius: 0.75rem;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 142 76% 36%;
-    --primary-foreground: 144 81% 96%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 142 76% 36%;
+    /* Deep forest night background */
+    --background: 115 35% 12%;
+    --foreground: 40 45% 90%;
+
+    /* Darker cards */
+    --card: 115 30% 16%;
+    --card-foreground: 40 45% 90%;
+
+    --popover: 115 30% 16%;
+    --popover-foreground: 40 45% 90%;
+
+    /* Brighter green for dark mode */
+    --primary: 115 50% 45%;
+    --primary-foreground: 115 35% 12%;
+
+    /* Teal secondary */
+    --secondary: 175 45% 35%;
+    --secondary-foreground: 40 45% 90%;
+
+    /* Dark muted */
+    --muted: 115 25% 22%;
+    --muted-foreground: 40 30% 65%;
+
+    /* Teal accent */
+    --accent: 175 50% 40%;
+    --accent-foreground: 40 45% 90%;
+
+    /* Muted burgundy for dark mode */
+    --destructive: 355 50% 50%;
+    --destructive-foreground: 40 45% 90%;
+
+    --border: 115 25% 22%;
+    --input: 115 25% 22%;
+    --ring: 115 50% 45%;
   }
 }
 
