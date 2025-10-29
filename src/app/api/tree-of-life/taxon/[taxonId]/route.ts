@@ -115,14 +115,12 @@ async function handleGetTaxonDetails(
   }));
 
   // Get user's progress for this taxon
-  const userProgress = await prisma.userTaxonProgress.findUnique({
+  const userProgress = await prisma.userTaxonProgress.findFirst({
     where: {
-      userId_taxonId_regionId: {
-        userId,
-        taxonId,
-        regionId: regionId ?? null,
-      },
-    } as any,
+      userId,
+      taxonId,
+      regionId: regionId ?? null,
+    },
   });
 
   // Get regional data if regionId provided
