@@ -308,6 +308,8 @@ This section ensures **zero feature loss** during migration.
 - Unified achievement dashboard
 - XP progress bar
 - Level title display
+- Badge preview with AnimatedBadgeCard (compact mode)
+- Visual consistency between preview and full collection
 
 #### **JOURNAL Section** (3 pages)
 
@@ -352,7 +354,7 @@ const redirects = [
   { source: '/tree-of-life/:taxonId', destination: '/adventure/tree/:taxonId', permanent: false },
   { source: '/stats', destination: '/profile/stats', permanent: false },
   { source: '/stats/life-list', destination: '/adventure/life-list', permanent: false },
-  { source: '/badges', destination: '/profile/badges', permanent: false },
+  { source: '/badges', destination: '/profile/badges', permanent: false }, // ✅ IMPLEMENTED
   { source: '/quests', destination: '/quest/all', permanent: false },
   { source: '/leaderboards', destination: '/profile/leaderboards', permanent: false },
   { source: '/trips', destination: '/adventure/trips', permanent: false },
@@ -489,19 +491,31 @@ const redirects = [
 - `LeaderboardRankCard.tsx` - Your rank summary
 - `StatsOverview.tsx` - Key stats at a glance
 
+**Badge Preview Enhancement:** ✅ IMPLEMENTED
+- Recent Achievements section uses AnimatedBadgeCard (compact mode)
+- Compact mode: smaller padding (p-3), smaller icons (w-12 h-12), simpler animations
+- Visual consistency: same tier colors, gradients, hover effects as full collection
+- Click behavior: navigate to /profile/badges (not ceremony modal)
+- Grid layout: responsive 2/3/3/4 columns (mobile/md/lg/xl)
+- Disabled shimmer effect and unlock dates in preview context
+
 **Success criteria:**
 - Users see holistic view of accomplishments
 - XP progress motivates next level
 - Badge showcase creates FOMO for locked badges
 - Leaderboard provides social validation
+- Visual consistency between badge preview and full collection ✅
 
 **Testing checklist:**
-- [ ] Level and XP display correctly
-- [ ] XP progress bar animates on load
-- [ ] Badge showcase shows most recent unlocks
+- [x] Level and XP display correctly ✅
+- [x] XP progress bar animates on load ✅
+- [x] Badge showcase shows most recent unlocks ✅
 - [ ] Locked badges show unlock criteria
 - [ ] Leaderboard rank updates after sync
-- [ ] Stats link to detailed views
+- [x] Stats link to detailed views ✅
+- [x] Badge preview uses AnimatedBadgeCard with compact mode ✅
+- [x] Clicking badge navigates to /profile/badges ✅
+- [x] Visual style matches between preview and full page ✅
 
 ### 5.5 Phase 5: Polish & Testing (Week 4-5)
 
@@ -750,7 +764,26 @@ trackEvent('leaderboard_checked', { leaderboardType: 'global' | 'local' | 'taxon
 | Date | Version | Changes | Author |
 |------|---------|---------|--------|
 | 2025-01-29 | 0.1 | Initial draft | Product Team |
+| 2025-01-30 | 0.2 | Badge UX flow improvements - Phase 4 partial implementation | Engineering Team |
 | TBD | 1.0 | Approved for implementation | TBD |
+
+### Version 0.2 Notes (Badge UX Improvements)
+
+**Implemented:**
+- Moved `/badges` to `/profile/badges` per specification
+- Added redirect for backward compatibility
+- Enhanced AnimatedBadgeCard with compact mode
+- Updated profile preview to use AnimatedBadgeCard (compact)
+- Ensured visual consistency between preview and full collection
+- All internal links updated to `/profile/badges`
+
+**Impact:**
+- Fixes UX inconsistency between profile preview and badges page
+- Aligns with PROFILE hub information architecture
+- Improves perceived game-like quality through visual consistency
+- Maintains all existing functionality with better UX
+
+**Commit:** fb977ee
 
 ---
 
