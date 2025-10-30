@@ -347,8 +347,11 @@ To prevent broken bookmarks and links:
 ```typescript
 // next.config.js redirects
 const redirects = [
-  { source: '/dashboard', destination: '/quest', permanent: false },
-  { source: '/explore', destination: '/quest/locations', permanent: false },
+  { source: '/dashboard', destination: '/quest', permanent: false }, // ✅ IMPLEMENTED
+  // NOTE: /explore redirect INTENTIONALLY NOT IMPLEMENTED
+  // Reason: /explore is essential for trip planning flow in ADVENTURE section
+  // Trip planning: Adventure → /explore (location recommendations) → TripCreationModal → trip detail
+  // Future: Consider moving /explore to /adventure/plan or integrating into Adventure page
   { source: '/observations', destination: '/journal', permanent: false },
   { source: '/tree-of-life', destination: '/adventure/tree', permanent: false },
   { source: '/tree-of-life/:taxonId', destination: '/adventure/tree/:taxonId', permanent: false },
@@ -765,6 +768,7 @@ trackEvent('leaderboard_checked', { leaderboardType: 'global' | 'local' | 'taxon
 |------|---------|---------|--------|
 | 2025-01-29 | 0.1 | Initial draft | Product Team |
 | 2025-01-30 | 0.2 | Badge UX flow improvements - Phase 4 partial implementation | Engineering Team |
+| 2025-01-30 | 0.3 | Trip planning flow fix - /explore redirect removed | Engineering Team |
 | TBD | 1.0 | Approved for implementation | TBD |
 
 ### Version 0.2 Notes (Badge UX Improvements)
@@ -784,6 +788,28 @@ trackEvent('leaderboard_checked', { leaderboardType: 'global' | 'local' | 'taxon
 - Maintains all existing functionality with better UX
 
 **Commit:** fb977ee
+
+### Version 0.3 Notes (Trip Planning Flow Fix)
+
+**Issue Identified:**
+- "Plan a Trip" buttons in Adventure page were redirecting to Quests (broken flow)
+- RFC-0001 originally specified `/explore` → `/quest/locations` redirect
+- But `/explore` was redirecting to `/quest` instead, breaking trip planning
+- Trip planning requires location recommendations from `/explore` page
+
+**Implemented:**
+- Removed `/explore` redirect entirely to restore trip planning functionality
+- Trip planning flow now works: Adventure → `/explore` → select location → TripCreationModal → trip detail
+- Clarified in RFC that `/explore` redirect is intentionally not implemented
+- Added note about future consideration to move `/explore` to `/adventure/plan`
+
+**Impact:**
+- Fixes broken trip planning flow from ADVENTURE section
+- Maintains that trips belong to ADVENTURE hub (not QUEST)
+- Preserves location recommendation and TripCreationModal functionality
+- Users can now successfully create trips with target species and locations
+
+**Commit:** 7542391
 
 ---
 
