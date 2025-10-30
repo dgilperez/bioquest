@@ -187,11 +187,6 @@ const nextConfig = {
         permanent: false,
       },
       {
-        source: '/explore',
-        destination: '/quest',
-        permanent: false,
-      },
-      {
         source: '/badges',
         destination: '/profile/badges',
         permanent: false,
