@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { MapPin, Compass, ListTodo, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -41,9 +41,9 @@ export function QuestLandingClient({ topQuests, totalActiveQuests }: QuestLandin
   };
 
   // Load recommendations on mount
-  if (recommendations.length === 0 && !isLoadingLocations) {
+  useEffect(() => {
     loadRecommendations();
-  }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="space-y-8">

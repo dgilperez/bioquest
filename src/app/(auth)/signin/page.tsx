@@ -19,17 +19,35 @@ export default async function SignInPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-nature-50 to-white dark:from-gray-900 dark:to-gray-800">
-      <div className="w-full max-w-md space-y-8 px-4">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-nature-50 to-white dark:from-gray-900 dark:to-gray-800 relative overflow-hidden">
+      {/* Decorative background elements */}
+      <div className="absolute top-10 right-10 w-64 h-64 opacity-20 dark:opacity-10 pointer-events-none">
+        <Image
+          src="/images/logo-watermark.png"
+          alt=""
+          width={256}
+          height={256}
+        />
+      </div>
+      <div className="absolute bottom-10 left-10 w-64 h-64 opacity-20 dark:opacity-10 pointer-events-none rotate-180">
+        <Image
+          src="/images/logo-watermark.png"
+          alt=""
+          width={256}
+          height={256}
+        />
+      </div>
+
+      <div className="w-full max-w-md space-y-8 px-4 relative z-10">
         <div className="text-center space-y-6">
           <div className="flex justify-center">
             <Image
-              src="/images/logo.png"
+              src="/images/logo-transparent.png"
               alt="BioQuest Logo"
-              width={120}
-              height={120}
+              width={140}
+              height={140}
               priority
-              className="drop-shadow-lg"
+              className="drop-shadow-2xl"
             />
           </div>
           <h1 className="text-4xl font-bold tracking-tight text-gray-900 dark:text-white">

@@ -113,6 +113,11 @@ export const authOptions: NextAuthOptions = {
         return token;
       }
 
+      // In mock mode, don't attempt to refresh (no real OAuth)
+      if (isMockMode) {
+        return token;
+      }
+
       // Access token has expired, try to refresh it
       return refreshAccessToken(token);
     },
@@ -227,6 +232,7 @@ async function refreshAccessToken(token: any) {
         client_id: process.env.INATURALIST_CLIENT_ID || '',
         client_secret: process.env.INATURALIST_CLIENT_SECRET || '',
       }),
+      signal: AbortSignal.timeout(5000), // 5 second timeout
     });
 
     const refreshedTokens = await response.json();
@@ -242,7 +248,15 @@ async function refreshAccessToken(token: any) {
       refreshToken: refreshedTokens.refresh_token ?? token.refreshToken,
     };
   } catch (error) {
-    console.error('Error refreshing access token:', error);
+    // Log minimal error info, not full stack trace
+    if (error instanceof Error && error.name === 'TimeoutError') {
+      console.warn('Token refresh timeout - iNaturalist may be unreachable');
+    } else if (error instanceof Error && error.message.includes('ECONNREFUSED')) {
+      console.warn('Token refresh failed - network error');
+    } else {
+      console.warn('Token refresh failed:', error instanceof Error ? error.message : 'Unknown error');
+    }
+
     return {
       ...token,
       error: 'RefreshAccessTokenError',

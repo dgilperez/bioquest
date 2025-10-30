@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>BioQuest Watermark Visibility Test</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 40px;
+            background: linear-gradient(to bottom, #f5ead8, #ffffff);
+            font-family: system-ui, sans-serif;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            position: relative;
+            min-height: 600px;
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        .watermark {
+            position: fixed;
+            pointer-events: none;
+        }
+        .top-right {
+            top: 80px;
+            right: 40px;
+            width: 384px;
+            height: 384px;
+            transform: rotate(12deg);
+        }
+        .bottom-left {
+            bottom: 128px;
+            left: 40px;
+            width: 320px;
+            height: 320px;
+            transform: rotate(-12deg);
+        }
+        .center {
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 600px;
+            height: 600px;
+        }
+        h1 { color: #3a5a40; }
+        .opacity-test {
+            margin: 20px 0;
+            padding: 20px;
+            background: #f0f0f0;
+            border-radius: 8px;
+        }
+        .slider-container {
+            margin: 10px 0;
+        }
+        input[type="range"] {
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <img src="/images/logo-watermark.png" class="watermark top-right" id="topRight" style="opacity: 0.40;">
+    <img src="/images/logo-watermark.png" class="watermark bottom-left" id="bottomLeft" style="opacity: 0.40;">
+    <img src="/images/logo-watermark.png" class="watermark center" id="center" style="opacity: 0.30;">
+    
+    <div class="container">
+        <h1>🌿 BioQuest Watermark Visibility Test</h1>
+        
+        <p>This page shows the ambient logo watermarks at their current opacity levels.</p>
+        
+        <div class="opacity-test">
+            <h3>Adjust Opacity to See Effect:</h3>
+            
+            <div class="slider-container">
+                <label>Top-Right Corner: <span id="topRightValue">40%</span></label>
+                <input type="range" min="0" max="100" value="40" id="topRightSlider">
+            </div>
+            
+            <div class="slider-container">
+                <label>Bottom-Left Corner: <span id="bottomLeftValue">10%</span></label>
+                <input type="range" min="0" max="100" value="40" id="bottomLeftSlider">
+            </div>
+            
+            <div class="slider-container">
+                <label>Center (large): <span id="centerValue">30%</span></label>
+                <input type="range" min="0" max="100" value="30" id="centerSlider">
+            </div>
+            
+            <p><strong>Current Settings:</strong></p>
+            <ul>
+                <li>Top-Right: 40% opacity, 384px, rotated 12°</li>
+                <li>Bottom-Left: 40% opacity, 320px, rotated -12°</li>
+                <li>Center: 30% opacity, 600px</li>
+            </ul>
+            
+            <p><em>Note: At 40% opacity, watermarks are subtle but visible. This creates ambiance without distraction.</em></p>
+        </div>
+    </div>
+    
+    <script>
+        function updateOpacity(element, slider, valueSpan) {
+            slider.addEventListener('input', (e) => {
+                const value = e.target.value;
+                element.style.opacity = value / 100;
+                valueSpan.textContent = value + '%';
+            });
+        }
+        
+        updateOpacity(
+            document.getElementById('topRight'),
+            document.getElementById('topRightSlider'),
+            document.getElementById('topRightValue')
+        );
+        
+        updateOpacity(
+            document.getElementById('bottomLeft'),
+            document.getElementById('bottomLeftSlider'),
+            document.getElementById('bottomLeftValue')
+        );
+        
+        updateOpacity(
+            document.getElementById('center'),
+            document.getElementById('centerSlider'),
+            document.getElementById('centerValue')
+        );
+    </script>
+</body>
+</html>

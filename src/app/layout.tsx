@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Outfit, Space_Grotesk } from 'next/font/google';
 import './globals.css';
 import { SessionProvider } from '@/components/auth/SessionProvider';
@@ -22,6 +22,16 @@ const spaceGrotesk = Space_Grotesk({
   display: 'swap',
 });
 
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#588157' },
+    { media: '(prefers-color-scheme: dark)', color: '#3a5a40' },
+  ],
+};
+
 export const metadata: Metadata = {
   title: {
     default: 'BioQuest - Gamified Nature Exploration',
@@ -41,16 +51,6 @@ export const metadata: Metadata = {
   authors: [{ name: 'BioQuest Team' }],
   creator: 'BioQuest',
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'),
-  themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#588157' },
-    { media: '(prefers-color-scheme: dark)', color: '#3a5a40' },
-  ],
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-    maximumScale: 5,
-    userScalable: true,
-  },
   openGraph: {
     type: 'website',
     locale: 'en_US',

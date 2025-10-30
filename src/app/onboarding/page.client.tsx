@@ -170,18 +170,26 @@ export function OnboardingClient({
             exit={{ opacity: 0 }}
             className="min-h-screen flex items-center justify-center p-8"
           >
-            <div className="max-w-2xl text-center text-white space-y-8">
+            <div className="max-w-2xl text-center text-white space-y-8 relative">
+              {/* Ambient glow effect behind logo */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 0.3, scale: 1.2 }}
+                transition={{ delay: 0.1, duration: 1 }}
+                className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-96 bg-nature-400 rounded-full blur-3xl"
+              />
+
               <motion.div
                 initial={{ scale: 0, rotate: -180 }}
                 animate={{ scale: 1, rotate: 0 }}
                 transition={{ delay: 0.2, type: 'spring', duration: 0.8 }}
-                className="flex justify-center"
+                className="flex justify-center relative z-10"
               >
                 <Image
-                  src="/images/logo.png"
+                  src="/images/logo-transparent.png"
                   alt="BioQuest Logo"
-                  width={140}
-                  height={140}
+                  width={160}
+                  height={160}
                   priority
                   className="drop-shadow-2xl"
                 />

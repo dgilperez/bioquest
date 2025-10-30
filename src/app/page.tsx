@@ -14,21 +14,50 @@ export default async function Home() {
   }
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-8 bg-gradient-to-b from-nature-50 to-white dark:from-gray-900 dark:to-gray-800">
+    <main className="flex min-h-screen flex-col items-center justify-center p-8 bg-gradient-to-b from-nature-50 to-white dark:from-gray-900 dark:to-gray-800 relative overflow-hidden">
+      {/* Ambient watermarks throughout the page */}
+      <div className="fixed top-0 right-0 w-[500px] h-[500px] opacity-50 dark:opacity-30 pointer-events-none rotate-45">
+        <Image
+          src="/images/logo-watermark.png"
+          alt=""
+          width={500}
+          height={500}
+        />
+      </div>
+      <div className="fixed bottom-0 left-0 w-[450px] h-[450px] opacity-50 dark:opacity-30 pointer-events-none -rotate-45">
+        <Image
+          src="/images/logo-watermark.png"
+          alt=""
+          width={450}
+          height={450}
+        />
+      </div>
+
       <div className="z-10 w-full max-w-4xl space-y-12">
         {/* Hero Section */}
-        <div className="text-center space-y-6">
-          <div className="flex justify-center mb-8">
+        <div className="text-center space-y-6 relative">
+          {/* Decorative logo watermark in background */}
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/4 w-96 h-96 pointer-events-none">
             <Image
-              src="/images/logo.png"
+              src="/images/logo-watermark.png"
+              alt=""
+              width={384}
+              height={384}
+              className="opacity-60 dark:opacity-40"
+            />
+          </div>
+
+          <div className="relative flex justify-center mb-8">
+            <Image
+              src="/images/logo-transparent.png"
               alt="BioQuest Logo"
-              width={160}
-              height={160}
+              width={180}
+              height={180}
               priority
               className="drop-shadow-2xl"
             />
           </div>
-          <h1 className="text-5xl md:text-6xl font-bold tracking-tight">
+          <h1 className="relative text-5xl md:text-6xl font-bold tracking-tight">
             Welcome to <span className="text-nature-600">BioQuest</span>
           </h1>
           <p className="text-xl md:text-2xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
