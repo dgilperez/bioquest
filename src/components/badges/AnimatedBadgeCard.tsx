@@ -10,6 +10,7 @@ interface AnimatedBadgeCardProps {
   isUnlocked: boolean;
   index?: number;
   onClick?: () => void;
+  compact?: boolean; // Compact mode for profile preview
 }
 
 const tierColors: Record<BadgeTier, { bg: string; border: string; glow: string }> = {
@@ -35,7 +36,7 @@ const tierColors: Record<BadgeTier, { bg: string; border: string; glow: string }
   },
 };
 
-export function AnimatedBadgeCard({ badge, isUnlocked, index = 0, onClick }: AnimatedBadgeCardProps) {
+export function AnimatedBadgeCard({ badge, isUnlocked, index = 0, onClick, compact = false }: AnimatedBadgeCardProps) {
   const tier = badge.tier || 'bronze';
   const tierConfig = tierColors[tier];
 
@@ -47,12 +48,18 @@ export function AnimatedBadgeCard({ badge, isUnlocked, index = 0, onClick }: Ani
       custom={index}
       whileHover={
         isUnlocked
-          ? {
-              scale: 1.05,
-              y: -8,
-              boxShadow: tierConfig.glow,
-              transition: { duration: 0.2 },
-            }
+          ? compact
+            ? {
+                scale: 1.02,
+                boxShadow: tierConfig.glow,
+                transition: { duration: 0.2 },
+              }
+            : {
+                scale: 1.05,
+                y: -8,
+                boxShadow: tierConfig.glow,
+                transition: { duration: 0.2 },
+              }
           : {
               scale: 1.02,
               transition: { duration: 0.2 },
@@ -61,14 +68,15 @@ export function AnimatedBadgeCard({ badge, isUnlocked, index = 0, onClick }: Ani
       whileTap={{ scale: 0.98 }}
       onClick={onClick}
       className={cn(
-        'rounded-lg border p-6 transition-all cursor-pointer relative overflow-hidden',
+        'rounded-lg border transition-all cursor-pointer relative overflow-hidden',
+        compact ? 'p-3' : 'p-6',
         isUnlocked
           ? `bg-gradient-to-br ${tierConfig.bg} ${tierConfig.border} shadow-lg`
           : 'bg-gray-100 dark:bg-gray-800 border-gray-300 dark:border-gray-700'
       )}
     >
-      {/* Shimmer effect for unlocked badges */}
-      {isUnlocked && (
+      {/* Shimmer effect for unlocked badges (disabled in compact mode) */}
+      {isUnlocked && !compact && (
         <motion.div
           className="absolute inset-0 pointer-events-none"
           initial={{ x: '-100%' }}
@@ -87,15 +95,16 @@ export function AnimatedBadgeCard({ badge, isUnlocked, index = 0, onClick }: Ani
         />
       )}
 
-      <div className="flex items-start gap-4 relative z-10">
+      <div className={cn('flex items-start relative z-10', compact ? 'gap-2' : 'gap-4')}>
         {/* Badge Icon */}
         <motion.div
           className={cn(
-            'flex-shrink-0 w-16 h-16 rounded-full flex items-center justify-center text-3xl',
+            'flex-shrink-0 rounded-full flex items-center justify-center',
+            compact ? 'w-12 h-12 text-2xl' : 'w-16 h-16 text-3xl',
             isUnlocked ? 'bg-white/20 backdrop-blur-sm' : 'bg-gray-300 dark:bg-gray-700'
           )}
           whileHover={
-            isUnlocked
+            isUnlocked && !compact
               ? {
                   scale: [1, 1.15, 1],
                   rotate: [0, -5, 5, 0],
@@ -164,7 +173,7 @@ export function AnimatedBadgeCard({ badge, isUnlocked, index = 0, onClick }: Ani
             </motion.p>
           )}
 
-          {isUnlocked && 'unlockedAt' in badge && badge.unlockedAt ? (
+          {isUnlocked && !compact && 'unlockedAt' in badge && badge.unlockedAt ? (
             <motion.p
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}

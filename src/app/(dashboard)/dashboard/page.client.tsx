@@ -264,7 +264,7 @@ export function DashboardClient({
         <h3 className="text-2xl font-display font-semibold mb-6">Quick Actions</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <QuickActionCard
-            href="/badges"
+            href="/profile/badges"
             icon="🏆"
             title="View Badges"
             description="Check your achievements"

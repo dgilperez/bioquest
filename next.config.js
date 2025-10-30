@@ -191,7 +191,12 @@ const nextConfig = {
         destination: '/quest',
         permanent: false,
       },
-      // Note: /observations, /badges, /stats, /quests, /leaderboards, /tree-of-life, /trips
+      {
+        source: '/badges',
+        destination: '/profile/badges',
+        permanent: false,
+      },
+      // Note: /observations, /stats, /quests, /leaderboards, /tree-of-life, /trips
       // are kept at their original routes for now (Phase 1)
       // They will be moved in future phases as needed
     ];

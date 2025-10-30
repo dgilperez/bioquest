@@ -1,10 +1,14 @@
 'use client';
 
 import Link from 'next/link';
-import { Trophy, TrendingUp, Users, Award, ArrowRight, Star } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Trophy, TrendingUp, Users, ArrowRight, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Badge, BadgeTier } from '@/types';
+import { Badge } from '@/types';
 import { getXPToNextLevel, getLevelProgress } from '@/lib/gamification/levels';
+import { AnimatedBadgeCard } from '@/components/badges/AnimatedBadgeCard';
+import { staggerContainer } from '@/lib/animations/variants';
+import { motion } from 'framer-motion';
 
 interface UserStats {
   level: number;
@@ -29,13 +33,6 @@ interface ProfileClientProps {
   leaderboardRank: LeaderboardRank | null;
 }
 
-const tierColors: Record<BadgeTier, string> = {
-  bronze: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
-  silver: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300',
-  gold: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300',
-  platinum: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300',
-};
-
 export function ProfileClient({
   userStats,
   recentBadges,
@@ -43,6 +40,8 @@ export function ProfileClient({
   totalBadgesAvailable,
   leaderboardRank,
 }: ProfileClientProps) {
+  const router = useRouter();
+
   // Calculate XP progress to next level using proper level config
   const xpProgress = getLevelProgress(userStats.level, userStats.totalPoints);
   const xpToNextLevel = getXPToNextLevel(userStats.level, userStats.totalPoints);
@@ -184,9 +183,9 @@ export function ProfileClient({
               {totalBadgesUnlocked} of {totalBadgesAvailable} badges unlocked
             </p>
           </div>
-          <Link href="/badges">
+          <Link href="/profile/badges">
             <Button variant="outline" className="gap-2">
-              <Award className="h-4 w-4" />
+              <Trophy className="h-4 w-4" />
               View All Badges
               <ArrowRight className="h-4 w-4" />
             </Button>
@@ -194,33 +193,23 @@ export function ProfileClient({
         </div>
 
         {recentBadges.length > 0 ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {recentBadges.map((badge) => (
-              <Link
+          <motion.div
+            variants={staggerContainer}
+            initial="hidden"
+            animate="visible"
+            className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-4"
+          >
+            {recentBadges.map((badge, index) => (
+              <AnimatedBadgeCard
                 key={badge.id}
-                href="/badges"
-                className="p-4 rounded-lg border bg-card hover:bg-accent transition-colors group"
-              >
-                <div className="flex flex-col items-center text-center">
-                  <div className="w-12 h-12 mb-2 flex items-center justify-center rounded-full bg-nature-100 dark:bg-nature-900/30">
-                    <Award className="h-6 w-6 text-nature-600" />
-                  </div>
-                  <h3 className="font-semibold text-sm mb-1 group-hover:text-nature-600 transition-colors">
-                    {badge.name}
-                  </h3>
-                  {badge.tier && (
-                    <span
-                      className={`text-xs px-2 py-1 rounded-full ${
-                        tierColors[badge.tier] || tierColors.bronze
-                      }`}
-                    >
-                      {badge.tier}
-                    </span>
-                  )}
-                </div>
-              </Link>
+                badge={badge}
+                isUnlocked={true}
+                index={index}
+                compact={true}
+                onClick={() => router.push('/profile/badges')}
+              />
             ))}
-          </div>
+          </motion.div>
         ) : (
           <div className="p-12 rounded-lg border border-dashed text-center">
             <Star className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
@@ -252,11 +241,11 @@ export function ProfileClient({
       {/* Quick Links */}
       <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Link
-          href="/badges"
+          href="/profile/badges"
           className="p-6 rounded-lg border bg-gradient-to-br from-amber-50 to-yellow-100 dark:from-amber-900/20 dark:to-yellow-800/20 hover:shadow-lg transition-all"
         >
           <h3 className="text-xl font-semibold mb-2 flex items-center gap-2">
-            <Award className="h-5 w-5 text-amber-600" />
+            <Trophy className="h-5 w-5 text-amber-600" />
             All Badges
           </h3>
           <p className="text-sm text-muted-foreground mb-4">
