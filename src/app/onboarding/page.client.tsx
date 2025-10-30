@@ -35,6 +35,12 @@ const features: Feature[] = [
   },
   {
     icon: <Sparkles className="w-12 h-12" />,
+    title: 'Earn XP for Every Observation',
+    description: 'Every observation earns Experience Points (XP). New species, rare finds, and quality identifications earn bonus XP. Level up to unlock new titles!',
+    color: 'from-amber-500 to-yellow-500',
+  },
+  {
+    icon: <Sparkles className="w-12 h-12" />,
     title: 'Rarity Classification',
     description: 'Discover if your observations are Common, Rare, or Legendary! We analyze global and regional data to classify every species.',
     color: 'from-purple-500 to-pink-500',

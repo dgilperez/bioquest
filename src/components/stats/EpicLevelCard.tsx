@@ -2,6 +2,8 @@
 
 import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { HelpCircle } from 'lucide-react';
 import { CountUp } from '@/components/animations/CountUp';
 import { EpicXPBar } from './EpicXPBar';
 
@@ -134,7 +136,16 @@ export function EpicLevelCard({
             animate={{ x: 0, opacity: 1 }}
             transition={{ delay: 0.4 }}
           >
-            <p className="text-sm opacity-90 mb-1 font-body uppercase tracking-wider">Total Points</p>
+            <div className="flex items-center gap-2 justify-end mb-1">
+              <p className="text-sm opacity-90 font-body uppercase tracking-wider">Total XP</p>
+              <Link
+                href="/profile/how-xp-works"
+                className="opacity-70 hover:opacity-100 transition-opacity"
+                title="Learn how XP works"
+              >
+                <HelpCircle className="h-4 w-4" />
+              </Link>
+            </div>
             <motion.p
               className="text-4xl font-display font-bold"
               initial={{ scale: 0.5, opacity: 0 }}

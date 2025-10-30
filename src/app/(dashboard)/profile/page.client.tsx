@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Trophy, TrendingUp, Users, ArrowRight, Star } from 'lucide-react';
+import { Trophy, TrendingUp, Users, ArrowRight, Star, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/types';
 import { getXPToNextLevel, getLevelProgress } from '@/lib/gamification/levels';
@@ -239,7 +239,7 @@ export function ProfileClient({
       </section>
 
       {/* Quick Links */}
-      <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Link
           href="/profile/badges"
           className="p-6 rounded-lg border bg-gradient-to-br from-amber-50 to-yellow-100 dark:from-amber-900/20 dark:to-yellow-800/20 hover:shadow-lg transition-all"
@@ -287,6 +287,23 @@ export function ProfileClient({
           </p>
           <Button variant="outline" className="w-full">
             View Rankings
+            <ArrowRight className="h-4 w-4 ml-2" />
+          </Button>
+        </Link>
+
+        <Link
+          href="/profile/how-xp-works"
+          className="p-6 rounded-lg border bg-gradient-to-br from-green-50 to-emerald-100 dark:from-green-900/20 dark:to-emerald-800/20 hover:shadow-lg transition-all"
+        >
+          <h3 className="text-xl font-semibold mb-2 flex items-center gap-2">
+            <Sparkles className="h-5 w-5 text-green-600" />
+            How XP Works
+          </h3>
+          <p className="text-sm text-muted-foreground mb-4">
+            Learn how to earn points and level up faster
+          </p>
+          <Button variant="outline" className="w-full">
+            Learn More
             <ArrowRight className="h-4 w-4 ml-2" />
           </Button>
         </Link>

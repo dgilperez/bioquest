@@ -1,8 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { Progress } from '@/components/ui/progress';
-import { Loader2, CheckCircle, XCircle } from 'lucide-react';
+import { Loader2, CheckCircle, XCircle, Sparkles } from 'lucide-react';
 
 interface SyncProgress {
   status: 'idle' | 'syncing' | 'completed' | 'error';
@@ -148,8 +149,17 @@ export function SyncProgress() {
 
         {/* Completion Message */}
         {progress.status === 'completed' && (
-          <div className="text-sm text-muted-foreground">
-            Processed {progress.observationsTotal} observations successfully
+          <div className="space-y-2">
+            <div className="text-sm text-muted-foreground">
+              Processed {progress.observationsTotal} observations successfully
+            </div>
+            <Link
+              href="/profile/how-xp-works"
+              className="flex items-center gap-2 text-sm text-amber-600 dark:text-amber-400 hover:underline"
+            >
+              <Sparkles className="h-4 w-4" />
+              Check your dashboard to see XP earned!
+            </Link>
           </div>
         )}
 
