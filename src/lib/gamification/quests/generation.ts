@@ -258,7 +258,7 @@ export async function assignQuestToUser(userId: string, questId: string): Promis
 }
 
 /**
- * Assign all available quests to a user
+ * Assign all available quests to a user (optimized with bulk operations)
  * Called when user signs in or manually syncs
  */
 export async function assignAvailableQuestsToUser(userId: string): Promise<void> {
@@ -275,9 +275,34 @@ export async function assignAvailableQuestsToUser(userId: string): Promise<void>
     },
   });
 
-  // Assign each quest to the user
-  for (const quest of activeQuests) {
-    await assignQuestToUser(userId, quest.id);
+  // Get existing user quests to avoid duplicates
+  const existingUserQuests = await prisma.userQuest.findMany({
+    where: {
+      userId,
+      questId: {
+        in: activeQuests.map(q => q.id),
+      },
+    },
+    select: {
+      questId: true,
+    },
+  });
+
+  const existingQuestIds = new Set(existingUserQuests.map(uq => uq.questId));
+
+  // Filter out quests that are already assigned
+  const questsToAssign = activeQuests.filter(q => !existingQuestIds.has(q.id));
+
+  // Bulk create user quests
+  if (questsToAssign.length > 0) {
+    await prisma.userQuest.createMany({
+      data: questsToAssign.map(quest => ({
+        userId,
+        questId: quest.id,
+        status: 'active',
+        progress: 0,
+      })),
+    });
   }
 }
 

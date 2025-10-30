@@ -4,7 +4,6 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db/prisma';
 import { generateAllQuests, assignAvailableQuestsToUser } from '@/lib/gamification/quests/generation';
-import { updateQuestProgress } from '@/lib/gamification/quests/progress';
 import { AutoSync } from '@/components/sync/AutoSync';
 import { QuestLandingClient } from './page.client';
 
@@ -39,7 +38,7 @@ export default async function QuestPage() {
   await generateAllQuests();
   await assignAvailableQuestsToUser(user.id);
 
-  // Get user's active quests
+  // Get user's active quests with optimized batch progress calculation
   const activeQuests = await prisma.userQuest.findMany({
     where: {
       userId: user.id,
@@ -55,17 +54,17 @@ export default async function QuestPage() {
     },
   });
 
-  // Calculate progress for each quest
-  const questsWithProgress = await Promise.all(
-    activeQuests.map(async (userQuest) => {
-      const progressData = await updateQuestProgress(user.id, userQuest.quest.id);
-      return {
-        quest: userQuest.quest,
-        progress: progressData?.newProgress || 0,
-        status: userQuest.status as 'active' | 'completed' | 'expired',
-      };
-    })
-  );
+  // Calculate progress for all quests in a single batch (optimized!)
+  const { calculateMultipleQuestProgress } = await import('@/lib/gamification/quests/progress');
+  const quests = activeQuests.map(uq => uq.quest);
+  const progressMap = await calculateMultipleQuestProgress(user.id, quests as any);
+
+  // Map results
+  const questsWithProgress = activeQuests.map((userQuest) => ({
+    quest: userQuest.quest,
+    progress: progressMap.get(userQuest.quest.id) || userQuest.progress,
+    status: userQuest.status as 'active' | 'completed' | 'expired',
+  }));
 
   // Get top 3 quests: 1 daily, 1 weekly, 1 monthly
   const dailyQuest = questsWithProgress.find(q => q.quest.type === 'daily');

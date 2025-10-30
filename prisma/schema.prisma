@@ -126,6 +126,11 @@ model Observation {
   @@index([userId, qualityGrade])
   @@index([userId, rarity])
   @@index([userId, observedOn])
+  // Quest progress optimization indexes
+  @@index([userId, createdAt, taxonId])      // For species_count queries
+  @@index([userId, createdAt, taxonName])    // For taxon_observation queries
+  @@index([userId, createdAt, qualityGrade]) // For quality_grade queries
+  @@index([userId, createdAt, placeGuess])   // For location_variety queries
   @@map("observations")
 }
 
@@ -270,6 +275,8 @@ model Quest {
   @@index([startDate])
   @@index([endDate])
   @@index([isActive])
+  @@index([type, startDate]) // For generating quests by type and period
+  @@index([endDate, isActive]) // For finding active/expired quests
   @@map("quests")
 }
 
@@ -296,6 +303,8 @@ model UserQuest {
   @@unique([userId, questId])
   @@index([userId])
   @@index([status])
+  @@index([userId, status])     // For filtering active quests per user
+  @@index([userId, questId, status]) // For quest assignment checks
   @@map("user_quests")
 }
 

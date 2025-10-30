@@ -364,7 +364,75 @@ async function completeQuest(userQuestId: string, userId: string, quest: Quest):
 }
 
 /**
+ * Group quests by criteria type
+ */
+function groupQuestsByCriteria(quests: Quest[]): Map<string, Quest[]> {
+  const questsByCriteria = new Map<string, Quest[]>();
+
+  for (const quest of quests) {
+    const criteria = quest.criteria as any;
+    const key = criteria.type;
+
+    if (!questsByCriteria.has(key)) {
+      questsByCriteria.set(key, []);
+    }
+    questsByCriteria.get(key)!.push(quest);
+  }
+
+  return questsByCriteria;
+}
+
+/**
+ * Find earliest start date from a group of quests
+ */
+function getEarliestStartDate(quests: Quest[]): Date {
+  return new Date(
+    Math.min(...quests.map(q => q.startDate.getTime()))
+  );
+}
+
+/**
+ * Calculate progress for multiple quests efficiently with batched queries
+ * Uses Strategy pattern with specialized calculators per criteria type
+ */
+export async function calculateMultipleQuestProgress(
+  userId: string,
+  quests: Quest[]
+): Promise<Map<string, number>> {
+  const { getCalculator } = await import('./progress-calculators');
+  const progressMap = new Map<string, number>();
+
+  // Group quests by criteria type for batch processing
+  const questsByCriteria = groupQuestsByCriteria(quests);
+
+  // Process each criteria type with its specialized calculator
+  for (const [criteriaType, questsGroup] of Array.from(questsByCriteria.entries())) {
+    const earliestStart = getEarliestStartDate(questsGroup);
+    const calculator = getCalculator(criteriaType);
+
+    if (calculator) {
+      // Use specialized calculator for this criteria type
+      const batchProgress = await calculator.calculateBatch(userId, questsGroup, earliestStart);
+
+      // Merge results into main map
+      for (const [questId, progress] of Array.from(batchProgress.entries())) {
+        progressMap.set(questId, progress);
+      }
+    } else {
+      // Fallback: calculate individually for unknown types
+      for (const quest of questsGroup) {
+        const progress = await calculateQuestProgress(userId, quest);
+        progressMap.set(quest.id, progress);
+      }
+    }
+  }
+
+  return progressMap;
+}
+
+/**
  * Update progress for all active quests for a user
+ * Optimized version with batched queries
  */
 export async function updateAllQuestProgress(userId: string): Promise<QuestProgressResult[]> {
   const activeQuests = await prisma.userQuest.findMany({
@@ -377,14 +445,50 @@ export async function updateAllQuestProgress(userId: string): Promise<QuestProgr
     },
   });
 
+  if (activeQuests.length === 0) {
+    return [];
+  }
+
+  // Calculate all progress values with batched queries
+  const quests = activeQuests.map(uq => uq.quest as Quest);
+  const progressMap = await calculateMultipleQuestProgress(userId, quests);
+
+  // Prepare batch updates
+  const updates: Promise<any>[] = [];
   const results: QuestProgressResult[] = [];
 
   for (const userQuest of activeQuests) {
-    const result = await updateQuestProgress(userId, userQuest.questId);
-    if (result) {
-      results.push(result);
+    const previousProgress = userQuest.progress;
+    const newProgress = progressMap.get(userQuest.questId) || 0;
+
+    // Update progress in database
+    updates.push(
+      prisma.userQuest.update({
+        where: { id: userQuest.id },
+        data: { progress: newProgress },
+      })
+    );
+
+    const isCompleted = newProgress >= 100;
+    const isNewlyCompleted = isCompleted && previousProgress < 100;
+
+    // If newly completed, mark as completed and award rewards
+    if (isNewlyCompleted) {
+      updates.push(completeQuest(userQuest.id, userId, userQuest.quest as Quest));
     }
+
+    results.push({
+      questId: userQuest.questId,
+      previousProgress,
+      newProgress,
+      isCompleted,
+      isNewlyCompleted,
+      quest: userQuest.quest as Quest,
+    });
   }
+
+  // Execute all updates in parallel
+  await Promise.all(updates);
 
   return results;
 }
