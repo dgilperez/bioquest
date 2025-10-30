@@ -8,14 +8,16 @@ export default function TripDetailPage({
   params: { tripId: string };
 }) {
   return (
-    <Suspense
-      fallback={
-        <div className="flex items-center justify-center min-h-screen">
-          <Loader2 className="h-8 w-8 animate-spin text-nature-600" />
-        </div>
-      }
-    >
-      <TripDetailClient tripId={params.tripId} />
-    </Suspense>
+    <div className="container mx-auto px-4 py-8">
+      <Suspense
+        fallback={
+          <div className="flex items-center justify-center min-h-[400px]">
+            <Loader2 className="h-8 w-8 animate-spin text-nature-600" />
+          </div>
+        }
+      >
+        <TripDetailClient tripId={params.tripId} />
+      </Suspense>
+    </div>
   );
 }
