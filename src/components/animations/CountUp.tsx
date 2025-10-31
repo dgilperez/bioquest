@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { useSpring, animated } from '@react-spring/web';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
 
 interface CountUpProps {
   value: number;
@@ -21,12 +22,13 @@ export function CountUp({
   decimals = 0,
 }: CountUpProps) {
   const previousValue = useRef(0);
+  const reducedMotion = useReducedMotion();
 
   const { number } = useSpring({
-    from: { number: previousValue.current },
+    from: { number: reducedMotion ? value : previousValue.current },
     number: value,
     config: {
-      duration,
+      duration: reducedMotion ? 0 : duration,
       easing: (t: number) => {
         // Ease out cubic
         return 1 - Math.pow(1 - t, 3);

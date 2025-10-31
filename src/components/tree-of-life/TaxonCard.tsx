@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { ChevronRight } from 'lucide-react';
+import { TaxonIcon, hasTaxonIcon } from '@/lib/icons/taxon-icon-mapper';
 
 interface TaxonCardProps {
   id: number;
@@ -45,9 +46,26 @@ export function TaxonCard({
       transition={{ delay: index * 0.05, duration: 0.3 }}
       whileHover={{ scale: 1.02, x: 4 }}
       onClick={onClick}
-      className="w-full text-left p-4 rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-nature-500 dark:hover:border-nature-600 transition-colors shadow-sm hover:shadow-md"
+      className="w-full text-left p-6 rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-nature-500 dark:hover:border-nature-600 transition-colors shadow-sm hover:shadow-md"
     >
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex items-center justify-between gap-6">
+        {/* Animated Icon */}
+        {hasTaxonIcon(name) && (
+          <motion.div
+            className="flex-shrink-0"
+            initial={{ scale: 0, rotate: -180 }}
+            animate={{ scale: 1, rotate: 0 }}
+            transition={{
+              delay: index * 0.05 + 0.1,
+              type: 'spring',
+              stiffness: 200,
+              damping: 15,
+            }}
+          >
+            <TaxonIcon name={name} size={56} animate={true} />
+          </motion.div>
+        )}
+
         {/* Left side: Taxon info */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">

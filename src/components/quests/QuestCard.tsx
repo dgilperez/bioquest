@@ -56,10 +56,10 @@ export function QuestCard({ quest, progress, status }: QuestCardProps) {
   return (
     <div
       className={cn(
-        'rounded-lg border p-6 transition-all',
-        isCompleted && 'bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 border-green-300 dark:border-green-700',
+        'rounded-lg border p-6 transition-all duration-200 cursor-pointer',
+        isCompleted && 'bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 border-green-300 dark:border-green-700 hover:scale-[1.02] hover:shadow-xl',
         isExpired && 'bg-gray-100 dark:bg-gray-800 border-gray-300 dark:border-gray-700 opacity-60',
-        isActive && 'bg-white dark:bg-gray-800 hover:shadow-lg'
+        isActive && 'bg-white dark:bg-gray-800 hover:scale-[1.02] hover:shadow-xl hover:border-gray-400 dark:hover:border-gray-600'
       )}
     >
       {/* Header */}

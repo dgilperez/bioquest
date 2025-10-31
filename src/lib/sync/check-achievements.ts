@@ -16,9 +16,16 @@ export interface CompletedQuest {
   pointsEarned: number;
 }
 
+export interface QuestMilestone {
+  quest: Quest;
+  progress: number;
+  milestone: number; // 25, 50, 75, or 100
+}
+
 export interface AchievementResult {
   newBadges: Badge[];
   completedQuests: CompletedQuest[];
+  questMilestones: QuestMilestone[];
 }
 
 /**
@@ -37,6 +44,15 @@ export async function checkAchievements(userId: string): Promise<AchievementResu
       pointsEarned: qp.quest.reward.points || 0,
     }));
 
+  // Collect quest milestones (25%, 50%, 75%, 100%)
+  const questMilestones: QuestMilestone[] = questProgress
+    .filter(qp => qp.milestone !== undefined)
+    .map(qp => ({
+      quest: qp.quest,
+      progress: qp.newProgress,
+      milestone: qp.milestone!,
+    }));
+
   // Check for badge unlocks
   const badgeResults = await checkAndUnlockBadges(userId);
   const newBadges = badgeResults
@@ -46,6 +62,7 @@ export async function checkAchievements(userId: string): Promise<AchievementResu
   return {
     newBadges,
     completedQuests,
+    questMilestones,
   };
 }
 

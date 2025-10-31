@@ -61,20 +61,57 @@ export function notifyNewSpecies(speciesName: string) {
 }
 
 /**
- * Show sync complete notification
+ * Show sync complete notification with optional XP breakdown
  */
-export function notifySyncComplete(newObservations: number) {
-  if (newObservations === 0) {
+export interface SyncSummary {
+  newObservations: number;
+  totalXP?: number;
+  newSpeciesCount?: number;
+  rareFindsCount?: number;
+  researchGradeCount?: number;
+}
+
+export function notifySyncComplete(summary: number | SyncSummary) {
+  // Support legacy number parameter for backward compatibility
+  const data = typeof summary === 'number'
+    ? { newObservations: summary }
+    : summary;
+
+  if (data.newObservations === 0) {
     toast.info('Sync Complete', {
       description: 'Your data is up to date!',
       duration: 3000,
     });
-  } else {
-    toast.success('Sync Complete', {
-      description: `📸 Found ${newObservations} new observation${newObservations !== 1 ? 's' : ''}!`,
-      duration: 4000,
-    });
+    return;
   }
+
+  // Build description with XP breakdown if available
+  let description = `📸 Found ${data.newObservations} new observation${data.newObservations !== 1 ? 's' : ''}`;
+
+  if (data.totalXP !== undefined && data.totalXP > 0) {
+    const breakdown: string[] = [];
+
+    if (data.newSpeciesCount && data.newSpeciesCount > 0) {
+      breakdown.push(`${data.newSpeciesCount} new species`);
+    }
+    if (data.rareFindsCount && data.rareFindsCount > 0) {
+      breakdown.push(`${data.rareFindsCount} rare find${data.rareFindsCount !== 1 ? 's' : ''}`);
+    }
+    if (data.researchGradeCount && data.researchGradeCount > 0) {
+      breakdown.push(`${data.researchGradeCount} research grade`);
+    }
+
+    if (breakdown.length > 0) {
+      description = `🎉 +${data.totalXP} XP earned! (${breakdown.join(', ')})`;
+    } else {
+      description = `🎉 +${data.totalXP} XP earned! ${description}`;
+    }
+  }
+
+  toast.success('Sync Complete', {
+    description,
+    duration: 5000,
+  });
 }
 
 /**
@@ -130,4 +167,34 @@ export function notifyMultipleQuests(quests: Quest[], totalPoints: number) {
       duration: 7000,
     });
   }
+}
+
+/**
+ * Show quest progress update notification
+ */
+export function notifyQuestProgress(questTitle: string, progress: number, milestone?: number) {
+  // Only show notifications at milestones (25%, 50%, 75%) or completion
+  if (!milestone) return;
+
+  const milestoneEmojis: Record<number, string> = {
+    25: '✨',
+    50: '⭐',
+    75: '🔥',
+    100: '🎉',
+  };
+
+  const milestoneMessages: Record<number, string> = {
+    25: 'Great start!',
+    50: 'Halfway there!',
+    75: 'Almost done!',
+    100: 'Quest complete!',
+  };
+
+  const emoji = milestoneEmojis[milestone] || '✨';
+  const message = milestoneMessages[milestone] || 'Making progress!';
+
+  toast.success(`${emoji} ${message}`, {
+    description: `${questTitle} - ${progress}% complete`,
+    duration: 4000,
+  });
 }

@@ -251,7 +251,7 @@ function TripCard({ trip, index }: TripCardProps) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.1 }}
       onClick={() => router.push(`/trips/${trip.id}`)}
-      className="rounded-2xl border bg-white dark:bg-gray-800 p-6 shadow-lg hover:shadow-xl transition-all cursor-pointer group"
+      className="rounded-2xl border bg-white dark:bg-gray-800 p-6 shadow-lg hover:shadow-2xl hover:scale-[1.02] transition-all duration-200 cursor-pointer group"
     >
       {/* Header */}
       <div className="flex items-start justify-between mb-4">

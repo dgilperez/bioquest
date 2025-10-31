@@ -165,12 +165,12 @@ export function TreeOfLifeClient() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="max-w-7xl mx-auto space-y-8">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex items-center justify-between"
+        className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4"
       >
         <div>
           <h1 className="text-4xl font-display font-bold bg-gradient-to-r from-nature-600 to-nature-800 bg-clip-text text-transparent">
@@ -331,7 +331,7 @@ export function TreeOfLifeClient() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.1 }}
-                  className="grid grid-cols-1 gap-3"
+                  className="grid grid-cols-1 md:grid-cols-2 gap-4"
                 >
                   {taxa.map((taxon, index) => (
                     <TaxonCard

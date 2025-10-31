@@ -138,13 +138,24 @@ export function EpicLevelCard({
           >
             <div className="flex items-center gap-2 justify-end mb-1">
               <p className="text-sm opacity-90 font-body uppercase tracking-wider">Total XP</p>
-              <Link
-                href="/profile/how-xp-works"
-                className="opacity-70 hover:opacity-100 transition-opacity"
-                title="Learn how XP works"
+              <motion.div
+                animate={{
+                  scale: [1, 1.1, 1],
+                }}
+                transition={{
+                  duration: 2,
+                  repeat: 3,
+                  repeatDelay: 3,
+                }}
               >
-                <HelpCircle className="h-4 w-4" />
-              </Link>
+                <Link
+                  href="/profile/how-xp-works"
+                  className="opacity-90 hover:opacity-100 transition-opacity group"
+                  title="Learn how XP works"
+                >
+                  <HelpCircle className="h-5 w-5" />
+                </Link>
+              </motion.div>
             </div>
             <motion.p
               className="text-4xl font-display font-bold"
@@ -159,6 +170,18 @@ export function EpicLevelCard({
             >
               <CountUp value={totalPoints} duration={1500} />
             </motion.p>
+            <motion.div
+              initial={{ opacity: 0, y: -5 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.8 }}
+            >
+              <Link
+                href="/profile/how-xp-works"
+                className="text-xs opacity-75 hover:opacity-100 transition-opacity font-body hover:underline inline-block mt-1"
+              >
+                Learn more
+              </Link>
+            </motion.div>
           </motion.div>
         </div>
 

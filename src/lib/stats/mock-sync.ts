@@ -7,23 +7,13 @@ import { generateMockObservations, getMockSpeciesCount } from '@/lib/inat/mock-d
 import { checkAndUnlockBadges } from '@/lib/gamification/badges/unlock';
 import { updateAllQuestProgress } from '@/lib/gamification/quests/progress';
 import { assignAvailableQuestsToUser } from '@/lib/gamification/quests/generation';
-import { calculateLevel } from '@/lib/stats/user-stats';
+import { calculateLevel, SyncResult, QuestMilestone } from '@/lib/stats/user-stats';
 import { updateStreaks } from '@/lib/gamification/streak-tracking';
-import { Badge, Quest } from '@/types';
+import { Quest } from '@/types';
 
 export interface CompletedQuest {
   quest: Quest;
   pointsEarned: number;
-}
-
-export interface MockSyncResult {
-  newObservations: number;
-  newBadges: Badge[];
-  completedQuests: CompletedQuest[];
-  leveledUp: boolean;
-  newLevel?: number;
-  levelTitle?: string;
-  oldLevel?: number;
 }
 
 /**
@@ -32,7 +22,7 @@ export interface MockSyncResult {
 export async function syncMockObservations(
   userId: string,
   _inatUsername: string
-): Promise<MockSyncResult> {
+): Promise<SyncResult> {
   // Import progress tracking
   const { initProgress, updateProgress, completeProgress, errorProgress } = await import('@/lib/sync/progress');
 
@@ -229,6 +219,15 @@ export async function syncMockObservations(
         pointsEarned: qp.quest.reward.points || 0,
       }));
 
+    // Collect quest milestones (25%, 50%, 75%, 100%)
+    const questMilestones: QuestMilestone[] = questProgress
+      .filter(qp => qp.milestone !== undefined)
+      .map(qp => ({
+        quest: qp.quest,
+        progress: qp.newProgress,
+        milestone: qp.milestone!,
+      }));
+
     await updateProgress(userId, {
       phase: 'calculating',
       message: 'Checking badges and quests...',
@@ -264,10 +263,19 @@ export async function syncMockObservations(
       newObservations,
       newBadges,
       completedQuests,
+      questMilestones,
       leveledUp,
       newLevel: leveledUp ? level : undefined,
       levelTitle: leveledUp ? levelTitle : undefined,
       oldLevel,
+      streakMilestone: undefined,
+      streakData: {
+        currentStreak: 0,
+        longestStreak: 0,
+        streakAtRisk: false,
+        hoursUntilBreak: 0,
+      },
+      rareFinds: [],
     };
   } catch (error) {
     console.error('Error syncing mock observations:', error);

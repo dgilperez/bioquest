@@ -62,12 +62,13 @@ export function LeaderboardList({
         </div>
 
         <div className="divide-y divide-gray-100">
-          {entries.map((entry) => (
+          {entries.map((entry, index) => (
             <LeaderboardRow
               key={entry.user.id}
               entry={entry}
               points={getPoints(entry)}
               isCurrentUser={userEntry?.user.id === entry.user.id}
+              index={index}
             />
           ))}
         </div>
@@ -84,6 +85,7 @@ export function LeaderboardList({
               entry={userEntry}
               points={getPoints(userEntry)}
               isCurrentUser={true}
+              index={0}
             />
           </div>
         </div>

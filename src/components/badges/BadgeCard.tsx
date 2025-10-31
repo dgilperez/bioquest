@@ -26,10 +26,10 @@ export function BadgeCard({ badge, isUnlocked }: BadgeCardProps) {
   return (
     <div
       className={cn(
-        'rounded-lg border p-6 transition-all',
+        'rounded-lg border p-6 transition-all duration-200 cursor-pointer',
         isUnlocked
-          ? `bg-gradient-to-br ${tierColors[tier]} ${tierBorder[tier]} shadow-lg`
-          : 'bg-gray-100 dark:bg-gray-800 border-gray-300 dark:border-gray-700 opacity-60'
+          ? `bg-gradient-to-br ${tierColors[tier]} ${tierBorder[tier]} shadow-lg hover:scale-105 hover:shadow-2xl`
+          : 'bg-gray-100 dark:bg-gray-800 border-gray-300 dark:border-gray-700 opacity-60 hover:opacity-80'
       )}
     >
       <div className="flex items-start gap-4">

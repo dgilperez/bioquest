@@ -11,7 +11,23 @@ export interface QuestProgressResult {
   newProgress: number;
   isCompleted: boolean;
   isNewlyCompleted: boolean;
+  milestone?: number; // 25, 50, 75, or 100 if a milestone was just crossed
   quest: Quest;
+}
+
+/**
+ * Detect if a milestone (25%, 50%, 75%, 100%) was just crossed
+ */
+function detectMilestone(previousProgress: number, newProgress: number): number | undefined {
+  const milestones = [25, 50, 75, 100];
+
+  for (const milestone of milestones) {
+    if (previousProgress < milestone && newProgress >= milestone) {
+      return milestone;
+    }
+  }
+
+  return undefined;
 }
 
 /**
@@ -287,6 +303,7 @@ export async function updateQuestProgress(
 
   const isCompleted = newProgress >= 100;
   const isNewlyCompleted = isCompleted && previousProgress < 100;
+  const milestone = detectMilestone(previousProgress, newProgress);
 
   // If newly completed, mark as completed and award rewards
   if (isNewlyCompleted) {
@@ -299,6 +316,7 @@ export async function updateQuestProgress(
     newProgress,
     isCompleted,
     isNewlyCompleted,
+    milestone,
     quest: userQuest.quest as Quest,
   };
 }
@@ -471,6 +489,7 @@ export async function updateAllQuestProgress(userId: string): Promise<QuestProgr
 
     const isCompleted = newProgress >= 100;
     const isNewlyCompleted = isCompleted && previousProgress < 100;
+    const milestone = detectMilestone(previousProgress, newProgress);
 
     // If newly completed, mark as completed and award rewards
     if (isNewlyCompleted) {
@@ -483,6 +502,7 @@ export async function updateAllQuestProgress(userId: string): Promise<QuestProgr
       newProgress,
       isCompleted,
       isNewlyCompleted,
+      milestone,
       quest: userQuest.quest as Quest,
     });
   }
