@@ -21,6 +21,8 @@ export interface StatsInput {
 export interface StatsUpdateInput {
   totalObservations: number;
   totalPoints: number;
+  rareObservations: number;
+  legendaryObservations: number;
   stats: StatsResult;
 }
 
@@ -119,7 +121,7 @@ export async function updateUserStatsInDB(
   userId: string,
   updateInput: StatsUpdateInput
 ): Promise<void> {
-  const { totalObservations, totalPoints, stats } = updateInput;
+  const { totalObservations, totalPoints, rareObservations, legendaryObservations, stats } = updateInput;
   const syncTime = new Date();
 
   await prisma.userStats.upsert({
@@ -130,6 +132,8 @@ export async function updateUserStatsInDB(
       totalPoints,
       level: stats.level,
       pointsToNextLevel: stats.pointsToNextLevel,
+      rareObservations,
+      legendaryObservations,
       currentStreak: stats.streakResult.currentStreak,
       longestStreak: stats.streakResult.longestStreak,
       lastObservationDate: stats.streakResult.lastObservationDate,
@@ -146,6 +150,8 @@ export async function updateUserStatsInDB(
       totalPoints,
       level: stats.level,
       pointsToNextLevel: stats.pointsToNextLevel,
+      rareObservations,
+      legendaryObservations,
       currentStreak: stats.streakResult.currentStreak,
       longestStreak: stats.streakResult.longestStreak,
       lastObservationDate: stats.streakResult.lastObservationDate,

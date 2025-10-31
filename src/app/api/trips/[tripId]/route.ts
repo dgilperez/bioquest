@@ -171,9 +171,16 @@ export async function PATCH(
         },
       });
 
-      // TODO: Detect and create achievements
+      // Check and unlock trip achievements
+      const { checkAndUnlockBadges } = await import('@/lib/gamification/badges/unlock');
+      const badgeResults = await checkAndUnlockBadges((session.user as any).id);
+      const newBadges = badgeResults.filter(r => r.isNewlyUnlocked).map(r => r.badge);
 
-      return NextResponse.json({ success: true, trip: updated });
+      return NextResponse.json({
+        success: true,
+        trip: updated,
+        newBadges: newBadges.length > 0 ? newBadges : undefined,
+      });
     }
 
     if (action === 'cancel') {

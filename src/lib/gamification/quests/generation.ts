@@ -49,7 +49,7 @@ function getEndDate(startDate: Date, durationDays: number): Date {
 }
 
 /**
- * Create quest in database from definition
+ * Create or update quest in database from definition
  */
 async function createQuestFromDefinition(def: QuestDefinition): Promise<Quest> {
   let startDate: Date;
@@ -70,8 +70,18 @@ async function createQuestFromDefinition(def: QuestDefinition): Promise<Quest> {
 
   const endDate = getEndDate(startDate, def.durationDays);
 
-  const quest = await prisma.quest.create({
-    data: {
+  const quest = await prisma.quest.upsert({
+    where: { code: def.code },
+    update: {
+      title: def.title,
+      description: def.description,
+      type: def.type,
+      startDate,
+      endDate,
+      criteria: def.criteria as any,
+      reward: def.reward as any,
+    },
+    create: {
       code: def.code,
       title: def.title,
       description: def.description,

@@ -60,6 +60,13 @@ export function TripCreationModal({ location, isOpen, onClose }: TripCreationMod
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           placeId: location.placeId,
+          placeData: {
+            id: location.placeId,
+            name: location.placeName,
+            displayName: location.displayName,
+            latitude: location.coordinates.lat,
+            longitude: location.coordinates.lng,
+          },
           title: formData.title,
           description: formData.description || undefined,
           plannedDate: plannedDateTime?.toISOString(),

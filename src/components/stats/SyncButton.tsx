@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { RefreshCw } from 'lucide-react';
-import { notifySyncComplete, notifyError, notifyMultipleBadges, notifyMultipleQuests } from '@/lib/notifications/achievements';
+import { notifySyncComplete, notifyError, notifyMultipleBadges, notifyMultipleQuests, notifyQuestProgress } from '@/lib/notifications/achievements';
 
 interface SyncButtonProps {
   userId: string;
@@ -101,7 +101,46 @@ export function SyncButton({ userId, inatUsername, accessToken }: SyncButtonProp
         notifyMultipleQuests(quests, totalPoints);
       }
 
-      notifySyncComplete(result.newObservations || 0);
+      // Show toast notifications for quest progress milestones (25%, 50%, 75%)
+      // Full-screen celebration for 100% completion
+      if (result.questMilestones && result.questMilestones.length > 0) {
+        const completedQuest = result.questMilestones.find((qm: any) => qm.milestone === 100);
+
+        if (completedQuest) {
+          // Show full-screen celebration for quest completion
+          celebrationParams.set('questComplete', 'true');
+          celebrationParams.set('questTitle', completedQuest.quest.title);
+          hasCelebrations = true;
+        }
+
+        // Show toasts for non-completion milestones
+        result.questMilestones
+          .filter((qm: any) => qm.milestone !== 100)
+          .forEach((qm: any) => {
+            notifyQuestProgress(qm.quest.title, qm.progress, qm.milestone);
+          });
+      }
+
+      // Show sync complete notification with XP breakdown if available
+      if (result.xpBreakdown) {
+        notifySyncComplete({
+          newObservations: result.newObservations || 0,
+          totalXP: result.xpBreakdown.totalXP,
+          newSpeciesCount: result.xpBreakdown.newSpeciesCount,
+          rareFindsCount: result.xpBreakdown.rareFindsCount,
+          researchGradeCount: result.xpBreakdown.researchGradeCount,
+        });
+      } else {
+        // Fallback: calculate basic XP breakdown from available data
+        const rareFindsCount = result.rareFinds?.length || 0;
+        const estimatedXP = (result.newObservations || 0) * 10; // Base XP estimate
+
+        notifySyncComplete({
+          newObservations: result.newObservations || 0,
+          totalXP: estimatedXP,
+          rareFindsCount,
+        });
+      }
 
       // Redirect to dashboard with celebration params or just refresh
       if (hasCelebrations) {

@@ -21,6 +21,8 @@ export interface UserStatsData {
   currentRarityStreak: number;
   longestRarityStreak: number;
   lastSyncedAt: Date | null;
+  weeklyPoints: number;
+  monthlyPoints: number;
 }
 
 /**
@@ -67,10 +69,17 @@ export interface RareFind {
   isFirstRegional: boolean;
 }
 
+export interface QuestMilestone {
+  quest: Quest;
+  progress: number;
+  milestone: number; // 25, 50, 75, or 100
+}
+
 export interface SyncResult {
   newObservations: number;
   newBadges: Badge[];
   completedQuests: CompletedQuest[];
+  questMilestones: QuestMilestone[];
   leveledUp: boolean;
   newLevel?: number;
   levelTitle?: string;
@@ -83,6 +92,13 @@ export interface SyncResult {
     hoursUntilBreak: number;
   };
   rareFinds: RareFind[];
+  // XP breakdown for sync summary
+  xpBreakdown?: {
+    totalXP: number;
+    newSpeciesCount: number;
+    rareFindsCount: number;
+    researchGradeCount: number;
+  };
 }
 
 export async function syncUserObservations(
@@ -171,43 +187,81 @@ export async function syncUserObservations(
       message: 'Calculating statistics and achievements...',
     });
 
+    // Calculate cumulative totals
+    const newObservationCount = observations.length; // Newly synced observations
+    const updatedTotalObservations = oldObservationCount + newObservationCount; // Cumulative total
+    const updatedTotalPoints = (currentStats?.totalPoints || 0) + totalPoints; // Cumulative total
+
     const stats = await calculateUserStats(
       {
         userId,
         accessToken,
         inatUsername,
-        totalPoints,
-        totalObservations: observations.length,
+        totalPoints: updatedTotalPoints,
+        totalObservations: updatedTotalObservations,
       },
       currentStats
     );
 
-    // Step 6: Update user stats in database
+    // Step 6: Calculate rarity counts from all observations in database
+    const rareObservations = await prisma.observation.count({
+      where: {
+        userId,
+        rarity: { in: ['rare', 'epic', 'legendary', 'mythic'] }
+      }
+    });
+    const legendaryObservations = await prisma.observation.count({
+      where: {
+        userId,
+        rarity: { in: ['legendary', 'mythic'] }
+      }
+    });
+
+    // Step 7: Update user stats in database
     await updateUserStatsInDB(userId, {
-      totalObservations: observations.length,
-      totalPoints,
+      totalObservations: updatedTotalObservations,
+      totalPoints: updatedTotalPoints,
+      rareObservations,
+      legendaryObservations,
       stats,
     });
 
-    // Step 7: Manage leaderboards
+    // Step 8: Manage leaderboards
     await manageLeaderboards(userId);
 
-    // Step 8: Check achievements (badges and quests)
-    const { newBadges, completedQuests } = await checkAchievements(userId);
+    // Step 9: Check achievements (badges and quests)
+    const { newBadges, completedQuests, questMilestones } = await checkAchievements(userId);
 
     // Determine level up
     const leveledUp = stats.level > oldLevel;
-    const newObservations = observations.length - oldObservationCount;
 
-    console.log(`Sync complete: ${newObservations} new observations, level ${stats.level}, ${newBadges.length} new badges`);
+    // Calculate XP breakdown for synced observations
+    // Note: enrichedObservations already contains only the newly fetched observations
+    const newSpeciesCount = stats.totalSpecies - (currentStats?.totalSpecies || 0);
+    const rareFindsCount = enrichedObservations.filter(e =>
+      e.rarity && ['rare', 'epic', 'legendary', 'mythic'].includes(e.rarity)
+    ).length;
+    const researchGradeCount = enrichedObservations.filter(e =>
+      e.observation.quality_grade === 'research'
+    ).length;
+
+    const xpBreakdown = {
+      totalXP: enrichedObservations.reduce((sum, e) => sum + e.points, 0),
+      newSpeciesCount,
+      rareFindsCount,
+      researchGradeCount,
+    };
+
+    console.log(`Sync complete: ${newObservationCount} new observations, level ${stats.level}, ${newBadges.length} new badges, ${questMilestones.length} quest milestones, +${xpBreakdown.totalXP} XP`);
 
     // Mark sync as completed
     completeProgress(userId);
 
     return {
-      newObservations,
+      newObservations: newObservationCount,
       newBadges,
       completedQuests,
+      questMilestones,
       leveledUp,
       newLevel: leveledUp ? stats.level : undefined,
       levelTitle: leveledUp ? getTitle(stats.level) : undefined,
@@ -220,6 +274,7 @@ export async function syncUserObservations(
         hoursUntilBreak: stats.streakResult.hoursUntilBreak,
       },
       rareFinds: rareFinds.slice(0, SYNC_CONFIG.MAX_RARE_FINDS_TO_REPORT),
+      xpBreakdown,
     };
   } catch (error) {
     console.error('Error syncing observations:', error);

@@ -21,6 +21,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { staggerContainer } from '@/lib/animations/variants';
+import { notifyBadgeUnlock, notifyMultipleBadges } from '@/lib/notifications/achievements';
 
 interface Trip {
   id: string;
@@ -172,11 +173,21 @@ export function TripDetailClient({ tripId }: { tripId: string }) {
       const data = await response.json();
       setTrip(data.trip);
 
+      // Show success toast
       toast.success(
         action === 'start' ? 'Trip started! 🎯' :
         action === 'complete' ? 'Trip completed! 🎉' :
         'Trip cancelled'
       );
+
+      // Show badge unlock notifications if any
+      if (data.newBadges && data.newBadges.length > 0) {
+        if (data.newBadges.length === 1) {
+          setTimeout(() => notifyBadgeUnlock(data.newBadges[0]), 1000);
+        } else {
+          setTimeout(() => notifyMultipleBadges(data.newBadges), 1000);
+        }
+      }
     } catch (error) {
       console.error(`Error ${action} trip:`, error);
       toast.error(`Failed to ${action} trip`);

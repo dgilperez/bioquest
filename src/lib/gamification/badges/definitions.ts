@@ -199,6 +199,42 @@ export const BADGE_DEFINITIONS: BadgeDefinition[] = [
     criteria: { minCountries: 3 },
     isSecret: false,
   },
+  {
+    code: 'first_trip',
+    name: 'First Trip',
+    description: 'Completed your first nature exploration trip',
+    category: 'geography',
+    tier: 'bronze',
+    criteria: { minTripsCompleted: 1 },
+    isSecret: false,
+  },
+  {
+    code: 'trip_enthusiast',
+    name: 'Trip Enthusiast',
+    description: 'Completed 5 nature exploration trips',
+    category: 'geography',
+    tier: 'silver',
+    criteria: { minTripsCompleted: 5 },
+    isSecret: false,
+  },
+  {
+    code: 'trip_master',
+    name: 'Trip Master',
+    description: 'Completed 10 nature exploration trips',
+    category: 'geography',
+    tier: 'gold',
+    criteria: { minTripsCompleted: 10 },
+    isSecret: false,
+  },
+  {
+    code: 'perfect_trip',
+    name: 'Perfect Trip',
+    description: 'Completed a trip with 100% target species spotted',
+    category: 'challenge',
+    tier: 'gold',
+    criteria: { hasPerfectTrip: true },
+    isSecret: false,
+  },
 
   // ============================================================================
   // TIME/SEASONAL BADGES

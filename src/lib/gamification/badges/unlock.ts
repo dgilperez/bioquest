@@ -23,6 +23,7 @@ export async function checkAndUnlockBadges(userId: string): Promise<BadgeUnlockR
         include: { badge: true },
       },
       observations: true,
+      trips: true,
     },
   });
 
@@ -54,7 +55,7 @@ export async function checkAndUnlockBadges(userId: string): Promise<BadgeUnlockR
     }
 
     // Check if criteria met
-    if (await isBadgeCriteriaMet(badgeDef.criteria, user.stats, user.observations)) {
+    if (await isBadgeCriteriaMet(badgeDef.criteria, user.stats, user.observations, user.trips)) {
       const badge = badgesByCode.get(badgeDef.code);
       if (badge) {
         badgesToUnlock.push(badge);
@@ -119,7 +120,8 @@ async function ensureAllBadgesExist(): Promise<void> {
 async function isBadgeCriteriaMet(
   criteria: Record<string, any>,
   stats: any,
-  observations: any[]
+  observations: any[],
+  trips: any[]
 ): Promise<boolean> {
   // Milestone criteria
   if (criteria.minObservations !== undefined) {
@@ -198,6 +200,21 @@ async function isBadgeCriteriaMet(
       obs => obs.photosCount >= criteria.minPhotosInOneObservation
     );
     if (!hasEnoughPhotos) return false;
+  }
+
+  // Trip criteria
+  if (criteria.minTripsCompleted !== undefined) {
+    const completedTrips = trips.filter(trip => trip.status === 'completed');
+    if (completedTrips.length < criteria.minTripsCompleted) return false;
+  }
+
+  if (criteria.hasPerfectTrip !== undefined) {
+    const perfectTrip = trips.some(trip => {
+      if (trip.status !== 'completed') return false;
+      if (!trip.completionScore) return false;
+      return trip.completionScore >= 100;
+    });
+    if (!perfectTrip) return false;
   }
 
   return true;

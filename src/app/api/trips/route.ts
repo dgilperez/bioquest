@@ -87,6 +87,7 @@ export async function POST(req: NextRequest) {
 
     const {
       placeId,
+      placeData,
       title,
       description,
       plannedDate,
@@ -109,6 +110,26 @@ export async function POST(req: NextRequest) {
         { error: 'Either placeId or custom location is required' },
         { status: 400 }
       );
+    }
+
+    // Upsert place if placeData provided
+    if (placeId && placeData) {
+      await prisma.place.upsert({
+        where: { id: parseInt(placeId) },
+        update: {
+          name: placeData.name,
+          displayName: placeData.displayName,
+          latitude: placeData.latitude,
+          longitude: placeData.longitude,
+        },
+        create: {
+          id: parseInt(placeId),
+          name: placeData.name,
+          displayName: placeData.displayName,
+          latitude: placeData.latitude,
+          longitude: placeData.longitude,
+        },
+      });
     }
 
     // Create trip with target species

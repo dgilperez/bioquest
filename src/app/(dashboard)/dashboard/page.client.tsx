@@ -4,11 +4,14 @@ import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { AnimatedStatsCard } from '@/components/stats/AnimatedStatsCard';
 import { EpicLevelCard } from '@/components/stats/EpicLevelCard';
+import { WeeklyXPCard } from '@/components/stats/WeeklyXPCard';
 import { QuickActionCard } from '@/components/dashboard/QuickActionCard';
 import { StreakDisplay } from '@/components/dashboard/StreakDisplay';
 import { LevelUpCelebration } from '@/components/celebrations/LevelUpCelebration';
 import { BadgeUnlockCeremony } from '@/components/celebrations/BadgeUnlockCeremony';
 import { StreakMilestone } from '@/components/celebrations/StreakMilestone';
+import { QuestProgressCelebration } from '@/components/celebrations/QuestProgressCelebration';
+import { QuickStartOverlay } from '@/components/onboarding/QuickStartOverlay';
 import { staggerContainer } from '@/lib/animations/variants';
 import { Badge } from '@/types';
 import { toast } from 'sonner';
@@ -28,6 +31,8 @@ interface DashboardClientProps {
   lastObservationDate: Date | null;
   currentRarityStreak: number;
   longestRarityStreak: number;
+  weeklyPoints: number;
+  monthlyPoints: number;
 }
 
 export function DashboardClient({
@@ -45,11 +50,35 @@ export function DashboardClient({
   lastObservationDate,
   currentRarityStreak,
   longestRarityStreak,
+  weeklyPoints,
+  monthlyPoints: _monthlyPoints, // Reserved for future monthly leaderboard features
 }: DashboardClientProps) {
   // Celebration states
   const [levelUpData, setLevelUpData] = useState<{ show: boolean; newLevel: number; levelTitle: string } | null>(null);
   const [badgeData, setBadgeData] = useState<Badge | null>(null);
   const [streakMilestoneData, setStreakMilestoneData] = useState<{ show: boolean; days: number; title: string; bonusPoints: number } | null>(null);
+  const [questCelebrationData, setQuestCelebrationData] = useState<{ show: boolean; questTitle: string; progress: number } | null>(null);
+
+  // Quick start overlay state
+  const [showQuickStart, setShowQuickStart] = useState(false);
+
+  // Check if this is the user's first dashboard visit
+  useEffect(() => {
+    const hasSeenQuickStart = localStorage.getItem('bioquest_quickstart_seen');
+    if (!hasSeenQuickStart) {
+      // Delay showing the overlay slightly to let the dashboard render first
+      const timer = setTimeout(() => {
+        setShowQuickStart(true);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+    return undefined;
+  }, []);
+
+  const handleQuickStartClose = () => {
+    setShowQuickStart(false);
+    localStorage.setItem('bioquest_quickstart_seen', 'true');
+  };
 
   // Check for celebrations from URL params (set by sync redirect)
   useEffect(() => {
@@ -107,6 +136,18 @@ export function DashboardClient({
       }
     }
 
+    // Check for quest completion celebration
+    if (params.get('questComplete') === 'true') {
+      const questTitle = params.get('questTitle') || '';
+      if (questTitle) {
+        const delayTime = (levelUpData || badgeData || streakMilestoneData) ? 4000 : 0;
+        setTimeout(() => {
+          setQuestCelebrationData({ show: true, questTitle, progress: 100 });
+        }, delayTime);
+        window.history.replaceState({}, '', window.location.pathname);
+      }
+    }
+
     // Check for rare finds (show toast)
     const rareFinds = params.get('rareFinds');
     if (rareFinds) {
@@ -133,7 +174,7 @@ export function DashboardClient({
         console.error('Error parsing rare finds:', e);
       }
     }
-  }, [levelUpData]);
+  }, [levelUpData, badgeData]);
 
   // Calculate streak at risk
   const now = new Date();
@@ -145,6 +186,9 @@ export function DashboardClient({
 
   return (
     <>
+      {/* Quick Start Overlay */}
+      <QuickStartOverlay show={showQuickStart} onClose={handleQuickStartClose} />
+
       {/* Celebrations */}
       {levelUpData && (
         <LevelUpCelebration
@@ -169,6 +213,16 @@ export function DashboardClient({
           title={streakMilestoneData.title}
           bonusPoints={streakMilestoneData.bonusPoints}
           onClose={() => setStreakMilestoneData(null)}
+        />
+      )}
+
+      {questCelebrationData && (
+        <QuestProgressCelebration
+          show={questCelebrationData.show}
+          questTitle={questCelebrationData.questTitle}
+          progress={questCelebrationData.progress}
+          milestone={100}
+          onClose={() => setQuestCelebrationData(null)}
         />
       )}
 
@@ -203,8 +257,9 @@ export function DashboardClient({
             />
           </div>
 
-          {/* Streak Display - Takes 1 column */}
-          <div>
+          {/* Right column - Streak + Weekly XP */}
+          <div className="space-y-6">
+            {/* Streak Display */}
             <StreakDisplay
               currentStreak={currentStreak}
               longestStreak={longestStreak}
@@ -214,6 +269,9 @@ export function DashboardClient({
               currentRarityStreak={currentRarityStreak}
               longestRarityStreak={longestRarityStreak}
             />
+
+            {/* Weekly XP Card */}
+            <WeeklyXPCard weeklyPoints={weeklyPoints} />
           </div>
         </div>
 
