@@ -42,13 +42,14 @@ export function XPCalculator() {
           <label className="text-sm font-medium">New Species?</label>
           <button
             onClick={() => setIsNewSpecies(!isNewSpecies)}
-            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+            className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors touch-manipulation ${
               isNewSpecies ? 'bg-nature-600' : 'bg-gray-200 dark:bg-gray-700'
             }`}
+            aria-label="Toggle new species"
           >
             <span
-              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                isNewSpecies ? 'translate-x-6' : 'translate-x-1'
+              className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform shadow-md ${
+                isNewSpecies ? 'translate-x-7' : 'translate-x-1'
               }`}
             />
           </button>
@@ -62,11 +63,12 @@ export function XPCalculator() {
               <button
                 key={r}
                 onClick={() => setRarity(r)}
-                className={`p-2 rounded-lg border transition-all ${
+                className={`p-3 rounded-lg border transition-all min-h-[44px] touch-manipulation ${
                   rarity === r
-                    ? 'border-nature-500 bg-nature-50 dark:bg-nature-900/20'
+                    ? 'border-nature-500 bg-nature-50 dark:bg-nature-900/20 shadow-md'
                     : 'border-gray-200 dark:border-gray-700 hover:border-nature-300'
                 }`}
+                aria-label={`Set rarity to ${r}`}
               >
                 <RarityBadge rarity={r} size="sm" showLabel={true} />
               </button>
@@ -79,13 +81,14 @@ export function XPCalculator() {
           <label className="text-sm font-medium">Research Grade?</label>
           <button
             onClick={() => setIsResearchGrade(!isResearchGrade)}
-            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+            className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors touch-manipulation ${
               isResearchGrade ? 'bg-nature-600' : 'bg-gray-200 dark:bg-gray-700'
             }`}
+            aria-label="Toggle research grade"
           >
             <span
-              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                isResearchGrade ? 'translate-x-6' : 'translate-x-1'
+              className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform shadow-md ${
+                isResearchGrade ? 'translate-x-7' : 'translate-x-1'
               }`}
             />
           </button>
@@ -103,7 +106,13 @@ export function XPCalculator() {
             max="5"
             value={photoCount}
             onChange={(e) => setPhotoCount(parseInt(e.target.value))}
-            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 accent-nature-600"
+            className="w-full h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 accent-nature-600 touch-pan-y"
+            style={{
+              WebkitAppearance: 'none',
+              // Ensure large enough touch target for mobile
+              minHeight: '44px',
+              padding: '20px 0',
+            }}
           />
           <p className="text-xs text-muted-foreground">
             Max 3 photos count for bonus ({Math.min(photoCount, 3)} × 5 XP)

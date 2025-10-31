@@ -1,0 +1,15 @@
+export { FungiIcon } from './FungiIcon';
+export { InsectaIcon } from './InsectaIcon';
+export { PlantaeIcon } from './PlantaeIcon';
+export { FernIcon } from './FernIcon';
+export { AnimaliaIcon } from './AnimaliaIcon';
+export { AvesIcon } from './AvesIcon';
+export { MolluscaIcon } from './MolluscaIcon';
+export { ArthropodaIcon } from './ArthropodaIcon';
+export { ReptiliaIcon } from './ReptiliaIcon';
+export { MammaliaIcon } from './MammaliaIcon';
+export { AmphibiaIcon } from './AmphibiaIcon';
+export { NematodaIcon } from './NematodaIcon';
+export { ChromistaIcon } from './ChromistaIcon';
+export { VirusIcon } from './VirusIcon';
+export { BacteriaIcon } from './BacteriaIcon';

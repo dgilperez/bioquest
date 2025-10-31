@@ -1,7 +1,16 @@
 'use client';
 
+import React from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import {
+  CircleIcon,
+  DiamondShapeIcon,
+  GemIcon,
+  StarIcon,
+  SparklesIcon,
+  DiamondIcon,
+} from '@/components/icons/rarity';
 
 export type RarityTier = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary' | 'mythic';
 
@@ -15,7 +24,7 @@ interface RarityBadgeProps {
 
 const rarityConfig = {
   common: {
-    emoji: '⚪',
+    icon: CircleIcon,
     label: 'Common',
     color: 'text-gray-500',
     bg: 'bg-gray-100 dark:bg-gray-800',
@@ -24,7 +33,7 @@ const rarityConfig = {
     xp: 0,
   },
   uncommon: {
-    emoji: '🔷',
+    icon: DiamondShapeIcon,
     label: 'Uncommon',
     color: 'text-blue-600 dark:text-blue-400',
     bg: 'bg-blue-50 dark:bg-blue-900/20',
@@ -33,7 +42,7 @@ const rarityConfig = {
     xp: 25,
   },
   rare: {
-    emoji: '💠',
+    icon: GemIcon,
     label: 'Rare',
     color: 'text-purple-600 dark:text-purple-400',
     bg: 'bg-purple-50 dark:bg-purple-900/20',
@@ -42,7 +51,7 @@ const rarityConfig = {
     xp: 100,
   },
   epic: {
-    emoji: '🌟',
+    icon: StarIcon,
     label: 'Epic',
     color: 'text-amber-600 dark:text-amber-400',
     bg: 'bg-amber-50 dark:bg-amber-900/20',
@@ -51,7 +60,7 @@ const rarityConfig = {
     xp: 250,
   },
   legendary: {
-    emoji: '✨',
+    icon: SparklesIcon,
     label: 'Legendary',
     color: 'text-yellow-500 dark:text-yellow-300',
     bg: 'bg-yellow-50 dark:bg-yellow-900/20',
@@ -60,7 +69,7 @@ const rarityConfig = {
     xp: 500,
   },
   mythic: {
-    emoji: '💎',
+    icon: DiamondIcon,
     label: 'Mythic',
     color: 'text-pink-600 dark:text-pink-400',
     bg: 'bg-gradient-to-br from-pink-50 to-purple-50 dark:from-pink-900/20 dark:to-purple-900/20',
@@ -71,9 +80,9 @@ const rarityConfig = {
 };
 
 const sizeConfig = {
-  sm: { badge: 'px-2 py-0.5 text-xs', emoji: 'text-xs', label: 'text-xs', xp: 'text-xs' },
-  md: { badge: 'px-3 py-1 text-sm', emoji: 'text-sm', label: 'text-sm', xp: 'text-xs' },
-  lg: { badge: 'px-4 py-2 text-base', emoji: 'text-lg', label: 'text-base', xp: 'text-sm' },
+  sm: { badge: 'px-2 py-0.5 text-xs', icon: 12, label: 'text-xs', xp: 'text-xs' },
+  md: { badge: 'px-3 py-1 text-sm', icon: 16, label: 'text-sm', xp: 'text-xs' },
+  lg: { badge: 'px-4 py-2 text-base', icon: 20, label: 'text-base', xp: 'text-sm' },
 };
 
 export function RarityBadge({
@@ -85,6 +94,8 @@ export function RarityBadge({
 }: RarityBadgeProps) {
   const config = rarityConfig[rarity];
   const sizes = sizeConfig[size];
+  const IconComponent = config.icon;
+  const [isHovered, setIsHovered] = React.useState(false);
 
   const badgeContent = (
     <div
@@ -97,8 +108,10 @@ export function RarityBadge({
         sizes.badge,
         className
       )}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
-      <span className={sizes.emoji}>{config.emoji}</span>
+      <IconComponent size={sizes.icon} animate={animated ? true : isHovered} />
       {showLabel && (
         <>
           <span className={sizes.label}>{config.label}</span>
