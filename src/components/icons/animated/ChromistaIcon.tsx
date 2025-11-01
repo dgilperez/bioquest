@@ -185,8 +185,14 @@ export function ChromistaIcon({ size = 32, className = '', animate = true }: Chr
           cy="28"
           r="1.5"
           fill="#8B4513"
-          animate={animate ? { cy: [28, 44], opacity: [1, 0] } : undefined}
-          transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+          animate={animate ? 'idle' : undefined}
+          variants={{
+            idle: {
+              cy: [28, 44],
+              opacity: [1, 0],
+              transition: { duration: 2, repeat: Infinity, ease: 'linear' }
+            }
+          }}
         />
       </motion.g>
 
@@ -228,8 +234,14 @@ export function ChromistaIcon({ size = 32, className = '', animate = true }: Chr
         stroke="#6AB8B8"
         strokeWidth="1.5"
         opacity="0.6"
-        animate={animate ? { r: [3, 4, 3], opacity: [0.6, 0.3, 0.6] } : undefined}
-        transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
+        animate={animate ? 'idle' : undefined}
+        variants={{
+          idle: {
+            r: [3, 4, 3],
+            opacity: [0.6, 0.3, 0.6],
+            transition: { duration: 1.5, repeat: Infinity, ease: 'easeInOut' }
+          }
+        }}
       />
 
       <motion.circle
@@ -240,8 +252,14 @@ export function ChromistaIcon({ size = 32, className = '', animate = true }: Chr
         stroke="#6AB8B8"
         strokeWidth="1.5"
         opacity="0.6"
-        animate={animate ? { r: [3, 4, 3], opacity: [0.6, 0.3, 0.6] } : undefined}
-        transition={{ duration: 1.5, delay: 0.75, repeat: Infinity, ease: 'easeInOut' }}
+        animate={animate ? 'idle' : undefined}
+        variants={{
+          idle: {
+            r: [3, 4, 3],
+            opacity: [0.6, 0.3, 0.6],
+            transition: { duration: 1.5, delay: 0.75, repeat: Infinity, ease: 'easeInOut' }
+          }
+        }}
       />
 
       {/* ===== ANTERIOR CILIA (longer at front for steering) ===== */}
@@ -264,8 +282,13 @@ export function ChromistaIcon({ size = 32, className = '', animate = true }: Chr
             strokeWidth="2"
             strokeLinecap="round"
             opacity="0.8"
-            animate={animate ? { rotate: [0, -20, 0, 20, 0] } : undefined}
-            transition={{ duration: 0.8, delay, repeat: Infinity, ease: 'easeInOut' }}
+            animate={animate ? 'idle' : undefined}
+            variants={{
+              idle: {
+                rotate: [0, -20, 0, 20, 0],
+                transition: { duration: 0.8, delay, repeat: Infinity, ease: 'easeInOut' }
+              }
+            }}
             style={{ transformOrigin: x1 + 'px ' + y1 + 'px' }}
           />
         );

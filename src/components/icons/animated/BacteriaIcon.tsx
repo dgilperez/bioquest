@@ -87,6 +87,7 @@ export function BacteriaIcon({ size = 32, className = '', animate = true }: Bact
       {/* ===== FLAGELLA (whip-like tails for movement) ===== */}
       {/* Posterior flagellum */}
       <motion.path
+        d="M 60 40 Q 65 35, 68 38 Q 71 41, 74 38"
         animate={animate ? 'idle' : undefined}
         variants={flagellaWaveVariants(0)}
         stroke="#7D6E83"
@@ -98,9 +99,9 @@ export function BacteriaIcon({ size = 32, className = '', animate = true }: Bact
 
       {/* Additional flagellum */}
       <motion.path
+        d="M 60 42 Q 65 47, 68 44 Q 71 41, 74 44"
         animate={animate ? 'idle' : undefined}
         variants={flagellaWaveVariants(0.3)}
-        d="M 60 42 Q 65 47, 68 44 Q 71 41, 74 44"
         stroke="#7D6E83"
         strokeWidth="2"
         strokeLinecap="round"
@@ -244,8 +245,13 @@ export function BacteriaIcon({ size = 32, className = '', animate = true }: Bact
 
       {/* Sex pilus (longer, for conjugation) */}
       <motion.g
-        animate={animate ? { rotate: [-10, 10, -10] } : undefined}
-        transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+        animate={animate ? 'idle' : undefined}
+        variants={{
+          idle: {
+            rotate: [-10, 10, -10],
+            transition: { duration: 2, repeat: Infinity, ease: 'easeInOut' }
+          }
+        }}
         style={{ transformOrigin: '22px 34px' }}
       >
         <path
@@ -267,8 +273,13 @@ export function BacteriaIcon({ size = 32, className = '', animate = true }: Bact
         ry="3"
         fill="#5B2C6F"
         opacity="0.4"
-        animate={animate ? { opacity: [0.4, 0.6, 0.4] } : undefined}
-        transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+        animate={animate ? 'idle' : undefined}
+        variants={{
+          idle: {
+            opacity: [0.4, 0.6, 0.4],
+            transition: { duration: 3, repeat: Infinity, ease: 'easeInOut' }
+          }
+        }}
       />
 
       {/* Gradient definitions */}

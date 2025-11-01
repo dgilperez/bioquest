@@ -28,12 +28,14 @@ export function AnimaliaIcon({ size = 32, className = '', animate = true }: Anim
   };
 
   const legWalkVariants = (delay: number, direction: 1 | -1) => ({
-    rotate: animate ? [0, 10 * direction, 0, -8 * direction, 0] : 0,
-    transition: {
-      duration: 2.5,
-      delay,
-      repeat: Infinity,
-      ease: 'easeInOut',
+    idle: {
+      rotate: animate ? [0, 10 * direction, 0, -8 * direction, 0] : 0,
+      transition: {
+        duration: 2.5,
+        delay,
+        repeat: Infinity,
+        ease: 'easeInOut',
+      },
     },
   });
 
@@ -247,7 +249,8 @@ export function AnimaliaIcon({ size = 32, className = '', animate = true }: Anim
         {/* ===== LEGS (thick and sturdy) ===== */}
         {/* Front left leg (far) */}
         <motion.g
-          animate={legWalkVariants(0, 1)}
+          animate={animate ? 'idle' : undefined}
+          variants={legWalkVariants(0, 1)}
           style={{ transformOrigin: '32px 52px' }}
         >
           <rect
@@ -286,7 +289,8 @@ export function AnimaliaIcon({ size = 32, className = '', animate = true }: Anim
 
         {/* Front right leg (near) */}
         <motion.g
-          animate={legWalkVariants(0.625, -1)}
+          animate={animate ? 'idle' : undefined}
+          variants={legWalkVariants(0.625, -1)}
           style={{ transformOrigin: '40px 52px' }}
         >
           <rect
@@ -328,7 +332,8 @@ export function AnimaliaIcon({ size = 32, className = '', animate = true }: Anim
 
         {/* Back left leg (far) */}
         <motion.g
-          animate={legWalkVariants(0.3125, -1)}
+          animate={animate ? 'idle' : undefined}
+          variants={legWalkVariants(0.3125, -1)}
           style={{ transformOrigin: '50px 52px' }}
         >
           <rect
@@ -367,7 +372,8 @@ export function AnimaliaIcon({ size = 32, className = '', animate = true }: Anim
 
         {/* Back right leg (near) */}
         <motion.g
-          animate={legWalkVariants(0.9375, 1)}
+          animate={animate ? 'idle' : undefined}
+          variants={legWalkVariants(0.9375, 1)}
           style={{ transformOrigin: '58px 52px' }}
         >
           <rect

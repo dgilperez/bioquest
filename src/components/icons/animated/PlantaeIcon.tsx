@@ -25,12 +25,14 @@ export function PlantaeIcon({ size = 32, className = '', animate = true }: Plant
   };
 
   const veinDrawVariants = (delay: number) => ({
-    pathLength: animate ? [0, 1] : 1,
-    opacity: animate ? [0, 1] : 1,
-    transition: {
-      duration: 0.6,
-      delay,
-      ease: 'easeOut',
+    idle: {
+      pathLength: animate ? [0, 1] : 1,
+      opacity: animate ? [0, 1] : 1,
+      transition: {
+        duration: 0.6,
+        delay,
+        ease: 'easeOut',
+      },
     },
   });
 
@@ -198,7 +200,8 @@ export function PlantaeIcon({ size = 32, className = '', animate = true }: Plant
           strokeWidth="1.8"
           strokeLinecap="round"
           initial={{ pathLength: 0, opacity: 0 }}
-          animate={veinDrawVariants(0.1)}
+          animate={animate ? 'idle' : undefined}
+          variants={veinDrawVariants(0.1)}
         />
 
         {/* Midvein highlight */}
@@ -209,7 +212,8 @@ export function PlantaeIcon({ size = 32, className = '', animate = true }: Plant
           strokeLinecap="round"
           opacity="0.5"
           initial={{ pathLength: 0, opacity: 0 }}
-          animate={veinDrawVariants(0.15)}
+          animate={animate ? 'idle' : undefined}
+          variants={veinDrawVariants(0.15)}
         />
 
         {/* Secondary veins - left side */}
@@ -231,7 +235,8 @@ export function PlantaeIcon({ size = 32, className = '', animate = true }: Plant
             strokeLinecap="round"
             fill="none"
             initial={{ pathLength: 0, opacity: 0 }}
-            animate={veinDrawVariants(vein.delay)}
+            animate={animate ? 'idle' : undefined}
+          variants={veinDrawVariants(vein.delay)}
           />
         ))}
 
@@ -254,7 +259,8 @@ export function PlantaeIcon({ size = 32, className = '', animate = true }: Plant
             strokeLinecap="round"
             fill="none"
             initial={{ pathLength: 0, opacity: 0 }}
-            animate={veinDrawVariants(vein.delay)}
+            animate={animate ? 'idle' : undefined}
+          variants={veinDrawVariants(vein.delay)}
           />
         ))}
 
@@ -275,7 +281,8 @@ export function PlantaeIcon({ size = 32, className = '', animate = true }: Plant
             strokeLinecap="round"
             opacity="0.6"
             initial={{ pathLength: 0, opacity: 0 }}
-            animate={veinDrawVariants(vein.delay)}
+            animate={animate ? 'idle' : undefined}
+          variants={veinDrawVariants(vein.delay)}
           />
         ))}
 
@@ -296,7 +303,8 @@ export function PlantaeIcon({ size = 32, className = '', animate = true }: Plant
             strokeLinecap="round"
             opacity="0.6"
             initial={{ pathLength: 0, opacity: 0 }}
-            animate={veinDrawVariants(vein.delay)}
+            animate={animate ? 'idle' : undefined}
+          variants={veinDrawVariants(vein.delay)}
           />
         ))}
 

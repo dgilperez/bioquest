@@ -39,13 +39,15 @@ export function FungiIcon({ size = 32, className = '', animate = true }: FungiIc
   };
 
   const spotVariants = (delay: number) => ({
-    scale: animate ? [1, 1.2, 1] : 1,
-    opacity: animate ? [0.95, 1, 0.95] : 0.95,
-    transition: {
-      duration: 1.8,
-      delay: delay * 0.08,
-      repeat: Infinity,
-      ease: 'easeInOut',
+    idle: {
+      scale: animate ? [1, 1.2, 1] : 1,
+      opacity: animate ? [0.95, 1, 0.95] : 0.95,
+      transition: {
+        duration: 1.8,
+        delay: delay * 0.08,
+        repeat: Infinity,
+        ease: 'easeInOut',
+      },
     },
   });
 
@@ -240,7 +242,9 @@ export function FungiIcon({ size = 32, className = '', animate = true }: FungiIc
 
       {/* White spots - varied sizes with animation */}
       {/* Large central spot */}
-      <motion.g animate={spotVariants(0)}>
+      <motion.g
+        animate={animate ? 'idle' : undefined}
+        variants={spotVariants(0)}>
         <ellipse
           cx="40"
           cy="36"
@@ -260,7 +264,9 @@ export function FungiIcon({ size = 32, className = '', animate = true }: FungiIc
       </motion.g>
 
       {/* Upper left spot */}
-      <motion.g animate={spotVariants(1)}>
+      <motion.g
+        animate={animate ? 'idle' : undefined}
+        variants={spotVariants(1)}>
         <ellipse
           cx="30"
           cy="40"
@@ -280,7 +286,9 @@ export function FungiIcon({ size = 32, className = '', animate = true }: FungiIc
       </motion.g>
 
       {/* Upper right spot */}
-      <motion.g animate={spotVariants(2)}>
+      <motion.g
+        animate={animate ? 'idle' : undefined}
+        variants={spotVariants(2)}>
         <ellipse
           cx="50"
           cy="39.5"
@@ -300,7 +308,9 @@ export function FungiIcon({ size = 32, className = '', animate = true }: FungiIc
       </motion.g>
 
       {/* Lower left spot */}
-      <motion.g animate={spotVariants(3)}>
+      <motion.g
+        animate={animate ? 'idle' : undefined}
+        variants={spotVariants(3)}>
         <ellipse
           cx="26"
           cy="45"
@@ -320,7 +330,9 @@ export function FungiIcon({ size = 32, className = '', animate = true }: FungiIc
       </motion.g>
 
       {/* Mid-left spot */}
-      <motion.g animate={spotVariants(4)}>
+      <motion.g
+        animate={animate ? 'idle' : undefined}
+        variants={spotVariants(4)}>
         <ellipse
           cx="33"
           cy="44.5"
@@ -340,7 +352,9 @@ export function FungiIcon({ size = 32, className = '', animate = true }: FungiIc
       </motion.g>
 
       {/* Lower right spot */}
-      <motion.g animate={spotVariants(5)}>
+      <motion.g
+        animate={animate ? 'idle' : undefined}
+        variants={spotVariants(5)}>
         <ellipse
           cx="48"
           cy="46"
@@ -366,7 +380,8 @@ export function FungiIcon({ size = 32, className = '', animate = true }: FungiIc
         r="1.7"
         fill="#F5E8D0"
         opacity="0.88"
-        animate={spotVariants(6)}
+        animate={animate ? 'idle' : undefined}
+        variants={spotVariants(6)}
       />
 
       {/* Far right small spot */}
@@ -376,7 +391,8 @@ export function FungiIcon({ size = 32, className = '', animate = true }: FungiIc
         r="1.8"
         fill="#F5E8D0"
         opacity="0.89"
-        animate={spotVariants(7)}
+        animate={animate ? 'idle' : undefined}
+        variants={spotVariants(7)}
       />
 
       {/* Tiny spots for extra detail */}
@@ -386,7 +402,8 @@ export function FungiIcon({ size = 32, className = '', animate = true }: FungiIc
         r="1.2"
         fill="#F5E8D0"
         opacity="0.85"
-        animate={spotVariants(8)}
+        animate={animate ? 'idle' : undefined}
+        variants={spotVariants(8)}
       />
 
       <motion.circle
@@ -395,7 +412,8 @@ export function FungiIcon({ size = 32, className = '', animate = true }: FungiIc
         r="1.3"
         fill="#F5E8D0"
         opacity="0.86"
-        animate={spotVariants(9)}
+        animate={animate ? 'idle' : undefined}
+        variants={spotVariants(9)}
       />
 
       <motion.circle
@@ -404,7 +422,8 @@ export function FungiIcon({ size = 32, className = '', animate = true }: FungiIc
         r="1"
         fill="#F5E8D0"
         opacity="0.82"
-        animate={spotVariants(10)}
+        animate={animate ? 'idle' : undefined}
+        variants={spotVariants(10)}
       />
 
       <motion.circle
@@ -413,7 +432,8 @@ export function FungiIcon({ size = 32, className = '', animate = true }: FungiIc
         r="1.2"
         fill="#F5E8D0"
         opacity="0.83"
-        animate={spotVariants(11)}
+        animate={animate ? 'idle' : undefined}
+        variants={spotVariants(11)}
       />
     </motion.svg>
   );

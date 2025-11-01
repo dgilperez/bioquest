@@ -26,12 +26,14 @@ export function AvesIcon({ size = 32, className = '', animate = true }: AvesIcon
   };
 
   const wingFlutterVariants = (delay: number) => ({
-    scaleY: animate ? [1, 0.9, 1] : 1,
-    transition: {
-      duration: 2,
-      delay,
-      repeat: Infinity,
-      ease: 'easeInOut',
+    idle: {
+      scaleY: animate ? [1, 0.9, 1] : 1,
+      transition: {
+        duration: 2,
+        delay,
+        repeat: Infinity,
+        ease: 'easeInOut',
+      },
     },
   });
 
@@ -115,13 +117,15 @@ export function AvesIcon({ size = 32, className = '', animate = true }: AvesIcon
           fill="#4A7ACC"
           opacity="0.7"
           transform="rotate(15 36 45)"
-          animate={wingFlutterVariants(0)}
+          animate={animate ? 'idle' : undefined}
+          variants={wingFlutterVariants(0)}
           style={{ transformOrigin: '36px 45px' }}
         />
 
         {/* ===== RIGHT WING (near side) ===== */}
         <motion.g
-          animate={wingFlutterVariants(0.1)}
+          animate={animate ? 'idle' : undefined}
+          variants={wingFlutterVariants(0.1)}
           style={{ transformOrigin: '44px 45px' }}
         >
           <ellipse

@@ -26,24 +26,28 @@ export function OctopusIcon({ size = 32, className = '', animate = true }: Octop
   };
 
   const tentacleWaveVariants = (delay: number, amplitude: number) => ({
-    rotate: animate ? [-amplitude, amplitude, -amplitude] : 0,
-    scaleY: animate ? [1, 1.1, 1] : 1,
-    transition: {
-      duration: 2,
-      delay,
-      repeat: Infinity,
-      ease: 'easeInOut',
+    idle: {
+      rotate: animate ? [-amplitude, amplitude, -amplitude] : 0,
+      scaleY: animate ? [1, 1.1, 1] : 1,
+      transition: {
+        duration: 2,
+        delay,
+        repeat: Infinity,
+        ease: 'easeInOut',
+      },
     },
   });
 
   const suckerPulseVariants = (delay: number) => ({
-    scale: animate ? [1, 1.3, 1] : 1,
-    opacity: animate ? [0.6, 0.8, 0.6] : 0.6,
-    transition: {
-      duration: 1.5,
-      delay,
-      repeat: Infinity,
-      ease: 'easeInOut',
+    idle: {
+      scale: animate ? [1, 1.3, 1] : 1,
+      opacity: animate ? [0.6, 0.8, 0.6] : 0.6,
+      transition: {
+        duration: 1.5,
+        delay,
+        repeat: Infinity,
+        ease: 'easeInOut',
+      },
     },
   });
 
@@ -59,12 +63,14 @@ export function OctopusIcon({ size = 32, className = '', animate = true }: Octop
   };
 
   const skinTextureShimmer = (delay: number) => ({
-    opacity: animate ? [0.3, 0.5, 0.3] : 0.3,
-    transition: {
-      duration: 2,
-      delay,
-      repeat: Infinity,
-      ease: 'easeInOut',
+    idle: {
+      opacity: animate ? [0.3, 0.5, 0.3] : 0.3,
+      transition: {
+        duration: 2,
+        delay,
+        repeat: Infinity,
+        ease: 'easeInOut',
+      },
     },
   });
 
@@ -90,7 +96,8 @@ export function OctopusIcon({ size = 32, className = '', animate = true }: Octop
       {/* ===== TENTACLES (8 total) ===== */}
       {/* Tentacle 1 - Front Left */}
       <motion.g
-        animate={tentacleWaveVariants(0, 15)}
+        animate={animate ? 'idle' : undefined}
+        variants={tentacleWaveVariants(0, 15)}
         style={{ transformOrigin: '32px 55px' }}
       >
         <path
@@ -116,14 +123,16 @@ export function OctopusIcon({ size = 32, className = '', animate = true }: Octop
             cy={sucker.y}
             r="1.8"
             fill="#A65B4A"
-            animate={suckerPulseVariants(i * 0.15)}
+            animate={animate ? 'idle' : undefined}
+            variants={suckerPulseVariants(i * 0.15)}
           />
         ))}
       </motion.g>
 
       {/* Tentacle 2 - Front Left-Center */}
       <motion.g
-        animate={tentacleWaveVariants(0.2, 12)}
+        animate={animate ? 'idle' : undefined}
+        variants={tentacleWaveVariants(0.2, 12)}
         style={{ transformOrigin: '35px 56px' }}
       >
         <path
@@ -148,14 +157,16 @@ export function OctopusIcon({ size = 32, className = '', animate = true }: Octop
             cy={sucker.y}
             r="1.6"
             fill="#A65B4A"
-            animate={suckerPulseVariants(0.2 + i * 0.15)}
+            animate={animate ? 'idle' : undefined}
+            variants={suckerPulseVariants(0.2 + i * 0.15)}
           />
         ))}
       </motion.g>
 
       {/* Tentacle 3 - Front Right-Center */}
       <motion.g
-        animate={tentacleWaveVariants(0.4, 10)}
+        animate={animate ? 'idle' : undefined}
+        variants={tentacleWaveVariants(0.4, 10)}
         style={{ transformOrigin: '45px 56px' }}
       >
         <path
@@ -180,14 +191,16 @@ export function OctopusIcon({ size = 32, className = '', animate = true }: Octop
             cy={sucker.y}
             r="1.6"
             fill="#A65B4A"
-            animate={suckerPulseVariants(0.4 + i * 0.15)}
+            animate={animate ? 'idle' : undefined}
+            variants={suckerPulseVariants(0.4 + i * 0.15)}
           />
         ))}
       </motion.g>
 
       {/* Tentacle 4 - Front Right */}
       <motion.g
-        animate={tentacleWaveVariants(0.6, 15)}
+        animate={animate ? 'idle' : undefined}
+        variants={tentacleWaveVariants(0.6, 15)}
         style={{ transformOrigin: '48px 55px' }}
       >
         <path
@@ -212,14 +225,16 @@ export function OctopusIcon({ size = 32, className = '', animate = true }: Octop
             cy={sucker.y}
             r="1.8"
             fill="#A65B4A"
-            animate={suckerPulseVariants(0.6 + i * 0.15)}
+            animate={animate ? 'idle' : undefined}
+            variants={suckerPulseVariants(0.6 + i * 0.15)}
           />
         ))}
       </motion.g>
 
       {/* Tentacle 5 - Back Left */}
       <motion.g
-        animate={tentacleWaveVariants(0.8, 18)}
+        animate={animate ? 'idle' : undefined}
+        variants={tentacleWaveVariants(0.8, 18)}
         style={{ transformOrigin: '28px 52px' }}
       >
         <path
@@ -246,14 +261,16 @@ export function OctopusIcon({ size = 32, className = '', animate = true }: Octop
             r="1.5"
             fill="#A65B4A"
             opacity="0.7"
-            animate={suckerPulseVariants(0.8 + i * 0.15)}
+            animate={animate ? 'idle' : undefined}
+            variants={suckerPulseVariants(0.8 + i * 0.15)}
           />
         ))}
       </motion.g>
 
       {/* Tentacle 6 - Back Left-Center */}
       <motion.g
-        animate={tentacleWaveVariants(1, 14)}
+        animate={animate ? 'idle' : undefined}
+        variants={tentacleWaveVariants(1, 14)}
         style={{ transformOrigin: '33px 53px' }}
       >
         <path
@@ -280,14 +297,16 @@ export function OctopusIcon({ size = 32, className = '', animate = true }: Octop
             r="1.4"
             fill="#A65B4A"
             opacity="0.7"
-            animate={suckerPulseVariants(1 + i * 0.15)}
+            animate={animate ? 'idle' : undefined}
+            variants={suckerPulseVariants(1 + i * 0.15)}
           />
         ))}
       </motion.g>
 
       {/* Tentacle 7 - Back Right-Center */}
       <motion.g
-        animate={tentacleWaveVariants(1.2, 14)}
+        animate={animate ? 'idle' : undefined}
+        variants={tentacleWaveVariants(1.2, 14)}
         style={{ transformOrigin: '47px 53px' }}
       >
         <path
@@ -314,14 +333,16 @@ export function OctopusIcon({ size = 32, className = '', animate = true }: Octop
             r="1.4"
             fill="#A65B4A"
             opacity="0.7"
-            animate={suckerPulseVariants(1.2 + i * 0.15)}
+            animate={animate ? 'idle' : undefined}
+            variants={suckerPulseVariants(1.2 + i * 0.15)}
           />
         ))}
       </motion.g>
 
       {/* Tentacle 8 - Back Right */}
       <motion.g
-        animate={tentacleWaveVariants(1.4, 18)}
+        animate={animate ? 'idle' : undefined}
+        variants={tentacleWaveVariants(1.4, 18)}
         style={{ transformOrigin: '52px 52px' }}
       >
         <path
@@ -348,7 +369,8 @@ export function OctopusIcon({ size = 32, className = '', animate = true }: Octop
             r="1.5"
             fill="#A65B4A"
             opacity="0.7"
-            animate={suckerPulseVariants(1.4 + i * 0.15)}
+            animate={animate ? 'idle' : undefined}
+            variants={suckerPulseVariants(1.4 + i * 0.15)}
           />
         ))}
       </motion.g>
@@ -411,7 +433,8 @@ export function OctopusIcon({ size = 32, className = '', animate = true }: Octop
             r={bump.r}
             fill="#C77D6B"
             opacity="0.3"
-            animate={skinTextureShimmer(i * 0.2)}
+            animate={animate ? 'idle' : undefined}
+            variants={skinTextureShimmer(i * 0.2)}
           />
         ))}
 
