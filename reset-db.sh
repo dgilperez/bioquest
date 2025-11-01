@@ -7,6 +7,10 @@ rm -f prisma/dev.db prisma/dev.db-journal prisma/dev.db-wal prisma/dev.db-shm
 echo "🔨 Creating database schema..."
 npx prisma db push
 
+echo "🔧 Setting database permissions..."
+chmod 664 prisma/dev.db
+chmod 775 prisma/
+
 echo "🌱 Seeding database..."
 npm run db:seed
 

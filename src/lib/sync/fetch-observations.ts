@@ -17,6 +17,8 @@ export interface FetchOptions {
 export interface FetchResult {
   observations: INatObservation[];
   isIncrementalSync: boolean;
+  totalAvailable: number;
+  fetchedAll: boolean; // true if we fetched all available observations
 }
 
 /**
@@ -75,9 +77,19 @@ export async function fetchUserObservations({
 
   console.log(`Fetched ${allObservations.length} observations (total available: ${totalResults})`);
 
+  const fetchedAll = allObservations.length >= totalResults;
+
+  if (!fetchedAll) {
+    console.log(`⚠️  Partial sync: ${totalResults - allObservations.length} observations remaining. Trigger another sync to continue.`);
+  } else {
+    console.log(`✅ Complete sync: All available observations fetched.`);
+  }
+
   return {
     observations: allObservations,
     isIncrementalSync,
+    totalAvailable: totalResults,
+    fetchedAll,
   };
 }
 

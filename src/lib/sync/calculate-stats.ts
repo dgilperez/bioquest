@@ -24,6 +24,7 @@ export interface StatsUpdateInput {
   rareObservations: number;
   legendaryObservations: number;
   stats: StatsResult;
+  fetchedAll: boolean; // Only update lastSyncedAt if we fetched all available observations
 }
 
 export interface StatsResult {
@@ -121,7 +122,7 @@ export async function updateUserStatsInDB(
   userId: string,
   updateInput: StatsUpdateInput
 ): Promise<void> {
-  const { totalObservations, totalPoints, rareObservations, legendaryObservations, stats } = updateInput;
+  const { totalObservations, totalPoints, rareObservations, legendaryObservations, stats, fetchedAll } = updateInput;
   const syncTime = new Date();
 
   await prisma.userStats.upsert({
@@ -140,7 +141,9 @@ export async function updateUserStatsInDB(
       currentRarityStreak: stats.currentRarityStreak,
       longestRarityStreak: stats.longestRarityStreak,
       lastRareObservationDate: stats.lastRareObservationDate,
-      lastSyncedAt: syncTime,
+      // Only set lastSyncedAt if we fetched ALL available observations
+      // This allows future syncs to continue from where we left off if we hit the limit
+      ...(fetchedAll ? { lastSyncedAt: syncTime } : {}),
       updatedAt: syncTime,
     },
     create: {
@@ -158,7 +161,8 @@ export async function updateUserStatsInDB(
       currentRarityStreak: stats.currentRarityStreak,
       longestRarityStreak: stats.longestRarityStreak,
       lastRareObservationDate: stats.lastRareObservationDate,
-      lastSyncedAt: syncTime,
+      // Only set lastSyncedAt on create if we fetched all available observations
+      ...(fetchedAll ? { lastSyncedAt: syncTime } : {}),
     },
   });
 }

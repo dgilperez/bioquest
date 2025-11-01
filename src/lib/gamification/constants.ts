@@ -161,10 +161,10 @@ export const SYNC_CONFIG = {
   RATE_LIMIT_MARGIN: 0.9,
 
   /** Maximum observations to process in one sync operation (respects rate limits) */
-  MAX_OBSERVATIONS_PER_SYNC: 1000,
+  MAX_OBSERVATIONS_PER_SYNC: process.env.NODE_ENV === 'production' ? 1000 : 100,
 
   /** For large backlogs, process this many at a time and let user trigger next batch */
-  CHUNK_SIZE: 1000,
+  CHUNK_SIZE: process.env.NODE_ENV === 'production' ? 1000 : 100,
 } as const;
 
 // ============================================================================

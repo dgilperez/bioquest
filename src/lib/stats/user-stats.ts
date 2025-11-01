@@ -124,7 +124,7 @@ export async function syncUserObservations(
     const lastSyncedAt = currentStats?.lastSyncedAt;
 
     // Initialize progress tracking (estimate total based on last sync)
-    const estimatedTotal = lastSyncedAt ? 100 : 1000; // Conservative estimate
+    const estimatedTotal = lastSyncedAt ? 100 : (process.env.NODE_ENV === 'production' ? 1000 : 100); // Conservative estimate
     initProgress(userId, estimatedTotal);
 
     // Step 1: Fetch observations from iNaturalist
@@ -134,7 +134,7 @@ export async function syncUserObservations(
       message: 'Fetching observations from iNaturalist...',
     });
 
-    const { observations } = await fetchUserObservations({
+    const { observations, fetchedAll } = await fetchUserObservations({
       accessToken,
       inatUsername,
       lastSyncedAt: lastSyncedAt || undefined,
@@ -175,8 +175,9 @@ export async function syncUserObservations(
           observationsProcessed: estimatedObsProcessed,
         });
       },
-      // Enable fast sync for onboarding (only classify top 200 taxa)
-      { fastSync: true, fastSyncLimit: 200 }
+      // Enable fast sync for onboarding (only classify top N taxa)
+      // In dev mode, use lower limit to test background processing
+      { fastSync: true, fastSyncLimit: process.env.NODE_ENV === 'production' ? 200 : 50 }
     );
 
     updateProgress(userId, {
@@ -237,6 +238,7 @@ export async function syncUserObservations(
       rareObservations,
       legendaryObservations,
       stats,
+      fetchedAll, // Only set lastSyncedAt if we fetched all available observations
     });
 
     // Step 8: Manage leaderboards
