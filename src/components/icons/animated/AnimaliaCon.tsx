@@ -105,13 +105,16 @@ export function AnimaliaIcon({ size = 32, className = '', animate = true }: Anim
         rx="4"
         ry="7"
         fill="#6B5B4A"
-        animate={animate ? {
-          rotate: [-5, 5, -5],
-        } : undefined}
-        transition={{
-          duration: 2,
-          repeat: Infinity,
-          ease: 'easeInOut',
+        animate={animate ? 'idle' : undefined}
+        variants={{
+          idle: {
+            rotate: [-5, 5, -5],
+            transition: {
+              duration: 2,
+              repeat: Infinity,
+              ease: 'easeInOut',
+            }
+          }
         }}
         style={{ transformOrigin: '24px 28px' }}
       />
@@ -121,13 +124,16 @@ export function AnimaliaIcon({ size = 32, className = '', animate = true }: Anim
         rx="4"
         ry="7"
         fill="#6B5B4A"
-        animate={animate ? {
-          rotate: [5, -5, 5],
-        } : undefined}
-        transition={{
-          duration: 2,
-          repeat: Infinity,
-          ease: 'easeInOut',
+        animate={animate ? 'idle' : undefined}
+        variants={{
+          idle: {
+            rotate: [5, -5, 5],
+            transition: {
+              duration: 2,
+              repeat: Infinity,
+              ease: 'easeInOut',
+            }
+          }
         }}
         style={{ transformOrigin: '36px 28px' }}
       />
