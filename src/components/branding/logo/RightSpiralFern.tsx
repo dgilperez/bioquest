@@ -103,8 +103,8 @@ export default function RightSpiralFern({ shouldAnimate, duration }: RightSpiral
         strokeLinejoin="round"
         fill="none"
         opacity="0.8"
+        initial={false}
         variants={tentacleVariants}
-        initial="hidden"
         animate={shouldAnimate ? 'visible' : 'visible'}
       />
 
@@ -120,8 +120,8 @@ export default function RightSpiralFern({ shouldAnimate, duration }: RightSpiral
         strokeLinecap="round"
         fill="none"
         opacity="0.6"
+        initial={false}
         variants={tentacleVariants}
-        initial="hidden"
         animate={shouldAnimate ? 'visible' : 'visible'}
       />
 
@@ -136,8 +136,8 @@ export default function RightSpiralFern({ shouldAnimate, duration }: RightSpiral
         strokeLinecap="round"
         fill="none"
         opacity="0.5"
+        initial={false}
         variants={tentacleVariants}
-        initial="hidden"
         animate={shouldAnimate ? 'visible' : 'visible'}
       />
 
@@ -168,7 +168,7 @@ export default function RightSpiralFern({ shouldAnimate, duration }: RightSpiral
           key={`suction-${i}`}
           variants={suctionVariants}
           custom={cup.delay}
-          initial="hidden"
+          initial={false}
           animate={shouldAnimate ? 'visible' : 'visible'}
         >
           {/* Outer rim */}
@@ -226,7 +226,7 @@ export default function RightSpiralFern({ shouldAnimate, duration }: RightSpiral
           fill="none"
           opacity="0.3"
           variants={tentacleVariants}
-          initial="hidden"
+          initial={false}
           animate={shouldAnimate ? 'visible' : 'visible'}
         />
       ))}
@@ -249,7 +249,7 @@ export default function RightSpiralFern({ shouldAnimate, duration }: RightSpiral
           fill="none"
           opacity={ridge.opacity}
           variants={tentacleVariants}
-          initial="hidden"
+          initial={false}
           animate={shouldAnimate ? 'visible' : 'visible'}
         />
       ))}

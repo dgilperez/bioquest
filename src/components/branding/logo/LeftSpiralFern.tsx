@@ -106,7 +106,7 @@ export default function LeftSpiralFern({ shouldAnimate, duration }: LeftSpiralFe
         fill="none"
         opacity="0.8"
         variants={tentacleVariants}
-        initial="hidden"
+        initial={false}
         animate={shouldAnimate ? 'visible' : 'visible'}
       />
 
@@ -123,7 +123,7 @@ export default function LeftSpiralFern({ shouldAnimate, duration }: LeftSpiralFe
         fill="none"
         opacity="0.6"
         variants={tentacleVariants}
-        initial="hidden"
+        initial={false}
         animate={shouldAnimate ? 'visible' : 'visible'}
       />
 
@@ -139,7 +139,7 @@ export default function LeftSpiralFern({ shouldAnimate, duration }: LeftSpiralFe
         fill="none"
         opacity="0.5"
         variants={tentacleVariants}
-        initial="hidden"
+        initial={false}
         animate={shouldAnimate ? 'visible' : 'visible'}
       />
 
@@ -170,7 +170,7 @@ export default function LeftSpiralFern({ shouldAnimate, duration }: LeftSpiralFe
           key={`suction-${i}`}
           variants={suctionVariants}
           custom={cup.delay}
-          initial="hidden"
+          initial={false}
           animate={shouldAnimate ? 'visible' : 'visible'}
         >
           {/* Outer rim */}
@@ -228,7 +228,7 @@ export default function LeftSpiralFern({ shouldAnimate, duration }: LeftSpiralFe
           fill="none"
           opacity="0.3"
           variants={tentacleVariants}
-          initial="hidden"
+          initial={false}
           animate={shouldAnimate ? 'visible' : 'visible'}
         />
       ))}
@@ -251,7 +251,7 @@ export default function LeftSpiralFern({ shouldAnimate, duration }: LeftSpiralFe
           fill="none"
           opacity={ridge.opacity}
           variants={tentacleVariants}
-          initial="hidden"
+          initial={false}
           animate={shouldAnimate ? 'visible' : 'visible'}
         />
       ))}
