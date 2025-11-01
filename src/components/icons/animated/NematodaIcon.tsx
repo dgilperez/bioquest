@@ -108,7 +108,7 @@ export function NematodaIcon({ size = 32, className = '', animate = true }: Nema
         animate={animate ? 'idle' : undefined}
         variants={segmentPulseVariants(0)}
       >
-        <motion.ellipse
+        <ellipse
           cx="28"
           cy="32"
           rx="6"
@@ -117,14 +117,6 @@ export function NematodaIcon({ size = 32, className = '', animate = true }: Nema
           stroke="#6B5345"
           strokeWidth="1"
           opacity="0.4"
-          animate={animate ? 'idle' : undefined}
-          variants={{
-            idle: {
-              cx: [28, 30, 28],
-              cy: [32, 36, 32],
-              transition: { duration: 2, repeat: Infinity, ease: 'easeInOut' }
-            }
-          }}
         />
       </motion.g>
 
@@ -132,7 +124,7 @@ export function NematodaIcon({ size = 32, className = '', animate = true }: Nema
         animate={animate ? 'idle' : undefined}
         variants={segmentPulseVariants(0.3)}
       >
-        <motion.ellipse
+        <ellipse
           cx="38"
           cy="38"
           rx="6"
@@ -141,14 +133,6 @@ export function NematodaIcon({ size = 32, className = '', animate = true }: Nema
           stroke="#6B5345"
           strokeWidth="1"
           opacity="0.4"
-          animate={animate ? 'idle' : undefined}
-          variants={{
-            idle: {
-              cx: [38, 40, 38],
-              cy: [38, 42, 38],
-              transition: { duration: 2, repeat: Infinity, ease: 'easeInOut' }
-            }
-          }}
         />
       </motion.g>
 
@@ -156,7 +140,7 @@ export function NematodaIcon({ size = 32, className = '', animate = true }: Nema
         animate={animate ? 'idle' : undefined}
         variants={segmentPulseVariants(0.6)}
       >
-        <motion.ellipse
+        <ellipse
           cx="48"
           cy="44"
           rx="6"
@@ -165,14 +149,6 @@ export function NematodaIcon({ size = 32, className = '', animate = true }: Nema
           stroke="#6B5345"
           strokeWidth="1"
           opacity="0.4"
-          animate={animate ? 'idle' : undefined}
-          variants={{
-            idle: {
-              cx: [48, 50, 48],
-              cy: [44, 47, 44],
-              transition: { duration: 2, repeat: Infinity, ease: 'easeInOut' }
-            }
-          }}
         />
       </motion.g>
 

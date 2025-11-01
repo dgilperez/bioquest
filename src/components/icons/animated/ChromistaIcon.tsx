@@ -188,7 +188,7 @@ export function ChromistaIcon({ size = 32, className = '', animate = true }: Chr
           animate={animate ? 'idle' : undefined}
           variants={{
             idle: {
-              cy: [28, 44],
+              y: [0, 16],  // Move from cy=28 to cy=44 (16px down)
               opacity: [1, 0],
               transition: { duration: 2, repeat: Infinity, ease: 'linear' }
             }
@@ -237,11 +237,12 @@ export function ChromistaIcon({ size = 32, className = '', animate = true }: Chr
         animate={animate ? 'idle' : undefined}
         variants={{
           idle: {
-            r: [3, 4, 3],
+            scale: [1, 1.33, 1],  // Scale from r=3 to r=4 (1.33x)
             opacity: [0.6, 0.3, 0.6],
             transition: { duration: 1.5, repeat: Infinity, ease: 'easeInOut' }
           }
         }}
+        style={{ transformOrigin: '32px 35px' }}
       />
 
       <motion.circle
@@ -255,11 +256,12 @@ export function ChromistaIcon({ size = 32, className = '', animate = true }: Chr
         animate={animate ? 'idle' : undefined}
         variants={{
           idle: {
-            r: [3, 4, 3],
+            scale: [1, 1.33, 1],  // Scale from r=3 to r=4 (1.33x)
             opacity: [0.6, 0.3, 0.6],
             transition: { duration: 1.5, delay: 0.75, repeat: Infinity, ease: 'easeInOut' }
           }
         }}
+        style={{ transformOrigin: '48px 55px' }}
       />
 
       {/* ===== ANTERIOR CILIA (longer at front for steering) ===== */}

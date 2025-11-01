@@ -1,6 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import { createBobVariants, createFlutterVariants } from '@/lib/animations/variants';
 
 interface AvesIconProps {
   size?: number;
@@ -13,29 +14,9 @@ interface AvesIconProps {
  * Features: blue cap, yellow body, head tilt, wing flutter
  */
 export function AvesIcon({ size = 32, className = '', animate = true }: AvesIconProps) {
-  const bobVariants = {
-    idle: {
-      y: [0, -2, 0, -1, 0],
-      rotate: [-2, 2, -2, 1, -2],
-      transition: {
-        duration: 2,
-        repeat: Infinity,
-        ease: 'easeInOut',
-      },
-    },
-  };
-
-  const wingFlutterVariants = (delay: number) => ({
-    idle: {
-      scaleY: animate ? [1, 0.9, 1] : 1,
-      transition: {
-        duration: 2,
-        delay,
-        repeat: Infinity,
-        ease: 'easeInOut',
-      },
-    },
-  });
+  // Using shared animation variants - much cleaner!
+  const bobVariants = createBobVariants([0, -2], [-2, 2], 2);
+  const wingFlutterVariants = (delay: number) => createFlutterVariants('Y', [0.9, 1], 2, delay);
 
   return (
     <motion.svg

@@ -293,3 +293,177 @@ export const rarityGlow = {
     },
   },
 };
+
+// ============================================================================
+// SVG ICON ANIMATION VARIANTS
+// Reusable variants for animated SVG icons (Tree of Life, etc.)
+// ============================================================================
+
+/**
+ * Gentle bobbing/floating animation for icons
+ */
+export const createBobVariants = (
+  yRange: [number, number] = [-2, 2],
+  rotateRange: [number, number] = [-2, 2],
+  duration: number = 2
+): Variants => ({
+  idle: {
+    y: [yRange[0], yRange[1], yRange[0]],
+    rotate: [rotateRange[0], rotateRange[1], rotateRange[0]],
+    transition: {
+      duration,
+      repeat: Infinity,
+      ease: 'easeInOut',
+    },
+  },
+});
+
+/**
+ * Side-to-side wiggle animation
+ */
+export const createWiggleVariants = (
+  xRange: [number, number] = [-2, 2],
+  duration: number = 1.5
+): Variants => ({
+  idle: {
+    x: [xRange[0], xRange[1], xRange[0]],
+    transition: {
+      duration,
+      repeat: Infinity,
+      ease: 'easeInOut',
+    },
+  },
+});
+
+/**
+ * Pulsing opacity animation
+ */
+export const createOpacityPulseVariants = (
+  opacityRange: [number, number] = [0.3, 1],
+  delay: number = 0,
+  duration: number = 2
+): Variants => ({
+  idle: {
+    opacity: [opacityRange[0], opacityRange[1], opacityRange[0]],
+    transition: {
+      duration,
+      delay,
+      repeat: Infinity,
+      ease: 'easeInOut',
+    },
+  },
+});
+
+/**
+ * Eye blink/wink animation
+ */
+export const createWinkVariants = (
+  duration: number = 3,
+  delay: number = 0
+): Variants => ({
+  idle: {
+    scaleY: [1, 0.2, 1, 1, 1], // Blink briefly then stay open
+    transition: {
+      duration,
+      delay,
+      repeat: Infinity,
+      ease: 'easeInOut',
+    },
+  },
+});
+
+/**
+ * Scale along one axis (useful for wings, fins, etc.)
+ */
+export const createFlutterVariants = (
+  axis: 'X' | 'Y' = 'Y',
+  scaleRange: [number, number] = [0.9, 1],
+  duration: number = 1.5,
+  delay: number = 0
+): Variants => ({
+  idle: {
+    [`scale${axis}`]: [scaleRange[0], scaleRange[1], scaleRange[0]],
+    transition: {
+      duration,
+      delay,
+      repeat: Infinity,
+      ease: 'easeInOut',
+    },
+  },
+});
+
+/**
+ * Morphing path animation (for worm wiggles, tentacles, etc.)
+ */
+export const createPathMorphVariants = (
+  pathStates: string[],
+  duration: number = 2
+): Variants => ({
+  idle: {
+    d: pathStates,
+    transition: {
+      duration,
+      repeat: Infinity,
+      ease: 'easeInOut',
+    },
+  },
+});
+
+/**
+ * Rotation animation
+ */
+export const createRotateVariants = (
+  rotateRange: [number, number] = [-10, 10],
+  duration: number = 2
+): Variants => ({
+  idle: {
+    rotate: [rotateRange[0], rotateRange[1], rotateRange[0]],
+    transition: {
+      duration,
+      repeat: Infinity,
+      ease: 'easeInOut',
+    },
+  },
+});
+
+/**
+ * Floating animation with both translation and rotation
+ */
+export const createFloatVariants = (
+  yRange: [number, number] = [-3, 3],
+  rotateRange: [number, number] = [-5, 5],
+  duration: number = 3,
+  delay: number = 0
+): Variants => ({
+  idle: {
+    y: [yRange[0], yRange[1], yRange[0]],
+    rotate: [rotateRange[0], rotateRange[1], rotateRange[0]],
+    transition: {
+      duration,
+      delay,
+      repeat: Infinity,
+      ease: 'easeInOut',
+    },
+  },
+});
+
+/**
+ * Swimming/undulating movement (x + y oscillation)
+ */
+export const createSwimVariants = (
+  xRange: [number, number] = [-2, 2],
+  yRange: [number, number] = [-1, 1],
+  duration: number = 2,
+  delay: number = 0
+): Variants => ({
+  idle: {
+    x: [xRange[0], xRange[1], xRange[0]],
+    y: [yRange[0], yRange[1], yRange[0]],
+    transition: {
+      duration,
+      delay,
+      repeat: Infinity,
+      ease: 'easeInOut',
+    },
+  },
+});
