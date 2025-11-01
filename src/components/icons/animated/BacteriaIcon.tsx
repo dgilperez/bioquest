@@ -88,6 +88,7 @@ export function BacteriaIcon({ size = 32, className = '', animate = true }: Bact
       {/* Posterior flagellum */}
       <motion.path
         d="M 60 40 Q 65 35, 68 38 Q 71 41, 74 38"
+        initial={false}
         animate={animate ? 'idle' : undefined}
         variants={flagellaWaveVariants(0)}
         stroke="#7D6E83"
@@ -100,6 +101,7 @@ export function BacteriaIcon({ size = 32, className = '', animate = true }: Bact
       {/* Additional flagellum */}
       <motion.path
         d="M 60 42 Q 65 47, 68 44 Q 71 41, 74 44"
+        initial={false}
         animate={animate ? 'idle' : undefined}
         variants={flagellaWaveVariants(0.3)}
         stroke="#7D6E83"
