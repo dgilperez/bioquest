@@ -5,6 +5,7 @@ import { getLocationRecommendations, getUserCoordinates } from '@/lib/explore/re
 import { recommendationsCache } from '@/lib/cache/recommendations-cache';
 
 export async function GET(req: NextRequest) {
+  console.log('==================== RECOMMENDATIONS API CALLED ====================');
   try {
     const session = await getServerSession(authOptions);
 

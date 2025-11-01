@@ -199,7 +199,7 @@ export function PlantaeIcon({ size = 32, className = '', animate = true }: Plant
           stroke="#3A5A3E"
           strokeWidth="1.8"
           strokeLinecap="round"
-          initial={{ pathLength: 0, opacity: 0 }}
+          initial={false}
           animate={animate ? 'idle' : undefined}
           variants={veinDrawVariants(0.1)}
         />
@@ -211,7 +211,7 @@ export function PlantaeIcon({ size = 32, className = '', animate = true }: Plant
           strokeWidth="0.6"
           strokeLinecap="round"
           opacity="0.5"
-          initial={{ pathLength: 0, opacity: 0 }}
+          initial={false}
           animate={animate ? 'idle' : undefined}
           variants={veinDrawVariants(0.15)}
         />
@@ -234,7 +234,7 @@ export function PlantaeIcon({ size = 32, className = '', animate = true }: Plant
             strokeWidth="1"
             strokeLinecap="round"
             fill="none"
-            initial={{ pathLength: 0, opacity: 0 }}
+            initial={false}
             animate={animate ? 'idle' : undefined}
           variants={veinDrawVariants(vein.delay)}
           />
@@ -258,7 +258,7 @@ export function PlantaeIcon({ size = 32, className = '', animate = true }: Plant
             strokeWidth="1"
             strokeLinecap="round"
             fill="none"
-            initial={{ pathLength: 0, opacity: 0 }}
+            initial={false}
             animate={animate ? 'idle' : undefined}
           variants={veinDrawVariants(vein.delay)}
           />
@@ -280,7 +280,7 @@ export function PlantaeIcon({ size = 32, className = '', animate = true }: Plant
             strokeWidth="0.5"
             strokeLinecap="round"
             opacity="0.6"
-            initial={{ pathLength: 0, opacity: 0 }}
+            initial={false}
             animate={animate ? 'idle' : undefined}
           variants={veinDrawVariants(vein.delay)}
           />
@@ -302,7 +302,7 @@ export function PlantaeIcon({ size = 32, className = '', animate = true }: Plant
             strokeWidth="0.5"
             strokeLinecap="round"
             opacity="0.6"
-            initial={{ pathLength: 0, opacity: 0 }}
+            initial={false}
             animate={animate ? 'idle' : undefined}
           variants={veinDrawVariants(vein.delay)}
           />
