@@ -1,6 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import { AnimatedPath } from '../AnimatedPath';
 
 interface NematodaIconProps {
   size?: number;
@@ -80,10 +81,9 @@ export function NematodaIcon({ size = 32, className = '', animate = true }: Nema
 
       {/* ===== WORM BODY ===== */}
       {/* Main body path with gradient */}
-      <motion.path
+      <AnimatedPath
         d="M 25 30 Q 35 25, 40 35 Q 45 45, 50 40 Q 55 35, 60 45"
-        initial={false}
-        animate={animate ? 'idle' : undefined}
+        animate={animate}
         variants={wormWiggleVariants}
         stroke="url(#wormGradient)"
         strokeWidth="12"
@@ -94,10 +94,9 @@ export function NematodaIcon({ size = 32, className = '', animate = true }: Nema
       />
 
       {/* Body outline (darker) */}
-      <motion.path
+      <AnimatedPath
         d="M 25 30 Q 35 25, 40 35 Q 45 45, 50 40 Q 55 35, 60 45"
-        initial={false}
-        animate={animate ? 'idle' : undefined}
+        animate={animate}
         variants={wormWiggleVariants}
         stroke="#8B7355"
         strokeWidth="14"

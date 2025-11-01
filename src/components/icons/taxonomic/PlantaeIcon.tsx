@@ -1,6 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import { AnimatedPath } from '../AnimatedPath';
 
 interface PlantaeIconProps {
   size?: number;
@@ -194,26 +195,26 @@ export function PlantaeIcon({ size = 32, className = '', animate = true }: Plant
         ))}
 
         {/* Central midvein */}
-        <motion.path
+        <AnimatedPath
           d="M 40 11 L 40 71"
           stroke="#3A5A3E"
           strokeWidth="1.8"
           strokeLinecap="round"
-          initial={false}
-          animate={animate ? 'idle' : undefined}
-          variants={veinDrawVariants(0.1)}
+          animate={animate}
+          variants={veinDrawVariants}
+          delay={0.1}
         />
 
         {/* Midvein highlight */}
-        <motion.path
+        <AnimatedPath
           d="M 39 12 L 39 70"
           stroke="#6B9D7A"
           strokeWidth="0.6"
           strokeLinecap="round"
           opacity="0.5"
-          initial={false}
-          animate={animate ? 'idle' : undefined}
-          variants={veinDrawVariants(0.15)}
+          animate={animate}
+          variants={veinDrawVariants}
+          delay={0.15}
         />
 
         {/* Secondary veins - left side */}
@@ -227,16 +228,16 @@ export function PlantaeIcon({ size = 32, className = '', animate = true }: Plant
           { start: 54, end: { x: 24, y: 62 }, delay: 0.32 },
           { start: 60, end: { x: 26, y: 67 }, delay: 0.34 },
         ].map((vein, i) => (
-          <motion.path
+          <AnimatedPath
             key={`left-vein-${i}`}
             d={`M 40 ${vein.start} Q 35 ${vein.start + 2}, ${vein.end.x} ${vein.end.y}`}
             stroke="#4A6B4A"
             strokeWidth="1"
             strokeLinecap="round"
             fill="none"
-            initial={false}
-            animate={animate ? 'idle' : undefined}
-          variants={veinDrawVariants(vein.delay)}
+            animate={animate}
+            variants={veinDrawVariants}
+            delay={vein.delay}
           />
         ))}
 
@@ -251,16 +252,16 @@ export function PlantaeIcon({ size = 32, className = '', animate = true }: Plant
           { start: 54, end: { x: 56, y: 62 }, delay: 0.32 },
           { start: 60, end: { x: 54, y: 67 }, delay: 0.34 },
         ].map((vein, i) => (
-          <motion.path
+          <AnimatedPath
             key={`right-vein-${i}`}
             d={`M 40 ${vein.start} Q 45 ${vein.start + 2}, ${vein.end.x} ${vein.end.y}`}
             stroke="#4A6B4A"
             strokeWidth="1"
             strokeLinecap="round"
             fill="none"
-            initial={false}
-            animate={animate ? 'idle' : undefined}
-          variants={veinDrawVariants(vein.delay)}
+            animate={animate}
+            variants={veinDrawVariants}
+            delay={vein.delay}
           />
         ))}
 
@@ -273,16 +274,16 @@ export function PlantaeIcon({ size = 32, className = '', animate = true }: Plant
           { from: { x: 28, y: 50 }, to: { x: 24, y: 54 }, delay: 0.44 },
           { from: { x: 29, y: 57 }, to: { x: 26, y: 61 }, delay: 0.45 },
         ].map((vein, i) => (
-          <motion.path
+          <AnimatedPath
             key={`left-tertiary-${i}`}
             d={`M ${vein.from.x} ${vein.from.y} L ${vein.to.x} ${vein.to.y}`}
             stroke="#5A7B5A"
             strokeWidth="0.5"
             strokeLinecap="round"
             opacity="0.6"
-            initial={false}
-            animate={animate ? 'idle' : undefined}
-          variants={veinDrawVariants(vein.delay)}
+            animate={animate}
+            variants={veinDrawVariants}
+            delay={vein.delay}
           />
         ))}
 
@@ -295,16 +296,16 @@ export function PlantaeIcon({ size = 32, className = '', animate = true }: Plant
           { from: { x: 52, y: 50 }, to: { x: 56, y: 54 }, delay: 0.44 },
           { from: { x: 51, y: 57 }, to: { x: 54, y: 61 }, delay: 0.45 },
         ].map((vein, i) => (
-          <motion.path
+          <AnimatedPath
             key={`right-tertiary-${i}`}
             d={`M ${vein.from.x} ${vein.from.y} L ${vein.to.x} ${vein.to.y}`}
             stroke="#5A7B5A"
             strokeWidth="0.5"
             strokeLinecap="round"
             opacity="0.6"
-            initial={false}
-            animate={animate ? 'idle' : undefined}
-          variants={veinDrawVariants(vein.delay)}
+            animate={animate}
+            variants={veinDrawVariants}
+            delay={vein.delay}
           />
         ))}
 
