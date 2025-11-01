@@ -39,6 +39,7 @@ model User {
   trips         Trip[]
   taxonProgress UserTaxonProgress[]
   syncProgress  SyncProgress?
+  rarityQueue   RarityClassificationQueue[]
 
   @@index([inatId])
   @@index([inatUsername])
@@ -105,6 +106,7 @@ model Observation {
   placeGuess      String?
   iconicTaxon     String?
   rarity          Rarity   @default(common)
+  rarityStatus    String   @default("pending") // 'pending' | 'classified' | 'failed'
   globalCount     Int?
   regionalCount   Int?
   isFirstGlobal   Boolean  @default(false)
@@ -119,12 +121,14 @@ model Observation {
   @@index([userId])
   @@index([taxonId])
   @@index([rarity])
+  @@index([rarityStatus])
   @@index([observedOn])
   // Composite indexes for common query patterns
   @@index([userId, createdAt])
   @@index([userId, iconicTaxon])
   @@index([userId, qualityGrade])
   @@index([userId, rarity])
+  @@index([userId, rarityStatus]) // For finding pending classifications
   @@index([userId, observedOn])
   // Quest progress optimization indexes
   @@index([userId, createdAt, taxonId])      // For species_count queries
@@ -624,4 +628,31 @@ model SyncProgress {
   @@index([status])
   @@index([updatedAt])
   @@map("sync_progress")
+}
+
+// ============================================================================
+// Background Rarity Classification Queue
+// ============================================================================
+
+model RarityClassificationQueue {
+  id            String    @id @default(cuid())
+  userId        String
+  taxonId       Int
+  taxonName     String?   // Cached for debugging/monitoring
+  priority      Int       @default(0)  // Higher = process first (based on observation count)
+  attempts      Int       @default(0)  // Retry counter
+  lastAttemptAt DateTime?
+  lastError     String?
+  status        String    @default("pending") // 'pending' | 'processing' | 'completed' | 'failed'
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, taxonId])
+  @@index([userId])
+  @@index([status])
+  @@index([userId, status, priority]) // Query active queue for user
+  @@index([status, priority])         // Global queue processing order
+  @@map("rarity_classification_queue")
 }

@@ -3,6 +3,7 @@ import { Outfit, Space_Grotesk } from 'next/font/google';
 import './globals.css';
 import { SessionProvider } from '@/components/auth/SessionProvider';
 import { AutoSyncProvider } from '@/components/sync/AutoSyncProvider';
+import { QueryProvider } from '@/components/providers/QueryProvider';
 import { InstallPrompt } from '@/components/pwa/InstallPrompt';
 import { OfflineIndicator } from '@/components/pwa/OfflineIndicator';
 import { Toaster } from '@/components/notifications/Toaster';
@@ -102,15 +103,17 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning className={`${outfit.variable} ${spaceGrotesk.variable}`}>
       <body className="font-body antialiased">
-        <SessionProvider>
-          <AutoSyncProvider>
-            {children}
-            <Toaster />
-            <InstallPrompt />
-            <OfflineIndicator />
-            <SyncStatus />
-          </AutoSyncProvider>
-        </SessionProvider>
+        <QueryProvider>
+          <SessionProvider>
+            <AutoSyncProvider>
+              {children}
+              <Toaster />
+              <InstallPrompt />
+              <OfflineIndicator />
+              <SyncStatus />
+            </AutoSyncProvider>
+          </SessionProvider>
+        </QueryProvider>
       </body>
     </html>
   );

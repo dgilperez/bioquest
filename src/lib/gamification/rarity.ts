@@ -138,7 +138,8 @@ export async function classifyObservationRarity(
 export async function classifyObservationsRarity(
   observations: INatObservation[],
   accessToken: string,
-  placeId?: number
+  placeId?: number,
+  onProgress?: (processed: number, total: number, message: string) => void
 ): Promise<Map<number, RarityResult>> {
   const results = new Map<number, RarityResult>();
   const { SYNC_CONFIG } = await import('./constants');
@@ -156,41 +157,108 @@ export async function classifyObservationsRarity(
     }
   }
 
-  console.log(`Fetching rarity for ${uniqueTaxonIds.size} unique taxa (from ${observations.length} observations)`);
+  const totalTaxa = uniqueTaxonIds.size;
+  console.log(`🔍 Starting rarity classification for ${totalTaxa} unique taxa (from ${observations.length} observations)`);
+
+  // Helper function to fetch taxon count with retry logic
+  const fetchTaxonCountWithRetry = async (
+    taxonId: number,
+    isRegional: boolean = false,
+    maxRetries: number = 3
+  ): Promise<number | undefined> => {
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        const count = await client.getTaxonObservationCount(
+          taxonId,
+          isRegional ? placeId : undefined
+        );
+        return count;
+      } catch (error) {
+        const isLastAttempt = attempt === maxRetries;
+        if (isLastAttempt) {
+          console.error(`    ❌ Failed after ${maxRetries} attempts for taxon ${taxonId}:`, error);
+          return undefined; // Give up gracefully
+        }
+
+        // Exponential backoff: 1s, 2s, 4s
+        const backoffMs = Math.pow(2, attempt - 1) * 1000;
+        console.warn(`    ⚠️  Retry ${attempt}/${maxRetries} for taxon ${taxonId} after ${backoffMs}ms...`);
+        await new Promise(resolve => setTimeout(resolve, backoffMs));
+      }
+    }
+    return undefined;
+  };
 
   // OPTIMIZATION 2: Batch fetch counts for unique taxa only
   const BATCH_SIZE = SYNC_CONFIG.RARITY_BATCH_SIZE;
   const taxonIdArray = Array.from(uniqueTaxonIds);
+  const totalBatches = Math.ceil(taxonIdArray.length / BATCH_SIZE);
+  let errorCount = 0;
 
   for (let i = 0; i < taxonIdArray.length; i += BATCH_SIZE) {
     const batch = taxonIdArray.slice(i, i + BATCH_SIZE);
+    const batchNumber = Math.floor(i / BATCH_SIZE) + 1;
+    const processedTaxa = i;
 
-    await Promise.all(
+    console.log(`📦 Processing batch ${batchNumber}/${totalBatches} (taxa ${processedTaxa + 1}-${Math.min(processedTaxa + BATCH_SIZE, totalTaxa)})`);
+
+    // Report progress
+    if (onProgress) {
+      onProgress(processedTaxa, totalTaxa, `Classifying rarity (batch ${batchNumber}/${totalBatches})`);
+    }
+
+    // Process batch with Promise.allSettled to handle failures gracefully
+    const results = await Promise.allSettled(
       batch.map(async taxonId => {
-        try {
-          // Fetch global count
-          const globalCount = await client.getTaxonObservationCount(taxonId);
+        console.log(`  🔎 Fetching counts for taxon ${taxonId}...`);
 
-          // Fetch regional count if place specified
-          let regionalCount: number | undefined;
-          if (placeId) {
-            regionalCount = await client.getTaxonObservationCount(taxonId, placeId);
-          }
+        // Fetch global count with retry
+        const globalCount = await fetchTaxonCountWithRetry(taxonId, false);
 
-          // Cache the counts
-          taxonCountCache.set(taxonId, { global: globalCount, regional: regionalCount });
-        } catch (error) {
-          console.error(`Error fetching counts for taxon ${taxonId}:`, error);
-          // Cache error state to avoid retries
+        if (globalCount === undefined) {
+          // Failed after retries - skip this taxon
+          errorCount++;
           taxonCountCache.set(taxonId, { global: 0 });
+          return;
         }
+
+        console.log(`    ✓ Taxon ${taxonId}: ${globalCount} global observations`);
+
+        // Fetch regional count if place specified
+        let regionalCount: number | undefined;
+        if (placeId) {
+          regionalCount = await fetchTaxonCountWithRetry(taxonId, true);
+          if (regionalCount !== undefined) {
+            console.log(`    ✓ Taxon ${taxonId}: ${regionalCount} regional observations`);
+          }
+        }
+
+        // Cache the counts
+        taxonCountCache.set(taxonId, { global: globalCount, regional: regionalCount });
       })
     );
 
+    // Log any rejected promises (shouldn't happen with our error handling, but just in case)
+    const rejected = results.filter(r => r.status === 'rejected');
+    if (rejected.length > 0) {
+      console.error(`    ⚠️  ${rejected.length} promises rejected in batch ${batchNumber}`);
+      rejected.forEach((r: any) => console.error(`      - ${r.reason}`));
+    }
+
+    console.log(`✅ Batch ${batchNumber}/${totalBatches} complete (${processedTaxa + batch.length}/${totalTaxa} taxa processed, ${errorCount} errors so far)`);
+
     // Small delay between batches to respect rate limits
     if (i + BATCH_SIZE < taxonIdArray.length) {
-      await new Promise(resolve => setTimeout(resolve, SYNC_CONFIG.RARITY_BATCH_DELAY_MS));
+      const delayMs = SYNC_CONFIG.RARITY_BATCH_DELAY_MS;
+      console.log(`⏳ Waiting ${delayMs}ms before next batch...`);
+      await new Promise(resolve => setTimeout(resolve, delayMs));
     }
+  }
+
+  if (errorCount > 0) {
+    console.warn(`⚠️  Rarity classification complete with ${errorCount} errors (${totalTaxa - errorCount}/${totalTaxa} taxa successful)`);
+  } else {
+    console.log(`🎉 All ${totalTaxa} taxa classified successfully!`);
   }
 
   // OPTIMIZATION 2: Map cached results to observations (no API calls!)

@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { Navigation } from '@/components/layout/Navigation';
 import { SyncButton } from '@/components/stats/SyncButton';
 import { SyncProgress } from '@/components/sync/SyncProgress';
+import { BackgroundClassificationBubble } from '@/components/sync/BackgroundClassificationBubble';
 import { ClientErrorBoundary } from '@/components/errors/ClientErrorBoundary';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -71,11 +72,14 @@ export default async function DashboardLayout({
                 {session.user.name || (session.user as any).inatUsername}
               </span>
             </div>
-            <SyncButton
+            {/* TODO: Move sync button to account settings page (profile edit/deletion section)
+                For now hidden - sync happens automatically on onboarding and we'll add background
+                rarity classification for ongoing syncs */}
+            {/* <SyncButton
               userId={(session.user as any).id}
               inatUsername={(session.user as any).inatUsername}
               accessToken={(session as any).accessToken}
-            />
+            /> */}
           </div>
           <Navigation />
         </div>
@@ -90,6 +94,9 @@ export default async function DashboardLayout({
 
       {/* Sync Progress Toast */}
       <SyncProgress />
+
+      {/* Background Classification Progress Bubble */}
+      <BackgroundClassificationBubble />
     </div>
   );
 }

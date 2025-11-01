@@ -6,6 +6,17 @@
  */
 
 import { prisma } from '@/lib/db/prisma';
+import { MessageRotator } from './messages';
+
+// Global message rotators per user (in-memory, resets on server restart)
+const messageRotators = new Map<string, MessageRotator>();
+
+function getMessageRotator(userId: string): MessageRotator {
+  if (!messageRotators.has(userId)) {
+    messageRotators.set(userId, new MessageRotator(7000)); // Rotate every 7 seconds
+  }
+  return messageRotators.get(userId)!;
+}
 
 export interface SyncProgress {
   userId: string;
@@ -14,6 +25,7 @@ export interface SyncProgress {
   currentStep: number;
   totalSteps: number;
   message: string;
+  funnyMessage?: string; // Rotating naturalist humor message
   observationsProcessed: number;
   observationsTotal: number;
   estimatedTimeRemaining?: number; // seconds
@@ -84,6 +96,11 @@ export async function getProgress(userId: string): Promise<SyncProgress | null> 
   const progress = await prisma.syncProgress.findUnique({ where: { userId } });
   if (!progress) return null;
 
+  // Get rotating funny message (only during active sync)
+  const funnyMessage = progress.status === 'syncing'
+    ? getMessageRotator(userId).getMessage()
+    : undefined;
+
   return {
     userId: progress.userId,
     status: progress.status as any,
@@ -91,6 +108,7 @@ export async function getProgress(userId: string): Promise<SyncProgress | null> 
     currentStep: progress.currentStep,
     totalSteps: progress.totalSteps,
     message: progress.message,
+    funnyMessage,
     observationsProcessed: progress.observationsProcessed,
     observationsTotal: progress.observationsTotal,
     estimatedTimeRemaining: progress.estimatedTimeRemaining ?? undefined,
@@ -137,4 +155,6 @@ export async function errorProgress(userId: string, error: string): Promise<void
 
 export async function clearProgress(userId: string): Promise<void> {
   await prisma.syncProgress.delete({ where: { userId } }).catch(() => {});
+  // Clean up message rotator
+  messageRotators.delete(userId);
 }

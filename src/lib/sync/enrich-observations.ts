@@ -35,17 +35,66 @@ export interface RareFind {
 /**
  * Enrich observations with rarity classification and point calculations
  * Uses batch processing for rarity classification to avoid N+1 API calls
+ *
+ * Options:
+ * - fastSync: Only classify first N unique taxa (for quick onboarding)
+ * - fastSyncLimit: Number of taxa to classify immediately (default: 200)
  */
 export async function enrichObservations(
   observations: INatObservation[],
-  accessToken: string
-): Promise<EnrichmentResult> {
+  accessToken: string,
+  onProgress?: (processed: number, total: number, message: string) => void,
+  options?: {
+    fastSync?: boolean;
+    fastSyncLimit?: number;
+  }
+): Promise<EnrichmentResult & { unclassifiedTaxa?: number[] }> {
   console.log(`Enriching ${observations.length} observations...`);
 
-  // BATCH CLASSIFY ALL OBSERVATIONS AT ONCE (instead of N+1 loop)
-  // This reduces 1000 API calls to ~10-20 batched calls
   const { classifyObservationsRarity } = await import('@/lib/gamification/rarity');
-  const rarityMap = await classifyObservationsRarity(observations, accessToken);
+
+  let rarityMap: Map<number, any>;
+  let unclassifiedTaxa: number[] | undefined;
+
+  if (options?.fastSync) {
+    // TWO-PHASE APPROACH: Classify only top N taxa immediately
+    const limit = options.fastSyncLimit || 200;
+
+    // Count observations per taxon to prioritize common species
+    const taxonCounts = new Map<number, number>();
+    observations.forEach(obs => {
+      if (obs.taxon?.id) {
+        taxonCounts.set(obs.taxon.id, (taxonCounts.get(obs.taxon.id) || 0) + 1);
+      }
+    });
+
+    // Sort by count (descending) - classify most common first
+    const sortedTaxa = Array.from(taxonCounts.entries())
+      .sort((a, b) => b[1] - a[1])
+      .map(([taxonId]) => taxonId);
+
+    const fastTaxa = sortedTaxa.slice(0, limit);
+    const backgroundTaxa = sortedTaxa.slice(limit);
+
+    console.log(`⚡ Fast sync: Classifying ${fastTaxa.length} most common taxa immediately`);
+    console.log(`📥 Queueing ${backgroundTaxa.length} taxa for background processing`);
+
+    // Filter observations to only classify fast taxa
+    const fastObservations = observations.filter(obs =>
+      obs.taxon?.id && fastTaxa.includes(obs.taxon.id)
+    );
+
+    // Classify only fast taxa
+    rarityMap = await classifyObservationsRarity(fastObservations, accessToken, undefined, onProgress);
+
+    // Return unclassified taxa for queueing
+    unclassifiedTaxa = backgroundTaxa;
+
+  } else {
+    // FULL SYNC: Classify ALL taxa (legacy behavior)
+    console.log(`🔍 Full sync: Classifying all ${observations.length} observations`);
+    rarityMap = await classifyObservationsRarity(observations, accessToken, undefined, onProgress);
+  }
 
   const enrichedObservations: EnrichedObservation[] = [];
   const rareFinds: RareFind[] = [];
@@ -102,9 +151,14 @@ export async function enrichObservations(
 
   console.log(`Enriched ${enrichedObservations.length} observations with ${totalPoints} total points (${rareFinds.length} rare finds)`);
 
+  if (unclassifiedTaxa) {
+    console.log(`📝 ${unclassifiedTaxa.length} taxa will be classified in background`);
+  }
+
   return {
     enrichedObservations,
     totalPoints,
     rareFinds,
+    unclassifiedTaxa,
   };
 }

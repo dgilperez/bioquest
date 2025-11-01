@@ -155,15 +155,28 @@ export async function syncUserObservations(
     }
 
     // Step 3: Enrich observations with rarity and points
+    // Use FAST SYNC for initial onboarding (classify only 200 most common taxa)
     updateProgress(userId, {
       phase: 'enriching',
       currentStep: 2,
       message: 'Classifying rarity and calculating points...',
     });
 
-    const { enrichedObservations, totalPoints, rareFinds } = await enrichObservations(
+    const { enrichedObservations, totalPoints, rareFinds, unclassifiedTaxa } = await enrichObservations(
       observations,
-      accessToken
+      accessToken,
+      // Progress callback for rarity classification
+      (processed, total, message) => {
+        // Estimate observations processed based on taxa progress
+        // If we've classified 50/100 taxa, assume we've processed ~50% of observations
+        const estimatedObsProcessed = Math.floor((processed / total) * observations.length);
+        updateProgress(userId, {
+          message: `${message}: ${processed}/${total} taxa classified`,
+          observationsProcessed: estimatedObsProcessed,
+        });
+      },
+      // Enable fast sync for onboarding (only classify top 200 taxa)
+      { fastSync: true, fastSyncLimit: 200 }
     );
 
     updateProgress(userId, {
@@ -253,6 +266,36 @@ export async function syncUserObservations(
     };
 
     console.log(`Sync complete: ${newObservationCount} new observations, level ${stats.level}, ${newBadges.length} new badges, ${questMilestones.length} quest milestones, +${xpBreakdown.totalXP} XP`);
+
+    // Step 10: Queue unclassified taxa for background processing
+    if (unclassifiedTaxa && unclassifiedTaxa.length > 0) {
+      console.log(`📥 Queueing ${unclassifiedTaxa.length} taxa for background classification...`);
+
+      const { queueTaxaForClassification } = await import('@/lib/rarity-queue/manager');
+
+      // Count observations per taxon to set priority
+      const taxonCounts = new Map<number, number>();
+      const taxonNames = new Map<number, string>();
+
+      observations.forEach(obs => {
+        if (obs.taxon?.id && unclassifiedTaxa.includes(obs.taxon.id)) {
+          taxonCounts.set(obs.taxon.id, (taxonCounts.get(obs.taxon.id) || 0) + 1);
+          if (!taxonNames.has(obs.taxon.id)) {
+            taxonNames.set(obs.taxon.id, obs.taxon.name);
+          }
+        }
+      });
+
+      // Build queue items with priority based on observation count
+      const queueItems = unclassifiedTaxa.map(taxonId => ({
+        taxonId,
+        taxonName: taxonNames.get(taxonId),
+        priority: taxonCounts.get(taxonId) || 0, // More observations = higher priority
+      }));
+
+      await queueTaxaForClassification(userId, queueItems);
+      console.log(`✅ Queued ${queueItems.length} taxa for background processing`);
+    }
 
     // Mark sync as completed
     completeProgress(userId);

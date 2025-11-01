@@ -7,7 +7,8 @@ import { prisma } from '@/lib/db/prisma';
 const isMockMode = !process.env.INATURALIST_CLIENT_ID || process.env.INATURALIST_CLIENT_ID === 'your_client_id_here';
 
 export const authOptions: NextAuthOptions = {
-  adapter: isMockMode ? undefined : PrismaAdapter(prisma),
+  // Don't use adapter with JWT sessions - we handle DB sync in signIn callback
+  adapter: undefined,
   providers: [
     // Mock provider for development (when iNat OAuth not yet approved)
     ...(isMockMode ? [
@@ -51,10 +52,76 @@ export const authOptions: NextAuthOptions = {
           response_type: 'code',
         },
       },
-      token: 'https://www.inaturalist.org/oauth/token',
-      userinfo: 'https://api.inaturalist.org/v1/users/me',
+      token: {
+        url: 'https://www.inaturalist.org/oauth/token',
+        async request(context: any) {
+          const { provider, params } = context;
+
+          console.log('🔑 Token exchange - requesting token with code:', params.code?.substring(0, 10) + '...');
+
+          const response = await fetch(provider.token.url, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams({
+              client_id: provider.clientId,
+              client_secret: provider.clientSecret,
+              code: params.code,
+              grant_type: 'authorization_code',
+              redirect_uri: provider.callbackUrl,
+            }),
+          });
+
+          const tokens = await response.json();
+          console.log('🔑 Token exchange response:', {
+            access_token: tokens.access_token?.substring(0, 20) + '...',
+            token_type: tokens.token_type,
+            scope: tokens.scope,
+          });
+
+          return { tokens };
+        },
+      },
+      userinfo: {
+        url: 'https://www.inaturalist.org/users/api_token',
+        async request(context: any) {
+          console.log('👤 Userinfo request - access_token:', context.tokens?.access_token?.substring(0, 20) + '...');
+
+          // First, get the API token from iNaturalist
+          const apiTokenResponse = await fetch('https://www.inaturalist.org/users/api_token', {
+            headers: {
+              Authorization: `Bearer ${context.tokens.access_token}`,
+            },
+          });
+
+          console.log('👤 API Token response status:', apiTokenResponse.status);
+
+          if (!apiTokenResponse.ok) {
+            console.error('👤 Failed to get API token');
+            return { error: 'Failed to get API token', status: apiTokenResponse.status };
+          }
+
+          const apiTokenData = await apiTokenResponse.json();
+          console.log('👤 API Token data:', JSON.stringify(apiTokenData).substring(0, 200));
+
+          // Now use the API token to get user info
+          const userInfoResponse = await fetch('https://api.inaturalist.org/v1/users/me', {
+            headers: {
+              Authorization: `Bearer ${apiTokenData.api_token}`,
+            },
+          });
+
+          const userData = await userInfoResponse.json();
+          console.log('👤 User info response status:', userInfoResponse.status);
+          console.log('👤 User info data:', JSON.stringify(userData).substring(0, 300));
+
+          return userData;
+        },
+      },
       clientId: process.env.INATURALIST_CLIENT_ID,
       clientSecret: process.env.INATURALIST_CLIENT_SECRET,
+      checks: [], // Disable state check - iNaturalist doesn't return state parameter
       profile(profile: any) {
         // iNaturalist API returns data in 'results' array
         const user = profile.results?.[0] || profile;
@@ -72,6 +139,17 @@ export const authOptions: NextAuthOptions = {
   session: {
     strategy: 'jwt',
     maxAge: 30 * 24 * 60 * 60, // 30 days
+  },
+  cookies: {
+    sessionToken: {
+      name: `${isMockMode ? 'next-auth.session-token.mock' : 'next-auth.session-token'}`,
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+      },
+    },
   },
   pages: {
     signIn: '/signin',

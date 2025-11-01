@@ -5,8 +5,16 @@ import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Loader2, Sparkles, Trophy, Target, BarChart3, CheckCircle2 } from 'lucide-react';
+import { Loader2, Sparkles, Trophy, Target, BarChart3, CheckCircle2, MapPin } from 'lucide-react';
 import Image from 'next/image';
+import dynamic from 'next/dynamic';
+
+// Dynamically import OrganicBackground with SSR disabled to avoid hydration issues
+// (component uses Math.random() for organism generation)
+const OrganicBackground = dynamic(
+  () => import('@/components/animations/OrganicBackground').then(mod => ({ default: mod.OrganicBackground })),
+  { ssr: false }
+);
 
 interface OnboardingClientProps {
   userId: string;
@@ -52,10 +60,16 @@ const features: Feature[] = [
     color: 'from-blue-500 to-cyan-500',
   },
   {
+    icon: <MapPin className="w-12 h-12" />,
+    title: 'Trip Planning & Exploration',
+    description: 'Plan nature trips with AI-powered location recommendations. Set target species, track discoveries, and earn trip achievements.',
+    color: 'from-emerald-500 to-teal-500',
+  },
+  {
     icon: <BarChart3 className="w-12 h-12" />,
     title: 'Advanced Statistics',
     description: 'Track your progress with detailed stats, life lists, observation streaks, and interactive charts.',
-    color: 'from-green-500 to-emerald-500',
+    color: 'from-green-500 to-cyan-500',
   },
 ];
 
@@ -165,7 +179,10 @@ export function OnboardingClient({
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-nature-900 via-nature-800 to-nature-900 overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-nature-900 via-nature-800 to-nature-900 overflow-hidden relative">
+      {/* Organic life background animation */}
+      <OrganicBackground />
+
       <AnimatePresence mode="wait">
         {/* Step 1: Welcome */}
         {step === 'welcome' && (
@@ -236,6 +253,7 @@ export function OnboardingClient({
                   <span>🏆 Badges & achievements</span>
                   <span>📊 Advanced statistics</span>
                   <span>🎯 Personalized quests</span>
+                  <span>🗺️ Trip planning</span>
                 </div>
               </motion.div>
 
@@ -334,6 +352,8 @@ export function OnboardingClient({
 }
 
 function ImmersiveSyncProgress({ progress, userName }: { progress: any; userName: string }) {
+  const [currentFunnyMessage, setCurrentFunnyMessage] = useState(progress?.funnyMessage || '');
+
   const percentage = progress?.observationsTotal > 0
     ? Math.round((progress.observationsProcessed / progress.observationsTotal) * 100)
     : 0;
@@ -345,6 +365,13 @@ function ImmersiveSyncProgress({ progress, userName }: { progress: any; userName
     calculating: 'Computing statistics and achievements',
     done: 'Complete!',
   };
+
+  // Update funny message when it changes, triggering animation
+  useEffect(() => {
+    if (progress?.funnyMessage && progress.funnyMessage !== currentFunnyMessage) {
+      setCurrentFunnyMessage(progress.funnyMessage);
+    }
+  }, [progress?.funnyMessage]);
 
   return (
     <motion.div
@@ -402,9 +429,8 @@ function ImmersiveSyncProgress({ progress, userName }: { progress: any; userName
 
         <div className="space-y-2">
           <p className="text-lg font-semibold text-nature-200">
-            {progress?.phase && phaseLabels[progress.phase as keyof typeof phaseLabels]}
+            {progress?.message || 'Starting sync...'}
           </p>
-          <p className="text-nature-300">{progress?.message}</p>
         </div>
 
         {progress?.estimatedTimeRemaining && progress.estimatedTimeRemaining > 5 && (
@@ -414,10 +440,21 @@ function ImmersiveSyncProgress({ progress, userName }: { progress: any; userName
           </p>
         )}
 
-        <p className="text-sm text-nature-400 pt-8">
-          While you wait, {userName}, we're analyzing every observation, classifying rarity,
-          calculating points, and preparing your personalized quests...
-        </p>
+        {/* Rotating funny message with animation */}
+        <AnimatePresence mode="wait">
+          {currentFunnyMessage && (
+            <motion.p
+              key={currentFunnyMessage}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.5 }}
+              className="text-base text-nature-400 pt-8 italic"
+            >
+              {currentFunnyMessage}
+            </motion.p>
+          )}
+        </AnimatePresence>
       </div>
     </motion.div>
   );
