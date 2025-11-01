@@ -14,11 +14,27 @@ export function installAnimationErrorReporter() {
   isInstalled = true;
 
   const originalError = console.error;
+  const originalWarn = console.warn;
   const seenErrors = new Set<string>();
+
+  // Also try to intercept at the console.warn level
+  console.warn = (...args: any[]) => {
+    const errorMessage = args[0]?.toString() || '';
+    if (errorMessage.includes('attribute') && errorMessage.includes('undefined')) {
+      console.error(...args); // Escalate to error handler
+      return;
+    }
+    originalWarn.apply(console, args);
+  };
 
   console.error = (...args: any[]) => {
     const errorMessage = args[0]?.toString() || '';
     const errorKey = errorMessage.substring(0, 100); // Use first 100 chars as key
+
+    // Log ALL errors with stack traces for debugging
+    if (errorMessage.includes('attribute') && errorMessage.includes('undefined')) {
+      console.log('🔍 STACK TRACE:', new Error().stack);
+    }
 
     // Check if this is a Framer Motion SVG error
     if (

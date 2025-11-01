@@ -106,7 +106,7 @@ export function InsectaIcon({ size = 32, className = '', animate = true }: Insec
           strokeWidth="2"
           strokeLinecap="round"
           fill="none"
-          initial="initial"
+          initial={false}
           animate={animate ? 'idle' : undefined}
           variants={legVariants(0.1)}
         />
@@ -117,7 +117,7 @@ export function InsectaIcon({ size = 32, className = '', animate = true }: Insec
           strokeWidth="1.8"
           strokeLinecap="round"
           fill="none"
-          initial="initial"
+          initial={false}
           animate={animate ? 'idle' : undefined}
           variants={legVariants(0.15)}
         />
@@ -128,7 +128,7 @@ export function InsectaIcon({ size = 32, className = '', animate = true }: Insec
           strokeWidth="1.5"
           strokeLinecap="round"
           fill="none"
-          initial="initial"
+          initial={false}
           animate={animate ? 'idle' : undefined}
           variants={legVariants(0.2)}
         />
@@ -138,7 +138,7 @@ export function InsectaIcon({ size = 32, className = '', animate = true }: Insec
           strokeWidth="1.2"
           strokeLinecap="round"
           fill="none"
-          initial="initial"
+          initial={false}
           animate={animate ? 'idle' : undefined}
           variants={legVariants(0.25)}
         />
@@ -154,7 +154,7 @@ export function InsectaIcon({ size = 32, className = '', animate = true }: Insec
           strokeWidth="2"
           strokeLinecap="round"
           fill="none"
-          initial="initial"
+          initial={false}
           animate={animate ? 'idle' : undefined}
           variants={legVariants(0.3)}
         />
@@ -165,7 +165,7 @@ export function InsectaIcon({ size = 32, className = '', animate = true }: Insec
           strokeWidth="1.8"
           strokeLinecap="round"
           fill="none"
-          initial="initial"
+          initial={false}
           animate={animate ? 'idle' : undefined}
           variants={legVariants(0.35)}
         />
@@ -176,7 +176,7 @@ export function InsectaIcon({ size = 32, className = '', animate = true }: Insec
           strokeWidth="1.5"
           strokeLinecap="round"
           fill="none"
-          initial="initial"
+          initial={false}
           animate={animate ? 'idle' : undefined}
           variants={legVariants(0.4)}
         />
@@ -186,7 +186,7 @@ export function InsectaIcon({ size = 32, className = '', animate = true }: Insec
           strokeWidth="1.2"
           strokeLinecap="round"
           fill="none"
-          initial="initial"
+          initial={false}
           animate={animate ? 'idle' : undefined}
           variants={legVariants(0.45)}
         />
@@ -202,7 +202,7 @@ export function InsectaIcon({ size = 32, className = '', animate = true }: Insec
           strokeWidth="2"
           strokeLinecap="round"
           fill="none"
-          initial="initial"
+          initial={false}
           animate={animate ? 'idle' : undefined}
           variants={legVariants(0.5)}
         />
@@ -213,7 +213,7 @@ export function InsectaIcon({ size = 32, className = '', animate = true }: Insec
           strokeWidth="1.8"
           strokeLinecap="round"
           fill="none"
-          initial="initial"
+          initial={false}
           animate={animate ? 'idle' : undefined}
           variants={legVariants(0.55)}
         />
@@ -224,7 +224,7 @@ export function InsectaIcon({ size = 32, className = '', animate = true }: Insec
           strokeWidth="1.5"
           strokeLinecap="round"
           fill="none"
-          initial="initial"
+          initial={false}
           animate={animate ? 'idle' : undefined}
           variants={legVariants(0.6)}
         />
@@ -234,7 +234,7 @@ export function InsectaIcon({ size = 32, className = '', animate = true }: Insec
           strokeWidth="1.2"
           strokeLinecap="round"
           fill="none"
-          initial="initial"
+          initial={false}
           animate={animate ? 'idle' : undefined}
           variants={legVariants(0.65)}
         />
@@ -250,7 +250,7 @@ export function InsectaIcon({ size = 32, className = '', animate = true }: Insec
           strokeWidth="2"
           strokeLinecap="round"
           fill="none"
-          initial="initial"
+          initial={false}
           animate={animate ? 'idle' : undefined}
           variants={legVariants(0.12)}
         />
@@ -261,7 +261,7 @@ export function InsectaIcon({ size = 32, className = '', animate = true }: Insec
           strokeWidth="1.8"
           strokeLinecap="round"
           fill="none"
-          initial="initial"
+          initial={false}
           animate={animate ? 'idle' : undefined}
           variants={legVariants(0.17)}
         />
@@ -272,7 +272,7 @@ export function InsectaIcon({ size = 32, className = '', animate = true }: Insec
           strokeWidth="1.5"
           strokeLinecap="round"
           fill="none"
-          initial="initial"
+          initial={false}
           animate={animate ? 'idle' : undefined}
           variants={legVariants(0.22)}
         />
@@ -282,7 +282,7 @@ export function InsectaIcon({ size = 32, className = '', animate = true }: Insec
           strokeWidth="1.2"
           strokeLinecap="round"
           fill="none"
-          initial="initial"
+          initial={false}
           animate={animate ? 'idle' : undefined}
           variants={legVariants(0.27)}
         />
@@ -298,7 +298,7 @@ export function InsectaIcon({ size = 32, className = '', animate = true }: Insec
           strokeWidth="2"
           strokeLinecap="round"
           fill="none"
-          initial="initial"
+          initial={false}
           animate={animate ? 'idle' : undefined}
           variants={legVariants(0.32)}
         />
@@ -309,7 +309,7 @@ export function InsectaIcon({ size = 32, className = '', animate = true }: Insec
           strokeWidth="1.8"
           strokeLinecap="round"
           fill="none"
-          initial="initial"
+          initial={false}
           animate={animate ? 'idle' : undefined}
           variants={legVariants(0.37)}
         />
@@ -320,7 +320,7 @@ export function InsectaIcon({ size = 32, className = '', animate = true }: Insec
           strokeWidth="1.5"
           strokeLinecap="round"
           fill="none"
-          initial="initial"
+          initial={false}
           animate={animate ? 'idle' : undefined}
           variants={legVariants(0.42)}
         />
@@ -330,7 +330,7 @@ export function InsectaIcon({ size = 32, className = '', animate = true }: Insec
           strokeWidth="1.2"
           strokeLinecap="round"
           fill="none"
-          initial="initial"
+          initial={false}
           animate={animate ? 'idle' : undefined}
           variants={legVariants(0.47)}
         />
@@ -346,7 +346,7 @@ export function InsectaIcon({ size = 32, className = '', animate = true }: Insec
           strokeWidth="2"
           strokeLinecap="round"
           fill="none"
-          initial="initial"
+          initial={false}
           animate={animate ? 'idle' : undefined}
           variants={legVariants(0.52)}
         />
@@ -357,7 +357,7 @@ export function InsectaIcon({ size = 32, className = '', animate = true }: Insec
           strokeWidth="1.8"
           strokeLinecap="round"
           fill="none"
-          initial="initial"
+          initial={false}
           animate={animate ? 'idle' : undefined}
           variants={legVariants(0.57)}
         />
@@ -368,7 +368,7 @@ export function InsectaIcon({ size = 32, className = '', animate = true }: Insec
           strokeWidth="1.5"
           strokeLinecap="round"
           fill="none"
-          initial="initial"
+          initial={false}
           animate={animate ? 'idle' : undefined}
           variants={legVariants(0.62)}
         />
@@ -378,7 +378,7 @@ export function InsectaIcon({ size = 32, className = '', animate = true }: Insec
           strokeWidth="1.2"
           strokeLinecap="round"
           fill="none"
-          initial="initial"
+          initial={false}
           animate={animate ? 'idle' : undefined}
           variants={legVariants(0.67)}
         />
