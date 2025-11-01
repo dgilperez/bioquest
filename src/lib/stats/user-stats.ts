@@ -21,6 +21,7 @@ export interface UserStatsData {
   currentRarityStreak: number;
   longestRarityStreak: number;
   lastSyncedAt: Date | null;
+  hasMoreToSync: boolean;
   weeklyPoints: number;
   monthlyPoints: number;
 }
@@ -77,6 +78,7 @@ export interface QuestMilestone {
 
 export interface SyncResult {
   newObservations: number;
+  totalSynced: number; // Cumulative total observations synced so far
   newBadges: Badge[];
   completedQuests: CompletedQuest[];
   questMilestones: QuestMilestone[];
@@ -318,6 +320,7 @@ export async function syncUserObservations(
 
     return {
       newObservations: newObservationCount,
+      totalSynced: updatedTotalObservations, // Cumulative total synced so far
       newBadges,
       completedQuests,
       questMilestones,

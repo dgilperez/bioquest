@@ -81,6 +81,7 @@ export default async function QuestPage() {
         inatUsername={(session.user as any).inatUsername}
         accessToken={(session as any).accessToken}
         lastSyncedAt={user.stats?.lastSyncedAt || null}
+        hasMoreToSync={user.stats?.hasMoreToSync}
       />
 
       <QuestLandingClient

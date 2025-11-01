@@ -182,6 +182,7 @@ model UserStats {
   lastRareObservationDate DateTime?
 
   lastSyncedAt          DateTime? // Track when we last synced to enable incremental sync
+  hasMoreToSync         Boolean   @default(false) // Track if there are more observations to sync from last incomplete sync
 
   // Leaderboard stats (reset periodically)
   weeklyPoints          Int       @default(0)

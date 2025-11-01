@@ -45,6 +45,7 @@ export default async function DashboardPage() {
         inatUsername={(session.user as any).inatUsername}
         accessToken={(session as any).accessToken}
         lastSyncedAt={stats.lastSyncedAt}
+        hasMoreToSync={stats.hasMoreToSync}
       />
 
       <DashboardClient

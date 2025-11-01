@@ -144,6 +144,8 @@ export async function updateUserStatsInDB(
       // Only set lastSyncedAt if we fetched ALL available observations
       // This allows future syncs to continue from where we left off if we hit the limit
       ...(fetchedAll ? { lastSyncedAt: syncTime } : {}),
+      // Track if there are more observations to sync
+      hasMoreToSync: !fetchedAll,
       updatedAt: syncTime,
     },
     create: {
@@ -163,6 +165,8 @@ export async function updateUserStatsInDB(
       lastRareObservationDate: stats.lastRareObservationDate,
       // Only set lastSyncedAt on create if we fetched all available observations
       ...(fetchedAll ? { lastSyncedAt: syncTime } : {}),
+      // Track if there are more observations to sync
+      hasMoreToSync: !fetchedAll,
     },
   });
 }

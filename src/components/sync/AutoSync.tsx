@@ -8,9 +8,10 @@ interface AutoSyncProps {
   inatUsername: string;
   accessToken: string;
   lastSyncedAt: Date | null;
+  hasMoreToSync?: boolean;
 }
 
-export function AutoSync({ userId, inatUsername, accessToken, lastSyncedAt }: AutoSyncProps) {
+export function AutoSync({ userId, inatUsername, accessToken, lastSyncedAt, hasMoreToSync }: AutoSyncProps) {
   const isSyncing = useRef(false);
   const [syncCount, setSyncCount] = useState(0);
   const router = useRouter();
@@ -40,6 +41,11 @@ export function AutoSync({ userId, inatUsername, accessToken, lastSyncedAt }: Au
     };
 
     const shouldSync = () => {
+      // Always sync if there's an incomplete sync (hasMoreToSync is set)
+      if (hasMoreToSync) {
+        return true;
+      }
+
       // Always sync if never synced before
       if (!lastSyncedAt) {
         return true;
@@ -90,7 +96,7 @@ export function AutoSync({ userId, inatUsername, accessToken, lastSyncedAt }: Au
 
           // Check if there are more observations to sync
           if (result.data?.hasMore) {
-            const remaining = result.data.totalAvailable - (result.data.newObservations || 0);
+            const remaining = (result.data.totalAvailable || 0) - (result.data.totalSynced || 0);
             console.log(`📥 More observations available (${remaining} remaining). Continuing sync...`);
 
             // Wait a moment for DB to update and background processing to complete
@@ -120,7 +126,7 @@ export function AutoSync({ userId, inatUsername, accessToken, lastSyncedAt }: Au
     return () => {
       clearTimeout(timeout);
     };
-  }, [userId, inatUsername, accessToken, lastSyncedAt, router, syncCount]);
+  }, [userId, inatUsername, accessToken, lastSyncedAt, hasMoreToSync, router, syncCount]);
 
   // This component renders nothing
   return null;
