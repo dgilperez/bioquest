@@ -180,7 +180,9 @@ export const authOptions: NextAuthOptions = {
           userId: dbUser?.id, // Store the database user ID
           accessToken: account.access_token,
           refreshToken: account.refresh_token,
-          accessTokenExpires: account.expires_at ? account.expires_at * 1000 : 0,
+          // iNaturalist tokens don't expire in the traditional OAuth sense
+          // Set to 10 years in the future to effectively disable token refresh
+          accessTokenExpires: Date.now() + (10 * 365 * 24 * 60 * 60 * 1000),
           inatId: (user as any).inatId,
           inatUsername: (user as any).inatUsername,
         };
@@ -191,13 +193,11 @@ export const authOptions: NextAuthOptions = {
         return token;
       }
 
-      // In mock mode, don't attempt to refresh (no real OAuth)
-      if (isMockMode) {
-        return token;
-      }
-
-      // Access token has expired, try to refresh it
-      return refreshAccessToken(token);
+      // iNaturalist OAuth 2.0 does not support refresh tokens
+      // The access tokens are long-lived and shouldn't reach this point
+      // If we do, just return the token as-is (user may need to re-authenticate)
+      console.warn('Token expiry reached - user may need to re-authenticate');
+      return token;
     },
     async session({ session, token }) {
       if (session.user) {
@@ -240,8 +240,9 @@ export const authOptions: NextAuthOptions = {
           }
           return true;
         } catch (error) {
-          console.error('Error syncing mock user:', error);
-          return false;
+          console.error('Error syncing mock user to database:', error);
+          // Return true to prevent redirect loops even on DB errors
+          return true;
         }
       }
 
@@ -289,57 +290,16 @@ export const authOptions: NextAuthOptions = {
 
         return true;
       } catch (error) {
-        console.error('Error syncing user:', error);
-        return false;
+        console.error('Error syncing user to database:', error);
+        // IMPORTANT: Return true even on error to prevent infinite redirect loops
+        // The user can still authenticate; we'll retry the DB sync later
+        // This prevents blocking login due to temporary DB issues (permissions, connectivity, etc.)
+        return true;
       }
     },
   },
   debug: process.env.NODE_ENV === 'development',
 };
 
-async function refreshAccessToken(token: any) {
-  try {
-    const url = 'https://www.inaturalist.org/oauth/token';
-
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: new URLSearchParams({
-        grant_type: 'refresh_token',
-        refresh_token: token.refreshToken,
-        client_id: process.env.INATURALIST_CLIENT_ID || '',
-        client_secret: process.env.INATURALIST_CLIENT_SECRET || '',
-      }),
-      signal: AbortSignal.timeout(5000), // 5 second timeout
-    });
-
-    const refreshedTokens = await response.json();
-
-    if (!response.ok) {
-      throw refreshedTokens;
-    }
-
-    return {
-      ...token,
-      accessToken: refreshedTokens.access_token,
-      accessTokenExpires: Date.now() + refreshedTokens.expires_in * 1000,
-      refreshToken: refreshedTokens.refresh_token ?? token.refreshToken,
-    };
-  } catch (error) {
-    // Log minimal error info, not full stack trace
-    if (error instanceof Error && error.name === 'TimeoutError') {
-      console.warn('Token refresh timeout - iNaturalist may be unreachable');
-    } else if (error instanceof Error && error.message.includes('ECONNREFUSED')) {
-      console.warn('Token refresh failed - network error');
-    } else {
-      console.warn('Token refresh failed:', error instanceof Error ? error.message : 'Unknown error');
-    }
-
-    return {
-      ...token,
-      error: 'RefreshAccessTokenError',
-    };
-  }
-}
+// Note: iNaturalist OAuth 2.0 does not support refresh tokens
+// Access tokens are long-lived and we handle expiry by setting a far-future expiration date

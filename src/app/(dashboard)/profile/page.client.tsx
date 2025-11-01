@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Trophy, TrendingUp, Users, ArrowRight, Star, Sparkles, Eye, Leaf } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/types';
-import { getXPToNextLevel, getLevelProgress } from '@/lib/gamification/levels';
+import { pointsForLevel } from '@/lib/gamification/constants';
 import { AnimatedBadgeCard } from '@/components/badges/AnimatedBadgeCard';
 import { staggerContainer } from '@/lib/animations/variants';
 import { CountUp } from '@/components/animations/CountUp';
@@ -43,9 +43,15 @@ export function ProfileClient({
 }: ProfileClientProps) {
   const router = useRouter();
 
-  // Calculate XP progress to next level using proper level config
-  const xpProgress = getLevelProgress(userStats.level, userStats.totalPoints);
-  const xpToNextLevel = getXPToNextLevel(userStats.level, userStats.totalPoints);
+  // Calculate XP progress to next level using the same system as the database
+  const currentLevelXP = pointsForLevel(userStats.level);
+  const nextLevelXP = pointsForLevel(userStats.level + 1);
+  const xpToNextLevel = Math.max(0, nextLevelXP - userStats.totalPoints);
+  const xpIntoLevel = userStats.totalPoints - currentLevelXP;
+  const xpRequiredForLevel = nextLevelXP - currentLevelXP;
+  const xpProgress = xpRequiredForLevel > 0
+    ? Math.min(100, Math.max(0, (xpIntoLevel / xpRequiredForLevel) * 100))
+    : 100;
 
   // Animation variants
   const fadeInUp = {

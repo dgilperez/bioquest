@@ -6,6 +6,59 @@
 
 import { prisma } from '@/lib/db/prisma';
 import { EnrichedObservation } from './enrich-observations';
+import { INatObservation } from '@/types';
+
+/**
+ * Extract coordinates from iNaturalist observation
+ * Tries multiple sources in order of preference:
+ * 1. geojson.coordinates (most reliable)
+ * 2. latitude/longitude fields
+ * 3. location string
+ */
+function extractCoordinates(inatObs: INatObservation): {
+  latitude: number | null;
+  longitude: number | null;
+  locationString: string | null;
+} {
+  // 1. Try geojson.coordinates (most reliable)
+  if (inatObs.geojson?.coordinates) {
+    // GeoJSON format is [lng, lat]
+    const longitude = inatObs.geojson.coordinates[0];
+    const latitude = inatObs.geojson.coordinates[1];
+    return {
+      latitude,
+      longitude,
+      locationString: `${latitude},${longitude}`,
+    };
+  }
+
+  // 2. Try separate latitude/longitude fields
+  if (inatObs.latitude !== undefined && inatObs.longitude !== undefined) {
+    return {
+      latitude: inatObs.latitude,
+      longitude: inatObs.longitude,
+      locationString: `${inatObs.latitude},${inatObs.longitude}`,
+    };
+  }
+
+  // 3. Fall back to location string (format: "lat,lon")
+  if (inatObs.location) {
+    const [lat, lon] = inatObs.location.split(',').map(s => parseFloat(s.trim()));
+    if (!isNaN(lat) && !isNaN(lon)) {
+      return {
+        latitude: lat,
+        longitude: lon,
+        locationString: inatObs.location,
+      };
+    }
+  }
+
+  return {
+    latitude: null,
+    longitude: null,
+    locationString: null,
+  };
+}
 
 /**
  * Store enriched observations in the database using batch operations
@@ -39,16 +92,8 @@ export async function storeObservations(
         const { observation: inatObs, rarity, points, isFirstGlobal, isFirstRegional } = enriched;
         const photoCount = inatObs.photos?.length || 0;
 
-        // Parse coordinates from location string (format: "lat,lon")
-        let latitude: number | null = null;
-        let longitude: number | null = null;
-        if (inatObs.location) {
-          const [lat, lon] = inatObs.location.split(',').map(s => parseFloat(s.trim()));
-          if (!isNaN(lat) && !isNaN(lon)) {
-            latitude = lat;
-            longitude = lon;
-          }
-        }
+        // Extract coordinates from multiple sources
+        const { latitude, longitude, locationString } = extractCoordinates(inatObs);
 
         return {
           id: inatObs.id,
@@ -62,7 +107,7 @@ export async function storeObservations(
           observedOn: new Date(inatObs.observed_on),
           qualityGrade: inatObs.quality_grade,
           photosCount: photoCount,
-          location: inatObs.location || null,
+          location: locationString,
           latitude,
           longitude,
           placeGuess: inatObs.place_guess || null,
@@ -82,16 +127,8 @@ export async function storeObservations(
         const { observation: inatObs, rarity, points, isFirstGlobal, isFirstRegional } = enriched;
         const photoCount = inatObs.photos?.length || 0;
 
-        // Parse coordinates from location string (format: "lat,lon")
-        let latitude: number | null = null;
-        let longitude: number | null = null;
-        if (inatObs.location) {
-          const [lat, lon] = inatObs.location.split(',').map(s => parseFloat(s.trim()));
-          if (!isNaN(lat) && !isNaN(lon)) {
-            latitude = lat;
-            longitude = lon;
-          }
-        }
+        // Extract coordinates from multiple sources
+        const { latitude, longitude, locationString } = extractCoordinates(inatObs);
 
         return prisma.observation.update({
           where: { id: inatObs.id },
@@ -105,7 +142,7 @@ export async function storeObservations(
             observedOn: new Date(inatObs.observed_on),
             qualityGrade: inatObs.quality_grade,
             photosCount: photoCount,
-            location: inatObs.location || null,
+            location: locationString,
             latitude,
             longitude,
             placeGuess: inatObs.place_guess || null,
@@ -120,5 +157,11 @@ export async function storeObservations(
     );
   }
 
-  console.log(`Stored ${enrichedObservations.length} observations (${toCreate.length} new, ${toUpdate.length} updated)`);
+  // Count observations with location data
+  const withLocation = enrichedObservations.filter(e => {
+    const { latitude } = extractCoordinates(e.observation);
+    return latitude !== null;
+  }).length;
+
+  console.log(`Stored ${enrichedObservations.length} observations (${toCreate.length} new, ${toUpdate.length} updated, ${withLocation} with location)`);
 }

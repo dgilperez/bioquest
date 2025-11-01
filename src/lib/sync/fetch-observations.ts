@@ -13,6 +13,7 @@ export interface FetchOptions {
   inatUsername: string;
   lastSyncedAt?: Date;
   syncCursor?: Date; // Cursor for incremental batched syncs (prefer over lastSyncedAt)
+  maxObservations?: number; // Optional limit override (e.g., for first sync in dev mode)
 }
 
 export interface FetchResult {
@@ -35,18 +36,22 @@ export async function fetchUserObservations({
   inatUsername,
   lastSyncedAt,
   syncCursor,
+  maxObservations,
 }: FetchOptions): Promise<FetchResult> {
   const client = getINatClient(accessToken);
   // Prefer syncCursor for batched syncs, fall back to lastSyncedAt for completed syncs
   const filterDate = syncCursor || lastSyncedAt;
   const isIncrementalSync = !!filterDate;
 
+  // Use provided max or default to MAX_OBSERVATIONS_PER_SYNC
+  const observationLimit = maxObservations || SYNC_CONFIG.MAX_OBSERVATIONS_PER_SYNC;
+
   let allObservations: any[] = [];
   let currentPage = 1;
   let totalResults = 0;
   const perPage = SYNC_CONFIG.OBSERVATIONS_PER_PAGE;
 
-  console.log(`Starting ${isIncrementalSync ? 'incremental' : 'full'} sync for ${inatUsername}${filterDate ? ` from ${filterDate.toISOString()}` : ''}...`);
+  console.log(`Starting ${isIncrementalSync ? 'incremental' : 'full'} sync for ${inatUsername}${filterDate ? ` from ${filterDate.toISOString()}` : ''} (limit: ${observationLimit})...`);
 
   do {
     const response = await client.getUserObservations(inatUsername, {
@@ -60,11 +65,24 @@ export async function fetchUserObservations({
 
     console.log(`Fetched page ${currentPage}: ${response.results.length} observations (${allObservations.length}/${totalResults} total)`);
 
+    // DEBUG: Log first observation to see location fields
+    if (currentPage === 1 && response.results.length > 0) {
+      const firstObs = response.results[0];
+      console.log('🔍 DEBUG - First observation structure:');
+      console.log('  - id:', firstObs.id);
+      console.log('  - location field:', firstObs.location);
+      console.log('  - geojson:', JSON.stringify(firstObs.geojson));
+      console.log('  - latitude:', firstObs.latitude);
+      console.log('  - longitude:', firstObs.longitude);
+      console.log('  - obscured:', firstObs.obscured);
+      console.log('  - geoprivacy:', firstObs.geoprivacy);
+    }
+
     currentPage++;
 
-    // SAFETY: Respect MAX_OBSERVATIONS_PER_SYNC limit
-    if (allObservations.length >= SYNC_CONFIG.MAX_OBSERVATIONS_PER_SYNC) {
-      console.log(`Reached MAX_OBSERVATIONS_PER_SYNC limit (${SYNC_CONFIG.MAX_OBSERVATIONS_PER_SYNC}), stopping fetch`);
+    // SAFETY: Respect observation limit
+    if (allObservations.length >= observationLimit) {
+      console.log(`Reached observation limit (${observationLimit}), stopping fetch`);
       break;
     }
 

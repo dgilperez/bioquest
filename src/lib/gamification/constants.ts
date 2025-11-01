@@ -161,10 +161,13 @@ export const SYNC_CONFIG = {
   RATE_LIMIT_MARGIN: 0.9,
 
   /** Maximum observations to process in one sync operation (respects rate limits) */
-  MAX_OBSERVATIONS_PER_SYNC: process.env.NODE_ENV === 'production' ? 1000 : 100,
+  MAX_OBSERVATIONS_PER_SYNC: process.env.NODE_ENV === 'production' ? 1000 : 200,
+
+  /** Limit for first-time sync (when user has no observations in DB yet) */
+  FIRST_SYNC_LIMIT: process.env.NODE_ENV === 'production' ? 1000 : 50,
 
   /** For large backlogs, process this many at a time and let user trigger next batch */
-  CHUNK_SIZE: process.env.NODE_ENV === 'production' ? 1000 : 100,
+  CHUNK_SIZE: process.env.NODE_ENV === 'production' ? 1000 : 200,
 } as const;
 
 // ============================================================================

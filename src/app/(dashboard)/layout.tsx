@@ -4,7 +4,6 @@ import { authOptions } from '@/lib/auth';
 import { Navigation } from '@/components/layout/Navigation';
 import { SyncButton } from '@/components/stats/SyncButton';
 import { SyncProgress } from '@/components/sync/SyncProgress';
-import { BackgroundClassificationBubble } from '@/components/sync/BackgroundClassificationBubble';
 import { ClientErrorBoundary } from '@/components/errors/ClientErrorBoundary';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -94,9 +93,6 @@ export default async function DashboardLayout({
 
       {/* Sync Progress Toast */}
       <SyncProgress />
-
-      {/* Background Classification Progress Bubble */}
-      <BackgroundClassificationBubble />
     </div>
   );
 }

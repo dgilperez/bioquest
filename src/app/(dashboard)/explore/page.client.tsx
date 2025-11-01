@@ -66,6 +66,7 @@ export function ExploreClient() {
   };
 
   const fetchRecommendations = async (coords?: { lat: number; lng: number }) => {
+    console.log('🔴 fetchRecommendations called with coords:', coords);
     setIsLoading(true);
     try {
       const params = new URLSearchParams();
@@ -74,6 +75,7 @@ export function ExploreClient() {
         params.set('lng', coords.lng.toString());
       }
 
+      console.log('🔴 Making fetch request to:', `/api/explore/recommendations?${params.toString()}`);
       const response = await fetch(`/api/explore/recommendations?${params.toString()}`);
 
       if (!response.ok) {

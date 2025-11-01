@@ -40,7 +40,15 @@ export interface INatObservation {
     license_code?: string;
   }>;
   place_guess?: string;
-  location?: string; // lat,lon
+  location?: string; // lat,lon (optional, not always present)
+  geojson?: {
+    type: 'Point';
+    coordinates: [number, number]; // [lng, lat]
+  };
+  latitude?: number;
+  longitude?: number;
+  obscured?: boolean;
+  geoprivacy?: string | null;
 }
 
 export interface INatTaxon {

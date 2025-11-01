@@ -129,8 +129,12 @@ export async function syncUserObservations(
     const lastSyncedAt = currentStats?.lastSyncedAt;
     const syncCursor = currentStats?.syncCursor;
 
+    // Determine if this is a first sync (no observations in DB)
+    const isFirstSync = oldObservationCount === 0;
+    const maxObservations = isFirstSync ? SYNC_CONFIG.FIRST_SYNC_LIMIT : SYNC_CONFIG.MAX_OBSERVATIONS_PER_SYNC;
+
     // Initialize progress tracking (estimate total based on last sync)
-    const estimatedTotal = lastSyncedAt ? 100 : (process.env.NODE_ENV === 'production' ? 1000 : 100); // Conservative estimate
+    const estimatedTotal = lastSyncedAt ? 100 : maxObservations;
     initProgress(userId, estimatedTotal);
 
     // Step 1: Fetch observations from iNaturalist
@@ -145,6 +149,7 @@ export async function syncUserObservations(
       inatUsername,
       lastSyncedAt: lastSyncedAt || undefined,
       syncCursor: syncCursor || undefined,
+      maxObservations,
     });
 
     // Update total now that we know the real count
