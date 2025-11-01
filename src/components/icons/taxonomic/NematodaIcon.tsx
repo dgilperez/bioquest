@@ -81,6 +81,8 @@ export function NematodaIcon({ size = 32, className = '', animate = true }: Nema
       {/* ===== WORM BODY ===== */}
       {/* Main body path with gradient */}
       <motion.path
+        d="M 25 30 Q 35 25, 40 35 Q 45 45, 50 40 Q 55 35, 60 45"
+        initial={false}
         animate={animate ? 'idle' : undefined}
         variants={wormWiggleVariants}
         stroke="url(#wormGradient)"
@@ -93,6 +95,8 @@ export function NematodaIcon({ size = 32, className = '', animate = true }: Nema
 
       {/* Body outline (darker) */}
       <motion.path
+        d="M 25 30 Q 35 25, 40 35 Q 45 45, 50 40 Q 55 35, 60 45"
+        initial={false}
         animate={animate ? 'idle' : undefined}
         variants={wormWiggleVariants}
         stroke="#8B7355"
