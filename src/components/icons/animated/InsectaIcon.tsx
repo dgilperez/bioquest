@@ -613,8 +613,13 @@ export function InsectaIcon({ size = 32, className = '', animate = true }: Insec
       {/* Right antenna */}
       <motion.g
         id="right-antenna"
-        animate={animate ? { rotate: [8, -8, 8] } : undefined}
-        transition={animate ? { duration: 1.5, repeat: Infinity, ease: 'easeInOut' } : undefined}
+        animate={animate ? 'idle' : undefined}
+        variants={{
+          idle: {
+            rotate: [8, -8, 8],
+            transition: { duration: 1.5, repeat: Infinity, ease: 'easeInOut' }
+          }
+        }}
         style={{ transformOrigin: '43px 19px' }}
       >
         <path

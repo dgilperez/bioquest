@@ -69,13 +69,16 @@ export function AvesIcon({ size = 32, className = '', animate = true }: AvesIcon
           ry="10"
           fill="#3A5AAA"
           transform="rotate(-20 28 55)"
-          animate={animate ? {
-            rotate: [-20, -25, -20],
-          } : undefined}
-          transition={{
-            duration: 2,
-            repeat: Infinity,
-            ease: 'easeInOut',
+          animate={animate ? 'idle' : undefined}
+          variants={{
+            idle: {
+              rotate: [-20, -25, -20],
+              transition: {
+                duration: 2,
+                repeat: Infinity,
+                ease: 'easeInOut',
+              }
+            }
           }}
           style={{ transformOrigin: '28px 55px' }}
         />
