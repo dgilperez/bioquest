@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 interface AutoSyncProps {
@@ -11,12 +11,13 @@ interface AutoSyncProps {
 }
 
 export function AutoSync({ userId, inatUsername, accessToken, lastSyncedAt }: AutoSyncProps) {
-  const hasSynced = useRef(false);
+  const isSyncing = useRef(false);
+  const [syncCount, setSyncCount] = useState(0);
   const router = useRouter();
 
   useEffect(() => {
-    // Prevent double sync (React StrictMode)
-    if (hasSynced.current) return;
+    // Don't sync if already syncing
+    if (isSyncing.current) return;
 
     const checkExistingSync = async () => {
       try {
@@ -28,11 +29,13 @@ export function AutoSync({ userId, inatUsername, accessToken, lastSyncedAt }: Au
           console.log('Auto-sync: Sync already in progress, not triggering new one');
           // Dispatch event so progress UI shows up
           window.dispatchEvent(new Event('sync-started'));
-          hasSynced.current = true;
-          return;
+          isSyncing.current = true;
+          return true;
         }
+        return false;
       } catch (error) {
         console.error('Error checking sync progress:', error);
+        return false;
       }
     };
 
@@ -42,22 +45,29 @@ export function AutoSync({ userId, inatUsername, accessToken, lastSyncedAt }: Au
         return true;
       }
 
-      // Auto-sync if last sync was > 1 hour ago
-      const hourAgo = Date.now() - 60 * 60 * 1000;
-      return new Date(lastSyncedAt).getTime() < hourAgo;
+      // For first auto-sync, check if last sync was > 1 hour ago
+      if (syncCount === 0) {
+        const hourAgo = Date.now() - 60 * 60 * 1000;
+        return new Date(lastSyncedAt).getTime() < hourAgo;
+      }
+
+      // For subsequent syncs in the session, always continue
+      // (they're triggered by hasMore flag, not time-based)
+      return true;
     };
 
     const triggerSync = async () => {
       // First check if sync is already running
-      await checkExistingSync();
+      const alreadySyncing = await checkExistingSync();
+      if (alreadySyncing) return;
 
-      if (hasSynced.current || !shouldSync()) {
+      if (!shouldSync()) {
         console.log('Auto-sync: Not needed');
         return;
       }
 
-      console.log('Auto-sync: Triggering sync...');
-      hasSynced.current = true;
+      console.log(`Auto-sync: Triggering sync (batch ${syncCount + 1})...`);
+      isSyncing.current = true;
 
       // Dispatch event to trigger progress polling
       window.dispatchEvent(new Event('sync-started'));
@@ -73,19 +83,34 @@ export function AutoSync({ userId, inatUsername, accessToken, lastSyncedAt }: Au
 
         if (!response.ok) {
           console.error('Auto-sync failed:', response.statusText);
-          hasSynced.current = false; // Allow retry
+          isSyncing.current = false;
         } else {
           const result = await response.json();
           console.log('Auto-sync completed:', result);
 
-          // Wait a moment for DB to update, then refresh
-          setTimeout(() => {
-            router.refresh();
-          }, 1000);
+          // Check if there are more observations to sync
+          if (result.data?.hasMore) {
+            const remaining = result.data.totalAvailable - (result.data.newObservations || 0);
+            console.log(`📥 More observations available (${remaining} remaining). Continuing sync...`);
+
+            // Wait a moment for DB to update and background processing to complete
+            setTimeout(() => {
+              isSyncing.current = false;
+              setSyncCount(prev => prev + 1); // Trigger next sync
+            }, 3000);
+          } else {
+            console.log('✅ All observations synced!');
+            isSyncing.current = false;
+
+            // Refresh the page to show updated stats
+            setTimeout(() => {
+              router.refresh();
+            }, 1000);
+          }
         }
       } catch (error) {
         console.error('Auto-sync error:', error);
-        hasSynced.current = false; // Allow retry
+        isSyncing.current = false;
       }
     };
 
@@ -95,7 +120,7 @@ export function AutoSync({ userId, inatUsername, accessToken, lastSyncedAt }: Au
     return () => {
       clearTimeout(timeout);
     };
-  }, [userId, inatUsername, accessToken, lastSyncedAt, router]);
+  }, [userId, inatUsername, accessToken, lastSyncedAt, router, syncCount]);
 
   // This component renders nothing
   return null;

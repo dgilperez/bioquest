@@ -99,6 +99,9 @@ export interface SyncResult {
     rareFindsCount: number;
     researchGradeCount: number;
   };
+  // Incremental sync tracking
+  hasMore?: boolean;
+  totalAvailable?: number;
 }
 
 export async function syncUserObservations(
@@ -134,7 +137,7 @@ export async function syncUserObservations(
       message: 'Fetching observations from iNaturalist...',
     });
 
-    const { observations, fetchedAll } = await fetchUserObservations({
+    const { observations, fetchedAll, totalAvailable } = await fetchUserObservations({
       accessToken,
       inatUsername,
       lastSyncedAt: lastSyncedAt || undefined,
@@ -297,6 +300,17 @@ export async function syncUserObservations(
 
       await queueTaxaForClassification(userId, queueItems);
       console.log(`✅ Queued ${queueItems.length} taxa for background processing`);
+
+      // Automatically start background processing (no manual trigger needed)
+      console.log(`🚀 Starting automatic background classification...`);
+      const { processUserQueue } = await import('@/lib/rarity-queue/processor');
+
+      // Process in background without blocking sync completion
+      processUserQueue(userId, 20).then(result => {
+        console.log(`✅ Background classification complete: ${result.succeeded} succeeded, ${result.failed} failed`);
+      }).catch(err => {
+        console.error(`❌ Background classification error:`, err);
+      });
     }
 
     // Mark sync as completed
@@ -320,6 +334,8 @@ export async function syncUserObservations(
       },
       rareFinds: rareFinds.slice(0, SYNC_CONFIG.MAX_RARE_FINDS_TO_REPORT),
       xpBreakdown,
+      hasMore: !fetchedAll, // Indicate if there are more observations to sync
+      totalAvailable,
     };
   } catch (error) {
     console.error('Error syncing observations:', error);
