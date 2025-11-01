@@ -4,6 +4,7 @@ import './globals.css';
 import { SessionProvider } from '@/components/auth/SessionProvider';
 import { AutoSyncProvider } from '@/components/sync/AutoSyncProvider';
 import { QueryProvider } from '@/components/providers/QueryProvider';
+import { DevToolsProvider } from '@/components/providers/DevToolsProvider';
 import { InstallPrompt } from '@/components/pwa/InstallPrompt';
 import { OfflineIndicator } from '@/components/pwa/OfflineIndicator';
 import { Toaster } from '@/components/notifications/Toaster';
@@ -103,17 +104,19 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning className={`${outfit.variable} ${spaceGrotesk.variable}`}>
       <body className="font-body antialiased">
-        <QueryProvider>
-          <SessionProvider>
-            <AutoSyncProvider>
-              {children}
-              <Toaster />
-              <InstallPrompt />
-              <OfflineIndicator />
-              <SyncStatus />
-            </AutoSyncProvider>
-          </SessionProvider>
-        </QueryProvider>
+        <DevToolsProvider>
+          <QueryProvider>
+            <SessionProvider>
+              <AutoSyncProvider>
+                {children}
+                <Toaster />
+                <InstallPrompt />
+                <OfflineIndicator />
+                <SyncStatus />
+              </AutoSyncProvider>
+            </SessionProvider>
+          </QueryProvider>
+        </DevToolsProvider>
       </body>
     </html>
   );

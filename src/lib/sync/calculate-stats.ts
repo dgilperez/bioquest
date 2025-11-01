@@ -25,6 +25,7 @@ export interface StatsUpdateInput {
   legendaryObservations: number;
   stats: StatsResult;
   fetchedAll: boolean; // Only update lastSyncedAt if we fetched all available observations
+  newestObservationDate?: Date; // Cursor for incremental pagination
 }
 
 export interface StatsResult {
@@ -122,7 +123,7 @@ export async function updateUserStatsInDB(
   userId: string,
   updateInput: StatsUpdateInput
 ): Promise<void> {
-  const { totalObservations, totalPoints, rareObservations, legendaryObservations, stats, fetchedAll } = updateInput;
+  const { totalObservations, totalPoints, rareObservations, legendaryObservations, stats, fetchedAll, newestObservationDate } = updateInput;
   const syncTime = new Date();
 
   await prisma.userStats.upsert({
@@ -144,6 +145,8 @@ export async function updateUserStatsInDB(
       // Only set lastSyncedAt if we fetched ALL available observations
       // This allows future syncs to continue from where we left off if we hit the limit
       ...(fetchedAll ? { lastSyncedAt: syncTime } : {}),
+      // Set syncCursor for incremental pagination (or clear it when sync completes)
+      syncCursor: fetchedAll ? null : (newestObservationDate || null),
       // Track if there are more observations to sync
       hasMoreToSync: !fetchedAll,
       updatedAt: syncTime,
@@ -165,6 +168,8 @@ export async function updateUserStatsInDB(
       lastRareObservationDate: stats.lastRareObservationDate,
       // Only set lastSyncedAt on create if we fetched all available observations
       ...(fetchedAll ? { lastSyncedAt: syncTime } : {}),
+      // Set syncCursor for incremental pagination (or clear it when sync completes)
+      syncCursor: fetchedAll ? null : (newestObservationDate || null),
       // Track if there are more observations to sync
       hasMoreToSync: !fetchedAll,
     },

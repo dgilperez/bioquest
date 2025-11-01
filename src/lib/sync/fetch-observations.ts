@@ -12,6 +12,7 @@ export interface FetchOptions {
   accessToken: string;
   inatUsername: string;
   lastSyncedAt?: Date;
+  syncCursor?: Date; // Cursor for incremental batched syncs (prefer over lastSyncedAt)
 }
 
 export interface FetchResult {
@@ -19,6 +20,7 @@ export interface FetchResult {
   isIncrementalSync: boolean;
   totalAvailable: number;
   fetchedAll: boolean; // true if we fetched all available observations
+  newestObservationDate?: Date; // newest updated_at from this batch (for cursor)
 }
 
 /**
@@ -32,22 +34,25 @@ export async function fetchUserObservations({
   accessToken,
   inatUsername,
   lastSyncedAt,
+  syncCursor,
 }: FetchOptions): Promise<FetchResult> {
   const client = getINatClient(accessToken);
-  const isIncrementalSync = !!lastSyncedAt;
+  // Prefer syncCursor for batched syncs, fall back to lastSyncedAt for completed syncs
+  const filterDate = syncCursor || lastSyncedAt;
+  const isIncrementalSync = !!filterDate;
 
   let allObservations: any[] = [];
   let currentPage = 1;
   let totalResults = 0;
   const perPage = SYNC_CONFIG.OBSERVATIONS_PER_PAGE;
 
-  console.log(`Starting ${isIncrementalSync ? 'incremental' : 'full'} sync for ${inatUsername}...`);
+  console.log(`Starting ${isIncrementalSync ? 'incremental' : 'full'} sync for ${inatUsername}${filterDate ? ` from ${filterDate.toISOString()}` : ''}...`);
 
   do {
     const response = await client.getUserObservations(inatUsername, {
       per_page: perPage,
       page: currentPage,
-      updated_since: isIncrementalSync ? lastSyncedAt.toISOString() : undefined,
+      updated_since: isIncrementalSync ? filterDate.toISOString() : undefined,
     });
 
     allObservations = allObservations.concat(response.results);
@@ -85,11 +90,24 @@ export async function fetchUserObservations({
     console.log(`✅ Complete sync: All available observations fetched.`);
   }
 
+  // Find the newest observation's updated_at for cursor-based pagination
+  const newestObservationDate = allObservations.length > 0
+    ? allObservations.reduce((newest, obs) => {
+        const obsDate = new Date(obs.updated_at);
+        return obsDate > newest ? obsDate : newest;
+      }, new Date(allObservations[0].updated_at))
+    : undefined;
+
+  if (newestObservationDate) {
+    console.log(`📍 Sync cursor: ${newestObservationDate.toISOString()}`);
+  }
+
   return {
     observations: allObservations,
     isIncrementalSync,
     totalAvailable: totalResults,
     fetchedAll,
+    newestObservationDate,
   };
 }
 

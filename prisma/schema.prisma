@@ -183,6 +183,7 @@ model UserStats {
 
   lastSyncedAt          DateTime? // Track when we last synced to enable incremental sync
   hasMoreToSync         Boolean   @default(false) // Track if there are more observations to sync from last incomplete sync
+  syncCursor            DateTime? // Track the newest observation updated_at from last batch (for incremental pagination)
 
   // Leaderboard stats (reset periodically)
   weeklyPoints          Int       @default(0)

@@ -127,6 +127,7 @@ export async function syncUserObservations(
     const oldObservationCount = currentStats?.totalObservations || 0;
     const oldLevel = currentStats?.level || 1;
     const lastSyncedAt = currentStats?.lastSyncedAt;
+    const syncCursor = currentStats?.syncCursor;
 
     // Initialize progress tracking (estimate total based on last sync)
     const estimatedTotal = lastSyncedAt ? 100 : (process.env.NODE_ENV === 'production' ? 1000 : 100); // Conservative estimate
@@ -139,10 +140,11 @@ export async function syncUserObservations(
       message: 'Fetching observations from iNaturalist...',
     });
 
-    const { observations, fetchedAll, totalAvailable } = await fetchUserObservations({
+    const { observations, fetchedAll, totalAvailable, newestObservationDate } = await fetchUserObservations({
       accessToken,
       inatUsername,
       lastSyncedAt: lastSyncedAt || undefined,
+      syncCursor: syncCursor || undefined,
     });
 
     // Update total now that we know the real count
@@ -244,6 +246,7 @@ export async function syncUserObservations(
       legendaryObservations,
       stats,
       fetchedAll, // Only set lastSyncedAt if we fetched all available observations
+      newestObservationDate, // Set syncCursor for incremental pagination
     });
 
     // Step 8: Manage leaderboards
