@@ -13,7 +13,7 @@ import {
   ChromistaIcon,
   VirusIcon,
   BacteriaIcon,
-} from '@/components/icons/animated';
+} from '@/components/icons/taxonomic';
 
 export type TaxonIconName =
   | 'Animalia'

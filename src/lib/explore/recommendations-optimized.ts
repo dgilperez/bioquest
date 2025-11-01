@@ -526,11 +526,14 @@ export async function getLocationRecommendations(
   const searchTerms = ['park', 'reserve', 'national', 'state park', 'wildlife'];
   const allPlaces: Array<{ id: number; name: string; displayName: string; bbox: number[][] }> = [];
 
+  console.log(`🔍 Searching for places near (${userCoordinates.lat}, ${userCoordinates.lng}) within ${maxDistance}km`);
+
   // Search in parallel for speed
   await Promise.all(
     searchTerms.map(async term => {
       try {
         const response = await client.searchPlaces(term, { per_page: 10 });
+        console.log(`  📍 Search "${term}": found ${response.results.length} results`);
         response.results.forEach((place: any) => {
           if (place.bounding_box_geojson?.coordinates?.[0]) {
             const bbox = place.bounding_box_geojson.coordinates[0];
@@ -542,6 +545,8 @@ export async function getLocationRecommendations(
               center.lng
             );
 
+            console.log(`    - ${place.display_name}: ${distance.toFixed(1)}km away (${distance <= maxDistance ? 'INCLUDED' : 'TOO FAR'})`);
+
             if (distance <= maxDistance) {
               allPlaces.push({
                 id: place.id,
@@ -550,10 +555,12 @@ export async function getLocationRecommendations(
                 bbox,
               });
             }
+          } else {
+            console.log(`    - ${place.display_name || place.name}: NO BBOX (skipped)`);
           }
         });
       } catch (error) {
-        console.error(`Search failed for term "${term}":`, error);
+        console.error(`❌ Search failed for term "${term}":`, error);
       }
     })
   );

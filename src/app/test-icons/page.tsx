@@ -8,7 +8,7 @@ import {
   AnimaliaIcon,
   AvesIcon,
   MolluscaIcon,
-} from '@/components/icons/animated';
+} from '@/components/icons/taxonomic';
 
 /**
  * Test page to showcase all animated taxon icons

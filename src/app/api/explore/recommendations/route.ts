@@ -54,7 +54,7 @@ export async function GET(req: NextRequest) {
     // Check cache first
     const cachedRecommendations = recommendationsCache.get(userId, userCoordinates) as any[] | null;
     if (cachedRecommendations) {
-      console.log('✨ Returning cached recommendations');
+      console.log(`✨ Returning cached recommendations: ${cachedRecommendations.length} results`);
       return NextResponse.json({
         success: true,
         userCoordinates,
@@ -63,6 +63,8 @@ export async function GET(req: NextRequest) {
         cached: true,
       });
     }
+
+    console.log('🆕 No cache hit, fetching fresh recommendations...');
 
     // Get real recommendations
     const recommendations = await getLocationRecommendations(

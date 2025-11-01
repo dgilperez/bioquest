@@ -1,4 +1,4 @@
-import AnimatedLogo from '@/components/AnimatedLogo';
+import AnimatedLogo from '@/components/branding/logo/AnimatedLogo';
 
 export default function AnimationDemoPage() {
   return (
@@ -235,7 +235,7 @@ export default function AnimationDemoPage() {
                 1. Import the component
               </h3>
               <pre className="bg-gray-100 p-4 rounded text-sm overflow-x-auto">
-                <code>{`import AnimatedLogo from '@/components/AnimatedLogo';`}</code>
+                <code>{`import AnimatedLogo from '@/components/branding/logo/AnimatedLogo';`}</code>
               </pre>
             </div>
 

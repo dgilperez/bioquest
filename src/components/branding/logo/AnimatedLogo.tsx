@@ -4,16 +4,16 @@ import { motion, useReducedMotion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 
 // Import all element components
-import Background from './logo/elements/Background';
-import LeftSpiralFern from './logo/elements/LeftSpiralFern';
-import RightSpiralFern from './logo/elements/RightSpiralFern';
-import RedMushroom from './logo/elements/RedMushroom';
-import OrangeMushroom from './logo/elements/OrangeMushroom';
-import PurpleMushroom from './logo/elements/PurpleMushroom';
-import Beetle from './logo/elements/Beetle';
-import BlueLeaves from './logo/elements/BlueLeaves';
-import GreenFronds from './logo/elements/GreenFronds';
-import OrangeBranches from './logo/elements/OrangeBranches';
+import Background from './Background';
+import LeftSpiralFern from './LeftSpiralFern';
+import RightSpiralFern from './RightSpiralFern';
+import RedMushroom from './RedMushroom';
+import OrangeMushroom from './OrangeMushroom';
+import PurpleMushroom from './PurpleMushroom';
+import Beetle from './Beetle';
+import BlueLeaves from './BlueLeaves';
+import GreenFronds from './GreenFronds';
+import OrangeBranches from './OrangeBranches';
 
 interface AnimatedLogoProps {
   size?: number;
