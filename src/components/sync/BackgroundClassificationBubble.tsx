@@ -18,9 +18,10 @@ interface QueueStatus {
 export function BackgroundClassificationBubble() {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isDismissed, setIsDismissed] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   // Poll queue status every 10 seconds
-  const { data: status } = useQuery<QueueStatus>({
+  const { data: status, refetch } = useQuery<QueueStatus>({
     queryKey: ['rarity-queue-status'],
     queryFn: async () => {
       const res = await fetch('/api/rarity-queue/status');
@@ -32,6 +33,26 @@ export function BackgroundClassificationBubble() {
     refetchInterval: 10000, // Poll every 10s
     enabled: !isDismissed, // Don't poll if dismissed
   });
+
+  // Manual queue processing
+  const handleProcessQueue = async () => {
+    setIsProcessing(true);
+    try {
+      const res = await fetch('/api/rarity-queue/process?batchSize=50', {
+        method: 'POST',
+      });
+      if (!res.ok) {
+        throw new Error('Failed to process queue');
+      }
+      // Refetch status immediately
+      await refetch();
+    } catch (error) {
+      console.error('Error processing queue:', error);
+      alert('Failed to process queue. Please try again.');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
 
   // Auto-dismiss when all complete
   useEffect(() => {
@@ -153,6 +174,27 @@ export function BackgroundClassificationBubble() {
               <p className="text-xs text-gray-500 dark:text-gray-400">
                 Species rarity is being classified in the background. You can continue using the app.
               </p>
+
+              {/* Process Queue Button */}
+              {remainingCount > 0 && (
+                <button
+                  onClick={handleProcessQueue}
+                  disabled={isProcessing}
+                  className="w-full bg-nature-600 hover:bg-nature-700 disabled:bg-gray-400 text-white font-medium py-2 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
+                >
+                  {isProcessing ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-4 h-4" />
+                      Process Now (50 species)
+                    </>
+                  )}
+                </button>
+              )}
             </div>
           </motion.div>
         )}

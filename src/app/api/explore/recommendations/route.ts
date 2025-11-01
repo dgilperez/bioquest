@@ -2,11 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { getLocationRecommendations, getUserCoordinates } from '@/lib/explore/recommendations-optimized';
-import { MOCK_RECOMMENDATIONS } from '@/lib/explore/mock-recommendations';
 import { recommendationsCache } from '@/lib/cache/recommendations-cache';
-
-// Check if we're in mock mode (no iNat OAuth configured)
-const isMockMode = !process.env.INATURALIST_CLIENT_ID || process.env.INATURALIST_CLIENT_ID === 'your_client_id_here';
 
 export async function GET(req: NextRequest) {
   try {
@@ -40,25 +36,7 @@ export async function GET(req: NextRequest) {
       userCoordinates = await getUserCoordinates(userId);
     }
 
-    // Use mock data in development mode
-    if (isMockMode) {
-      console.log('🎭 Using mock location recommendations (iNaturalist OAuth not configured)');
-
-      // Use default San Francisco coordinates if none provided
-      if (!userCoordinates) {
-        userCoordinates = { lat: 37.7749, lng: -122.4194 };
-      }
-
-      return NextResponse.json({
-        success: true,
-        mock: true,
-        userCoordinates,
-        recommendations: MOCK_RECOMMENDATIONS,
-        count: MOCK_RECOMMENDATIONS.length,
-      });
-    }
-
-    // Real mode - require coordinates
+    // Require coordinates
     if (!userCoordinates) {
       return NextResponse.json(
         {

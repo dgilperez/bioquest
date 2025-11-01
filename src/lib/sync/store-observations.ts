@@ -39,6 +39,17 @@ export async function storeObservations(
         const { observation: inatObs, rarity, points, isFirstGlobal, isFirstRegional } = enriched;
         const photoCount = inatObs.photos?.length || 0;
 
+        // Parse coordinates from location string (format: "lat,lon")
+        let latitude: number | null = null;
+        let longitude: number | null = null;
+        if (inatObs.location) {
+          const [lat, lon] = inatObs.location.split(',').map(s => parseFloat(s.trim()));
+          if (!isNaN(lat) && !isNaN(lon)) {
+            latitude = lat;
+            longitude = lon;
+          }
+        }
+
         return {
           id: inatObs.id,
           userId,
@@ -52,6 +63,8 @@ export async function storeObservations(
           qualityGrade: inatObs.quality_grade,
           photosCount: photoCount,
           location: inatObs.location || null,
+          latitude,
+          longitude,
           placeGuess: inatObs.place_guess || null,
           rarity,
           isFirstGlobal,
@@ -69,6 +82,17 @@ export async function storeObservations(
         const { observation: inatObs, rarity, points, isFirstGlobal, isFirstRegional } = enriched;
         const photoCount = inatObs.photos?.length || 0;
 
+        // Parse coordinates from location string (format: "lat,lon")
+        let latitude: number | null = null;
+        let longitude: number | null = null;
+        if (inatObs.location) {
+          const [lat, lon] = inatObs.location.split(',').map(s => parseFloat(s.trim()));
+          if (!isNaN(lat) && !isNaN(lon)) {
+            latitude = lat;
+            longitude = lon;
+          }
+        }
+
         return prisma.observation.update({
           where: { id: inatObs.id },
           data: {
@@ -82,6 +106,8 @@ export async function storeObservations(
             qualityGrade: inatObs.quality_grade,
             photosCount: photoCount,
             location: inatObs.location || null,
+            latitude,
+            longitude,
             placeGuess: inatObs.place_guess || null,
             rarity,
             isFirstGlobal,

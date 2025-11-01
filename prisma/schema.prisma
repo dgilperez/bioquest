@@ -23,6 +23,7 @@ model User {
   email               String?   @unique
   location            String?   // User's primary location (city, state, country)
   region              String?   // Normalized region code (e.g., "US-CA", "UK")
+  accessToken         String?   // iNaturalist OAuth access token for API calls
   onboardingCompleted Boolean   @default(false) // Track if user completed onboarding
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
@@ -103,6 +104,8 @@ model Observation {
   qualityGrade    QualityGrade
   photosCount     Int      @default(0)
   location        String?
+  latitude        Float?
+  longitude       Float?
   placeGuess      String?
   iconicTaxon     String?
   rarity          Rarity   @default(common)
@@ -135,6 +138,8 @@ model Observation {
   @@index([userId, createdAt, taxonName])    // For taxon_observation queries
   @@index([userId, createdAt, qualityGrade]) // For quality_grade queries
   @@index([userId, createdAt, placeGuess])   // For location_variety queries
+  // Location-based queries for recommendations
+  @@index([userId, latitude, longitude])
   @@map("observations")
 }
 

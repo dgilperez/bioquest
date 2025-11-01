@@ -48,7 +48,7 @@ export const authOptions: NextAuthOptions = {
       authorization: {
         url: 'https://www.inaturalist.org/oauth/authorize',
         params: {
-          scope: 'read',
+          scope: 'write login',
           response_type: 'code',
         },
       },
@@ -262,6 +262,7 @@ export const authOptions: NextAuthOptions = {
               name: user.name || (user as any).inatUsername,
               icon: user.image,
               email: user.email,
+              accessToken: account.access_token, // Store access token for background processing
               stats: {
                 create: {
                   totalObservations: 0,
@@ -274,13 +275,14 @@ export const authOptions: NextAuthOptions = {
             },
           });
         } else {
-          // Update user info
+          // Update user info and access token
           await prisma.user.update({
             where: { inatId: (user as any).inatId },
             data: {
               name: user.name || (user as any).inatUsername,
               icon: user.image,
               email: user.email,
+              accessToken: account.access_token, // Update access token on each login
             },
           });
         }

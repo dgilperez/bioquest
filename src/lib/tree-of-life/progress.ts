@@ -179,9 +179,10 @@ export async function getUnobservedChildrenTaxa(
 
   const observedTaxonIds = new Set(userObservations.map((obs) => obs.taxonId));
 
-  // Filter to unobserved children
+  // Filter to unobserved children (exclude those with 0 observations globally)
   const unobserved = childrenResponse.results
     .filter((child) => !observedTaxonIds.has(child.id))
+    .filter((child) => (child.observations_count || 0) > 0) // Only show taxa with at least 1 observation globally
     .map((child) => ({
       id: child.id,
       name: child.name,

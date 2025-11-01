@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db/prisma';
+import { INatClient } from '@/lib/inat/client';
 import { OnboardingClient } from './page.client';
 
 export const metadata: Metadata = {
@@ -32,8 +33,21 @@ export default async function OnboardingPage() {
     redirect('/dashboard');
   }
 
-  // Get observation count from iNat to show in welcome
-  const obsCount = user.stats?.totalObservations || 0;
+  // Get actual observation count from iNaturalist API
+  let obsCount = user.stats?.totalObservations || 0;
+
+  // If stats are empty (fresh user), fetch from iNat API
+  if (obsCount === 0) {
+    try {
+      const client = new INatClient({ accessToken: (session as any).accessToken });
+      const response = await client.getUserObservations(user.inatUsername, { per_page: 1 });
+      obsCount = response.total_results;
+    } catch (error) {
+      console.error('Failed to fetch observation count from iNat:', error);
+      // Fall back to 0 if API fails
+      obsCount = 0;
+    }
+  }
 
   return (
     <OnboardingClient

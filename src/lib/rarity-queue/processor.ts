@@ -53,19 +53,17 @@ async function classifyTaxonRarity(
   isFirstRegional: boolean;
   bonusPoints: number;
 }> {
-  // Get user's access token
-  const account = await prisma.account.findFirst({
-    where: {
-      user: { id: userId },
-      provider: 'inaturalist',
-    },
+  // Get user's access token from User table
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { accessToken: true },
   });
 
-  if (!account?.access_token) {
+  if (!user?.accessToken) {
     throw new Error('No access token found for user');
   }
 
-  const client = getINatClient(account.access_token);
+  const client = getINatClient(user.accessToken);
 
   // Import rarity classification logic
   const { classifyObservationRarity } = await import('@/lib/gamification/rarity');
@@ -76,7 +74,7 @@ async function classifyTaxonRarity(
     taxon: { id: taxonId, name: '' },
   } as any;
 
-  const result = await classifyObservationRarity(mockObs, account.access_token, placeId);
+  const result = await classifyObservationRarity(mockObs, user.accessToken, placeId);
 
   return {
     rarity: result.rarity,
