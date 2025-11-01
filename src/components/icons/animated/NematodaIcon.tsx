@@ -109,8 +109,6 @@ export function NematodaIcon({ size = 32, className = '', animate = true }: Nema
         variants={segmentPulseVariants(0)}
       >
         <motion.ellipse
-          animate={animate ? { cx: [28, 30, 28], cy: [32, 36, 32] } : undefined}
-          transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
           cx="28"
           cy="32"
           rx="6"
@@ -119,6 +117,14 @@ export function NematodaIcon({ size = 32, className = '', animate = true }: Nema
           stroke="#6B5345"
           strokeWidth="1"
           opacity="0.4"
+          animate={animate ? 'idle' : undefined}
+          variants={{
+            idle: {
+              cx: [28, 30, 28],
+              cy: [32, 36, 32],
+              transition: { duration: 2, repeat: Infinity, ease: 'easeInOut' }
+            }
+          }}
         />
       </motion.g>
 
@@ -127,8 +133,6 @@ export function NematodaIcon({ size = 32, className = '', animate = true }: Nema
         variants={segmentPulseVariants(0.3)}
       >
         <motion.ellipse
-          animate={animate ? { cx: [38, 40, 38], cy: [38, 42, 38] } : undefined}
-          transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
           cx="38"
           cy="38"
           rx="6"
@@ -137,6 +141,14 @@ export function NematodaIcon({ size = 32, className = '', animate = true }: Nema
           stroke="#6B5345"
           strokeWidth="1"
           opacity="0.4"
+          animate={animate ? 'idle' : undefined}
+          variants={{
+            idle: {
+              cx: [38, 40, 38],
+              cy: [38, 42, 38],
+              transition: { duration: 2, repeat: Infinity, ease: 'easeInOut' }
+            }
+          }}
         />
       </motion.g>
 
@@ -145,8 +157,6 @@ export function NematodaIcon({ size = 32, className = '', animate = true }: Nema
         variants={segmentPulseVariants(0.6)}
       >
         <motion.ellipse
-          animate={animate ? { cx: [48, 50, 48], cy: [44, 47, 44] } : undefined}
-          transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
           cx="48"
           cy="44"
           rx="6"
@@ -155,13 +165,27 @@ export function NematodaIcon({ size = 32, className = '', animate = true }: Nema
           stroke="#6B5345"
           strokeWidth="1"
           opacity="0.4"
+          animate={animate ? 'idle' : undefined}
+          variants={{
+            idle: {
+              cx: [48, 50, 48],
+              cy: [44, 47, 44],
+              transition: { duration: 2, repeat: Infinity, ease: 'easeInOut' }
+            }
+          }}
         />
       </motion.g>
 
       {/* ===== HEAD (anterior end) ===== */}
       <motion.g
-        animate={animate ? { x: [-2, 0, -2], y: [-1, 1, -1] } : undefined}
-        transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+        animate={animate ? 'idle' : undefined}
+        variants={{
+          idle: {
+            x: [-2, 0, -2],
+            y: [-1, 1, -1],
+            transition: { duration: 2, repeat: Infinity, ease: 'easeInOut' }
+          }
+        }}
       >
         {/* Head cap */}
         <circle
@@ -206,8 +230,14 @@ export function NematodaIcon({ size = 32, className = '', animate = true }: Nema
 
       {/* ===== TAIL (posterior end) ===== */}
       <motion.g
-        animate={animate ? { x: [2, 0, 2], y: [1, -1, 1] } : undefined}
-        transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+        animate={animate ? 'idle' : undefined}
+        variants={{
+          idle: {
+            x: [2, 0, 2],
+            y: [1, -1, 1],
+            transition: { duration: 2, repeat: Infinity, ease: 'easeInOut' }
+          }
+        }}
       >
         {/* Tail tip */}
         <ellipse
@@ -230,14 +260,20 @@ export function NematodaIcon({ size = 32, className = '', animate = true }: Nema
 
       {/* Happy face decoration */}
       <motion.path
-        animate={animate ? { x: [-2, 0, -2], y: [-1, 1, -1] } : undefined}
-        transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
         d="M 23 31 Q 25 32, 27 31"
         stroke="#5A4A3A"
         strokeWidth="0.8"
         strokeLinecap="round"
         fill="none"
         opacity="0.6"
+        animate={animate ? 'idle' : undefined}
+        variants={{
+          idle: {
+            x: [-2, 0, -2],
+            y: [-1, 1, -1],
+            transition: { duration: 2, repeat: Infinity, ease: 'easeInOut' }
+          }
+        }}
       />
 
       {/* Gradient definitions */}

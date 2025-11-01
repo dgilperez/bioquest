@@ -68,14 +68,17 @@ export function FernIcon({ size = 32, className = '', animate = true }: FernIcon
 
         {/* ===== FIDDLEHEAD SPIRAL - ANIMATED ===== */}
         <motion.g
-          animate={animate ? {
-            rotate: [0, -30, -60, -90, -60, -30, 0],
-            scale: [1, 1.1, 1.2, 1.3, 1.2, 1.1, 1],
-          } : undefined}
-          transition={{
-            duration: 6,
-            repeat: Infinity,
-            ease: 'easeInOut',
+          animate={animate ? 'idle' : undefined}
+          variants={{
+            idle: {
+              rotate: [0, -30, -60, -90, -60, -30, 0],
+              scale: [1, 1.1, 1.2, 1.3, 1.2, 1.1, 1],
+              transition: {
+                duration: 6,
+                repeat: Infinity,
+                ease: 'easeInOut',
+              }
+            }
           }}
           style={{ transformOrigin: '33px 29px' }}
         >
@@ -146,14 +149,17 @@ export function FernIcon({ size = 32, className = '', animate = true }: FernIcon
         {/* ===== DEVELOPING PINNAE ===== */}
         {/* Lower pinnae - most developed */}
         <motion.g
-          animate={animate ? {
-            scaleX: [0.8, 1, 0.8],
-            opacity: [0.6, 1, 0.6],
-          } : undefined}
-          transition={{
-            duration: 6,
-            repeat: Infinity,
-            ease: 'easeInOut',
+          animate={animate ? 'idle' : undefined}
+          variants={{
+            idle: {
+              scaleX: [0.8, 1, 0.8],
+              opacity: [0.6, 1, 0.6],
+              transition: {
+                duration: 6,
+                repeat: Infinity,
+                ease: 'easeInOut',
+              }
+            }
           }}
           style={{ transformOrigin: '40px 52px' }}
         >
@@ -165,15 +171,18 @@ export function FernIcon({ size = 32, className = '', animate = true }: FernIcon
 
         {/* Mid pinnae */}
         <motion.g
-          animate={animate ? {
-            scaleX: [0.6, 0.9, 0.6],
-            opacity: [0.4, 0.8, 0.4],
-          } : undefined}
-          transition={{
-            duration: 6,
-            delay: 1,
-            repeat: Infinity,
-            ease: 'easeInOut',
+          animate={animate ? 'idle' : undefined}
+          variants={{
+            idle: {
+              scaleX: [0.6, 0.9, 0.6],
+              opacity: [0.4, 0.8, 0.4],
+              transition: {
+                duration: 6,
+                delay: 1,
+                repeat: Infinity,
+                ease: 'easeInOut',
+              }
+            }
           }}
           style={{ transformOrigin: '39px 42px' }}
         >
@@ -183,15 +192,18 @@ export function FernIcon({ size = 32, className = '', animate = true }: FernIcon
 
         {/* Upper pinnae - just emerging */}
         <motion.g
-          animate={animate ? {
-            scaleX: [0.3, 0.6, 0.3],
-            opacity: [0.3, 0.6, 0.3],
-          } : undefined}
-          transition={{
-            duration: 6,
-            delay: 2,
-            repeat: Infinity,
-            ease: 'easeInOut',
+          animate={animate ? 'idle' : undefined}
+          variants={{
+            idle: {
+              scaleX: [0.3, 0.6, 0.3],
+              opacity: [0.3, 0.6, 0.3],
+              transition: {
+                duration: 6,
+                delay: 2,
+                repeat: Infinity,
+                ease: 'easeInOut',
+              }
+            }
           }}
           style={{ transformOrigin: '38px 34px' }}
         >
