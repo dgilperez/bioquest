@@ -10,6 +10,21 @@ import { syncUserObservations } from '@/lib/stats/user-stats';
 // Mock dependencies
 vi.mock('@/lib/db/prisma', () => ({
   prisma: {
+    $transaction: vi.fn((callback: any) => {
+      // Default mock transaction - just execute the callback with prisma as tx
+      const mockTx = {
+        observation: {
+          findMany: vi.fn(),
+          createMany: vi.fn(),
+          update: vi.fn(),
+          count: vi.fn(),
+        },
+        userStats: {
+          upsert: vi.fn(),
+        },
+      };
+      return callback(mockTx);
+    }),
     userStats: {
       findUnique: vi.fn(),
       upsert: vi.fn(),
@@ -154,7 +169,12 @@ describe('Incremental Sync System', () => {
     });
 
     // Ensure storeObservations is always set to succeed by default
-    storeObservations.mockResolvedValue(undefined);
+    // Return the new format with newCount, updatedCount, and newObservationIds
+    storeObservations.mockResolvedValue({
+      newCount: 100,
+      updatedCount: 0,
+      newObservationIds: new Set([1, 2, 3, 4, 5]),
+    });
   });
 
   afterEach(() => {
@@ -240,11 +260,13 @@ describe('Incremental Sync System', () => {
       await syncUserObservations(mockUserId, mockInatUsername, mockAccessToken);
 
       // Check that updateUserStatsInDB was called with fetchedAll: false
+      // Note: Third parameter is the transaction context
       expect(updateUserStatsInDB).toHaveBeenCalledWith(
         mockUserId,
         expect.objectContaining({
           fetchedAll: false,
-        })
+        }),
+        expect.anything() // Transaction context
       );
     });
 
@@ -266,11 +288,13 @@ describe('Incremental Sync System', () => {
       await syncUserObservations(mockUserId, mockInatUsername, mockAccessToken);
 
       // Check that updateUserStatsInDB was called with fetchedAll: true
+      // Note: Third parameter is the transaction context
       expect(updateUserStatsInDB).toHaveBeenCalledWith(
         mockUserId,
         expect.objectContaining({
           fetchedAll: true,
-        })
+        }),
+        expect.anything() // Transaction context
       );
     });
 
@@ -401,30 +425,35 @@ describe('Incremental Sync System', () => {
   });
 
   describe('Environment-Dependent Configuration', () => {
-    it('should use development limits in NODE_ENV=development', async () => {
-      const originalEnv = process.env.NODE_ENV;
-      process.env.NODE_ENV = 'development';
+    it('should use development limits when ENABLE_DEV_SYNC_LIMITS=true', async () => {
+      const originalEnv = process.env.ENABLE_DEV_SYNC_LIMITS;
+      process.env.ENABLE_DEV_SYNC_LIMITS = 'true';
 
+      // Force reimport to pick up new env
+      vi.resetModules();
       const { SYNC_CONFIG } = await import('@/lib/gamification/constants');
 
-      expect(SYNC_CONFIG.MAX_OBSERVATIONS_PER_SYNC).toBe(100);
-      expect(SYNC_CONFIG.CHUNK_SIZE).toBe(100);
+      expect(SYNC_CONFIG.MAX_OBSERVATIONS_PER_SYNC).toBe(200);
+      expect(SYNC_CONFIG.FIRST_SYNC_LIMIT).toBe(100);
+      expect(SYNC_CONFIG.CHUNK_SIZE).toBe(200);
 
-      process.env.NODE_ENV = originalEnv;
+      process.env.ENABLE_DEV_SYNC_LIMITS = originalEnv;
+      vi.resetModules();
     });
 
-    it('should use production limits in NODE_ENV=production', async () => {
-      const originalEnv = process.env.NODE_ENV;
-      process.env.NODE_ENV = 'production';
+    it('should use production limits when ENABLE_DEV_SYNC_LIMITS is not set', async () => {
+      const originalEnv = process.env.ENABLE_DEV_SYNC_LIMITS;
+      delete process.env.ENABLE_DEV_SYNC_LIMITS;
 
       // Force reimport to pick up new env
       vi.resetModules();
       const { SYNC_CONFIG } = await import('@/lib/gamification/constants');
 
       expect(SYNC_CONFIG.MAX_OBSERVATIONS_PER_SYNC).toBe(1000);
+      expect(SYNC_CONFIG.FIRST_SYNC_LIMIT).toBe(1000);
       expect(SYNC_CONFIG.CHUNK_SIZE).toBe(1000);
 
-      process.env.NODE_ENV = originalEnv;
+      process.env.ENABLE_DEV_SYNC_LIMITS = originalEnv;
       vi.resetModules();
     });
   });
@@ -519,7 +548,11 @@ describe('Incremental Sync System', () => {
       ).rejects.toThrow('Storage Error');
 
       // Reset the mock for subsequent tests
-      storeObservations.mockResolvedValue(undefined);
+      storeObservations.mockResolvedValue({
+        newCount: 100,
+        updatedCount: 0,
+        newObservationIds: new Set([1, 2, 3, 4, 5]),
+      });
     });
 
     it('should not block sync when background processing fails', async () => {
@@ -535,6 +568,13 @@ describe('Incremental Sync System', () => {
         totalPoints: 100,
         rareFinds: [],
         unclassifiedTaxa: [123],
+      });
+
+      // Override default storeObservations mock for this test
+      storeObservations.mockResolvedValueOnce({
+        newCount: 10,
+        updatedCount: 0,
+        newObservationIds: new Set([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]),
       });
 
       // Background processing fails

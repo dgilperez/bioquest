@@ -60,18 +60,33 @@ function extractCoordinates(inatObs: INatObservation): {
   };
 }
 
+export interface StoreResult {
+  newCount: number;
+  updatedCount: number;
+  newObservationIds: Set<number>;
+}
+
 /**
  * Store enriched observations in the database using batch operations
  * Much more efficient than individual upserts (5-10x faster)
+ * Returns counts of new vs updated observations
+ *
+ * @param userId - User ID
+ * @param enrichedObservations - Observations to store
+ * @param tx - Optional Prisma transaction context (for atomicity with other operations)
  */
 export async function storeObservations(
   userId: string,
-  enrichedObservations: EnrichedObservation[]
-): Promise<void> {
-  if (enrichedObservations.length === 0) return;
+  enrichedObservations: EnrichedObservation[],
+  tx?: any // Prisma transaction context
+): Promise<StoreResult> {
+  if (enrichedObservations.length === 0) return { newCount: 0, updatedCount: 0, newObservationIds: new Set() };
+
+  // Use transaction context if provided, otherwise use global prisma
+  const db = tx || prisma;
 
   // Check which observations already exist
-  const existingIds = await prisma.observation.findMany({
+  const existingIds = await db.observation.findMany({
     where: {
       id: {
         in: enrichedObservations.map(e => e.observation.id)
@@ -87,7 +102,7 @@ export async function storeObservations(
 
   // BATCH CREATE new observations
   if (toCreate.length > 0) {
-    await prisma.observation.createMany({
+    await db.observation.createMany({
       data: toCreate.map(enriched => {
         const { observation: inatObs, rarity, points, isFirstGlobal, isFirstRegional } = enriched;
         const photoCount = inatObs.photos?.length || 0;
@@ -130,7 +145,7 @@ export async function storeObservations(
         // Extract coordinates from multiple sources
         const { latitude, longitude, locationString } = extractCoordinates(inatObs);
 
-        return prisma.observation.update({
+        return db.observation.update({
           where: { id: inatObs.id },
           data: {
             speciesGuess: inatObs.species_guess || null,
@@ -164,4 +179,13 @@ export async function storeObservations(
   }).length;
 
   console.log(`Stored ${enrichedObservations.length} observations (${toCreate.length} new, ${toUpdate.length} updated, ${withLocation} with location)`);
+
+  // Create set of new observation IDs for filtering
+  const newObservationIds = new Set(toCreate.map(e => e.observation.id));
+
+  return {
+    newCount: toCreate.length,
+    updatedCount: toUpdate.length,
+    newObservationIds,
+  };
 }

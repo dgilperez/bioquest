@@ -118,15 +118,23 @@ export async function calculateUserStats(
 
 /**
  * Update user stats in the database
+ *
+ * @param userId - User ID
+ * @param updateInput - Stats update data
+ * @param tx - Optional Prisma transaction context (for atomicity with other operations)
  */
 export async function updateUserStatsInDB(
   userId: string,
-  updateInput: StatsUpdateInput
+  updateInput: StatsUpdateInput,
+  tx?: any // Prisma transaction context
 ): Promise<void> {
   const { totalObservations, totalPoints, rareObservations, legendaryObservations, stats, fetchedAll, newestObservationDate } = updateInput;
   const syncTime = new Date();
 
-  await prisma.userStats.upsert({
+  // Use transaction context if provided, otherwise use global prisma
+  const db = tx || prisma;
+
+  await db.userStats.upsert({
     where: { userId },
     update: {
       totalObservations,
@@ -145,7 +153,9 @@ export async function updateUserStatsInDB(
       // Only set lastSyncedAt if we fetched ALL available observations
       // This allows future syncs to continue from where we left off if we hit the limit
       ...(fetchedAll ? { lastSyncedAt: syncTime } : {}),
-      // Set syncCursor for incremental pagination (or clear it when sync completes)
+      // Cursor strategy:
+      // - Complete sync (fetchedAll=true): Set cursor to null, use lastSyncedAt for incremental
+      // - Incomplete sync (fetchedAll=false): Store newest observation date as cursor for continuation
       syncCursor: fetchedAll ? null : (newestObservationDate || null),
       // Track if there are more observations to sync
       hasMoreToSync: !fetchedAll,
@@ -168,7 +178,9 @@ export async function updateUserStatsInDB(
       lastRareObservationDate: stats.lastRareObservationDate,
       // Only set lastSyncedAt on create if we fetched all available observations
       ...(fetchedAll ? { lastSyncedAt: syncTime } : {}),
-      // Set syncCursor for incremental pagination (or clear it when sync completes)
+      // Cursor strategy (same as update):
+      // - Complete sync: null cursor, use lastSyncedAt
+      // - Incomplete sync: store newest observation date for continuation
       syncCursor: fetchedAll ? null : (newestObservationDate || null),
       // Track if there are more observations to sync
       hasMoreToSync: !fetchedAll,

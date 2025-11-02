@@ -36,32 +36,56 @@ export interface SyncProgress {
 }
 
 export async function initProgress(userId: string, totalObservations: number): Promise<void> {
-  await prisma.syncProgress.upsert({
-    where: { userId },
-    create: {
-      userId,
-      status: 'syncing',
-      phase: 'fetching',
-      currentStep: 0,
-      totalSteps: 4,
-      message: 'Starting sync...',
-      observationsProcessed: 0,
-      observationsTotal: totalObservations,
-      startedAt: new Date(),
-    },
-    update: {
-      status: 'syncing',
-      phase: 'fetching',
-      currentStep: 0,
-      totalSteps: 4,
-      message: 'Starting sync...',
-      observationsProcessed: 0,
-      observationsTotal: totalObservations,
-      error: null,
-      completedAt: null,
-      startedAt: new Date(),
-    },
-  });
+  // ATOMIC check-and-lock: Use raw SQL with WHERE clause to prevent race conditions
+  // This will only update if status is NOT 'syncing', otherwise it throws
+  try {
+    const result = await prisma.$executeRaw`
+      UPDATE sync_progress
+      SET
+        status = 'syncing',
+        phase = 'fetching',
+        currentStep = 0,
+        totalSteps = 4,
+        message = 'Starting sync...',
+        observationsProcessed = 0,
+        observationsTotal = ${totalObservations},
+        error = NULL,
+        completedAt = NULL,
+        startedAt = ${new Date()},
+        updatedAt = ${new Date()}
+      WHERE userId = ${userId}
+        AND (status IS NULL OR status != 'syncing')
+    `;
+
+    // If no rows updated, either record doesn't exist or sync is already in progress
+    if (result === 0) {
+      // Try to create a new record
+      try {
+        await prisma.syncProgress.create({
+          data: {
+            userId,
+            status: 'syncing',
+            phase: 'fetching',
+            currentStep: 0,
+            totalSteps: 4,
+            message: 'Starting sync...',
+            observationsProcessed: 0,
+            observationsTotal: totalObservations,
+            startedAt: new Date(),
+          },
+        });
+      } catch (error) {
+        // Unique constraint violation - sync already in progress
+        throw new Error('Sync already in progress for this user');
+      }
+    }
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('Sync already in progress')) {
+      throw error;
+    }
+    // Some other error - rethrow
+    throw error;
+  }
 }
 
 export async function updateProgress(
