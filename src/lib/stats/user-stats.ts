@@ -117,27 +117,42 @@ export async function syncUserObservations(
   const { calculateUserStats, updateUserStatsInDB } = await import('@/lib/sync/calculate-stats');
   const { checkAchievements, manageLeaderboards } = await import('@/lib/sync/check-achievements');
   const { initProgress, updateProgress, completeProgress, errorProgress } = await import('@/lib/sync/progress');
+  const {
+    prepareSyncContext,
+    calculatePointsForNewObservations,
+    buildXPBreakdown,
+    buildSyncResult,
+  } = await import('@/lib/sync/sync-helpers');
+  const { createSyncLogger } = await import('@/lib/sync/sync-logger');
+
+  const startTime = Date.now();
+  const logger = createSyncLogger(userId);
 
   try {
-    // Get current stats and last sync time
+    // Phase 0: Initialize sync
+    logger.startPhase('init');
+
+    // Get current stats and prepare sync context
     const currentStats = await prisma.userStats.findUnique({
       where: { userId },
     });
 
-    const oldObservationCount = currentStats?.totalObservations || 0;
-    const oldLevel = currentStats?.level || 1;
-    const lastSyncedAt = currentStats?.lastSyncedAt;
-    const syncCursor = currentStats?.syncCursor;
+    const { oldObservationCount, oldLevel, lastSyncedAt, syncCursor, isFirstSync, maxObservations } =
+      prepareSyncContext(currentStats);
 
-    // Determine if this is a first sync (no observations in DB)
-    const isFirstSync = oldObservationCount === 0;
-    const maxObservations = isFirstSync ? SYNC_CONFIG.FIRST_SYNC_LIMIT : SYNC_CONFIG.MAX_OBSERVATIONS_PER_SYNC;
+    logger.completePhase('init', {
+      isFirstSync,
+      oldObservationCount,
+      oldLevel
+    });
 
     // Initialize progress tracking (estimate total based on last sync)
     const estimatedTotal = lastSyncedAt ? 100 : maxObservations;
     initProgress(userId, estimatedTotal);
 
-    // Step 1: Fetch observations from iNaturalist
+    // Phase 1: Fetch observations from iNaturalist
+    logger.startPhase('fetching', { maxObservations });
+
     updateProgress(userId, {
       phase: 'fetching',
       currentStep: 1,
@@ -152,22 +167,34 @@ export async function syncUserObservations(
       maxObservations,
     });
 
+    logger.completePhase('fetching', {
+      observationCount: observations.length,
+      fetchedAll,
+      totalAvailable
+    });
+
     // Update total now that we know the real count
     updateProgress(userId, {
       observationsTotal: observations.length,
       message: `Found ${observations.length} observations to process`,
     });
 
-    // Step 2: Update user location if we have observations
+    // Phase 2: Update user location if we have observations
     if (observations.length > 0) {
+      logger.startPhase('location');
       const user = await prisma.user.findUnique({ where: { id: userId } });
       if (user?.inatId) {
         await updateUserLocation(userId, user.inatId, observations, accessToken);
+        logger.completePhase('location');
+      } else {
+        logger.completePhase('location', { skipped: true, reason: 'No iNat user ID' });
       }
     }
 
-    // Step 3: Enrich observations with rarity and points
+    // Phase 3: Enrich observations with rarity and points
     // Use FAST SYNC for initial onboarding (classify only 200 most common taxa)
+    logger.startPhase('enriching', { observationCount: observations.length });
+
     updateProgress(userId, {
       phase: 'enriching',
       currentStep: 2,
@@ -188,102 +215,141 @@ export async function syncUserObservations(
         });
       },
       // Enable fast sync for onboarding (only classify top N taxa)
-      // In dev mode, use lower limit to test background processing
-      { fastSync: true, fastSyncLimit: process.env.NODE_ENV === 'production' ? 200 : 50 }
+      // Use env var to control limit (50 if dev limits enabled, 200 otherwise)
+      {
+        fastSync: true,
+        fastSyncLimit: process.env.ENABLE_DEV_SYNC_LIMITS === 'true' ? 50 : 200
+      }
     );
+
+    logger.completePhase('enriching', {
+      enrichedCount: enrichedObservations.length,
+      rareFindsCount: rareFinds.length,
+      unclassifiedCount: unclassifiedTaxa?.length || 0,
+      totalPoints
+    });
 
     updateProgress(userId, {
       observationsProcessed: observations.length,
       message: `Classified ${observations.length} observations (${rareFinds.length} rare finds)`,
     });
 
-    // Step 4: Store observations in database
+    // Phase 4: Store observations in database
+    logger.startPhase('storing', { count: enrichedObservations.length });
+
     updateProgress(userId, {
       phase: 'storing',
       currentStep: 3,
       message: 'Saving to database...',
     });
 
-    await storeObservations(userId, enrichedObservations);
-
-    // Step 5: Calculate stats (species, level, streaks)
+    // Phase 5: Calculate stats (species, level, streaks)
     updateProgress(userId, {
       phase: 'calculating',
       currentStep: 4,
       message: 'Calculating statistics and achievements...',
     });
 
-    // Calculate cumulative totals
-    const newObservationCount = observations.length; // Newly synced observations
-    const updatedTotalObservations = oldObservationCount + newObservationCount; // Cumulative total
-    const updatedTotalPoints = (currentStats?.totalPoints || 0) + totalPoints; // Cumulative total
+    logger.startPhase('calculating');
 
-    const stats = await calculateUserStats(
-      {
-        userId,
-        accessToken,
-        inatUsername,
-        totalPoints: updatedTotalPoints,
-        totalObservations: updatedTotalObservations,
-      },
-      currentStats
-    );
+    // TRANSACTION: Wrap critical database operations for atomicity
+    // If either operation fails, both are rolled back
+    const { newObsCount, updatedCount, newObservationIds, updatedTotalObservations, updatedTotalPoints, stats } =
+      await prisma.$transaction(async (tx) => {
+        // Store observations (within transaction)
+        const { newCount: newObsCount, updatedCount, newObservationIds } = await storeObservations(userId, enrichedObservations, tx);
 
-    // Step 6: Calculate rarity counts from all observations in database
-    const rareObservations = await prisma.observation.count({
-      where: {
-        userId,
-        rarity: { in: ['rare', 'epic', 'legendary', 'mythic'] }
-      }
+        // Calculate cumulative totals - ONLY count NEW observations
+        // (updated observations were already counted in a previous sync)
+        const newObservationCount = newObsCount; // Only truly new observations
+        const updatedTotalObservations = oldObservationCount + newObservationCount; // Cumulative total
+
+        // Calculate points only from NEW observations (prevents double-counting)
+        const newObsPoints = calculatePointsForNewObservations(enrichedObservations, newObservationIds);
+        const updatedTotalPoints = (currentStats?.totalPoints || 0) + newObsPoints; // Cumulative total
+
+        console.log(`📊 Sync stats: ${newObsCount} new observations (+${newObsPoints} XP), ${updatedCount} updated`);
+
+        // Calculate stats (outside transaction - read-only operations)
+        const stats = await calculateUserStats(
+          {
+            userId,
+            accessToken,
+            inatUsername,
+            totalPoints: updatedTotalPoints,
+            totalObservations: updatedTotalObservations,
+          },
+          currentStats
+        );
+
+        // Step 6: Calculate rarity counts from all observations in database (within transaction)
+        const rareObservations = await tx.observation.count({
+          where: {
+            userId,
+            rarity: { in: ['rare', 'epic', 'legendary', 'mythic'] }
+          }
+        });
+        const legendaryObservations = await tx.observation.count({
+          where: {
+            userId,
+            rarity: { in: ['legendary', 'mythic'] }
+          }
+        });
+
+        // Step 7: Update user stats in database (within transaction)
+        await updateUserStatsInDB(userId, {
+          totalObservations: updatedTotalObservations,
+          totalPoints: updatedTotalPoints,
+          rareObservations,
+          legendaryObservations,
+          stats,
+          fetchedAll, // Only set lastSyncedAt if we fetched all available observations
+          newestObservationDate, // Set syncCursor for incremental pagination
+        }, tx);
+
+        // Return values needed outside transaction
+        return { newObsCount, updatedCount, newObservationIds, updatedTotalObservations, updatedTotalPoints, stats };
+      });
+
+    // Transaction complete - all critical operations succeeded atomically
+    logger.completePhase('storing', {
+      newObservations: newObsCount,
+      updatedObservations: updatedCount
     });
-    const legendaryObservations = await prisma.observation.count({
-      where: {
-        userId,
-        rarity: { in: ['legendary', 'mythic'] }
-      }
+    logger.completePhase('calculating', {
+      newLevel: stats.level,
+      totalSpecies: stats.totalSpecies,
+      totalPoints: updatedTotalPoints
     });
 
-    // Step 7: Update user stats in database
-    await updateUserStatsInDB(userId, {
-      totalObservations: updatedTotalObservations,
-      totalPoints: updatedTotalPoints,
-      rareObservations,
-      legendaryObservations,
-      stats,
-      fetchedAll, // Only set lastSyncedAt if we fetched all available observations
-      newestObservationDate, // Set syncCursor for incremental pagination
-    });
+    const newObservationCount = newObsCount;
 
-    // Step 8: Manage leaderboards
+    // Phase 6: Check achievements (badges, quests, leaderboards)
+    logger.startPhase('achievements');
+
+    // Manage leaderboards
     await manageLeaderboards(userId);
 
-    // Step 9: Check achievements (badges and quests)
-    const { newBadges, completedQuests, questMilestones } = await checkAchievements(userId);
+    // Check achievements (badges and quests)
+    const achievements = await checkAchievements(userId);
 
-    // Determine level up
-    const leveledUp = stats.level > oldLevel;
+    logger.completePhase('achievements', {
+      newBadges: achievements.newBadges.length,
+      completedQuests: achievements.completedQuests.length,
+      questMilestones: achievements.questMilestones.length
+    });
 
-    // Calculate XP breakdown for synced observations
-    // Note: enrichedObservations already contains only the newly fetched observations
+    // Calculate XP breakdown for display (shows ALL fetched observations' potential XP)
+    // Note: actual points awarded (newObsPoints) may be less due to updated observations
+    const totalPotentialXP = enrichedObservations.reduce((sum, e) => sum + e.points, 0);
     const newSpeciesCount = stats.totalSpecies - (currentStats?.totalSpecies || 0);
-    const rareFindsCount = enrichedObservations.filter(e =>
-      e.rarity && ['rare', 'epic', 'legendary', 'mythic'].includes(e.rarity)
-    ).length;
-    const researchGradeCount = enrichedObservations.filter(e =>
-      e.observation.quality_grade === 'research'
-    ).length;
+    const xpBreakdown = buildXPBreakdown(enrichedObservations, newObservationIds, totalPotentialXP, newSpeciesCount);
 
-    const xpBreakdown = {
-      totalXP: enrichedObservations.reduce((sum, e) => sum + e.points, 0),
-      newSpeciesCount,
-      rareFindsCount,
-      researchGradeCount,
-    };
+    console.log(`Sync complete: ${newObservationCount} new observations, level ${stats.level}, ${achievements.newBadges.length} new badges, ${achievements.questMilestones.length} quest milestones, +${xpBreakdown.totalXP} XP`);
 
-    console.log(`Sync complete: ${newObservationCount} new observations, level ${stats.level}, ${newBadges.length} new badges, ${questMilestones.length} quest milestones, +${xpBreakdown.totalXP} XP`);
-
-    // Step 10: Queue unclassified taxa for background processing
+    // Phase 7: Queue unclassified taxa for background processing
     if (unclassifiedTaxa && unclassifiedTaxa.length > 0) {
+      logger.startPhase('background', { taxaCount: unclassifiedTaxa.length });
       console.log(`📥 Queueing ${unclassifiedTaxa.length} taxa for background classification...`);
 
       const { queueTaxaForClassification } = await import('@/lib/rarity-queue/manager');
@@ -311,6 +377,10 @@ export async function syncUserObservations(
       await queueTaxaForClassification(userId, queueItems);
       console.log(`✅ Queued ${queueItems.length} taxa for background processing`);
 
+      logger.completePhase('background', {
+        queuedTaxa: queueItems.length
+      });
+
       // Automatically start background processing (no manual trigger needed)
       console.log(`🚀 Starting automatic background classification...`);
       const { processUserQueue } = await import('@/lib/rarity-queue/processor');
@@ -326,32 +396,65 @@ export async function syncUserObservations(
     // Mark sync as completed
     completeProgress(userId);
 
-    return {
-      newObservations: newObservationCount,
-      totalSynced: updatedTotalObservations, // Cumulative total synced so far
-      newBadges,
-      completedQuests,
-      questMilestones,
-      leveledUp,
-      newLevel: leveledUp ? stats.level : undefined,
-      levelTitle: leveledUp ? getTitle(stats.level) : undefined,
-      oldLevel,
-      streakMilestone: stats.streakResult.milestoneReached,
-      streakData: {
-        currentStreak: stats.streakResult.currentStreak,
-        longestStreak: stats.streakResult.longestStreak,
-        streakAtRisk: stats.streakResult.streakAtRisk,
-        hoursUntilBreak: stats.streakResult.hoursUntilBreak,
+    // Complete sync logging with metrics
+    logger.complete(true);
+
+    // Build final result
+    const durationMs = Date.now() - startTime;
+    const result = buildSyncResult({
+      achievements,
+      stats: {
+        level: stats.level,
+        pointsToNextLevel: stats.pointsToNextLevel,
+        totalSpecies: stats.totalSpecies,
+        totalPoints: updatedTotalPoints,
+        totalObservations: updatedTotalObservations,
+        streakData: {
+          currentStreak: stats.streakResult.currentStreak,
+          longestStreak: stats.streakResult.longestStreak,
+          streakAtRisk: stats.streakResult.streakAtRisk,
+          hoursUntilBreak: stats.streakResult.hoursUntilBreak,
+        },
       },
-      rareFinds: rareFinds.slice(0, SYNC_CONFIG.MAX_RARE_FINDS_TO_REPORT),
+      rareFinds,
       xpBreakdown,
-      hasMore: !fetchedAll, // Indicate if there are more observations to sync
+      newObservations: newObservationCount,
+      totalSynced: updatedTotalObservations,
+      hasMore: !fetchedAll,
       totalAvailable,
+      oldLevel,
+      durationMs,
+    });
+
+    // Add streakMilestone for backward compatibility
+    return {
+      ...result,
+      streakMilestone: stats.streakResult.milestoneReached,
     };
   } catch (error) {
-    console.error('Error syncing observations:', error);
-    errorProgress(userId, error instanceof Error ? error.message : 'Unknown error');
-    throw error;
+    // Classify and enhance error with sync context
+    const { classifyError } = await import('@/lib/sync/sync-errors');
+    const syncError = classifyError(error, 'sync', userId);
+
+    // Complete logger with error
+    logger.complete(false, syncError.code);
+
+    // Log structured error
+    console.error('Sync failed:', {
+      code: syncError.code,
+      severity: syncError.severity,
+      phase: syncError.phase,
+      userId: syncError.userId,
+      message: syncError.message,
+      recovery: syncError.recovery,
+      cause: syncError.cause instanceof Error ? syncError.cause.message : syncError.cause,
+    });
+
+    // Update progress with error
+    errorProgress(userId, syncError.recovery.userMessage);
+
+    // Re-throw the enhanced error
+    throw syncError;
   }
 }
 
