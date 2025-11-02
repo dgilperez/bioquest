@@ -59,7 +59,17 @@ export async function initProgress(userId: string, totalObservations: number): P
 
     // If no rows updated, either record doesn't exist or sync is already in progress
     if (result === 0) {
-      // Try to create a new record
+      // Check if sync is already in progress before creating
+      const existing = await prisma.syncProgress.findUnique({ where: { userId } });
+
+      if (existing && existing.status === 'syncing') {
+        // Sync already in progress - this is OK, just return silently
+        // The sync that's in progress will update the progress
+        console.log(`⚠️ Sync already in progress for ${userId}, skipping initProgress`);
+        return;
+      }
+
+      // No record exists, create a new one
       try {
         await prisma.syncProgress.create({
           data: {
@@ -75,16 +85,15 @@ export async function initProgress(userId: string, totalObservations: number): P
           },
         });
       } catch (error) {
-        // Unique constraint violation - sync already in progress
-        throw new Error('Sync already in progress for this user');
+        // Race condition: another process created the record between our check and create
+        // This is OK, the other sync will proceed
+        console.log(`⚠️ Race condition in initProgress for ${userId}, another sync started first`);
+        return;
       }
     }
   } catch (error) {
-    if (error instanceof Error && error.message.includes('Sync already in progress')) {
-      throw error;
-    }
-    // Some other error - rethrow
-    throw error;
+    // Log but don't throw - sync can proceed even if progress tracking fails
+    console.error('Error in initProgress:', error);
   }
 }
 
