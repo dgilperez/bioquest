@@ -84,11 +84,19 @@ export function ExploreClient() {
       }
 
       const data = await response.json();
-      setRecommendations(data.recommendations);
-      setUserCoordinates(data.userCoordinates);
+      console.log('🔴 Received data:', data);
 
-      if (data.recommendations.length === 0) {
-        toast.info('No recommendations found nearby. Try increasing your search radius.');
+      setRecommendations(data.recommendations || []);
+      setUserCoordinates(data.userCoordinates || null);
+
+      if (!data.success) {
+        toast.error(data.message || 'Failed to load recommendations');
+      } else if (data.recommendations.length === 0) {
+        if (!data.userCoordinates) {
+          toast.info('No location data available. Please use "Use My Location" or sync observations with GPS data.');
+        } else {
+          toast.info('No recommendations found nearby. Try increasing your search radius.');
+        }
       }
     } catch (error) {
       console.error('Error fetching recommendations:', error);
@@ -159,6 +167,49 @@ export function ExploreClient() {
           </p>
         )}
       </div>
+
+      {/* Loading State */}
+      {isLoading && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="space-y-6"
+        >
+          <div className="rounded-2xl border bg-gradient-to-br from-nature-50 to-nature-100 dark:from-nature-900/20 dark:to-nature-800/20 p-8 text-center">
+            <Loader2 className="h-12 w-12 mx-auto text-nature-600 animate-spin mb-4" />
+            <h3 className="text-xl font-semibold mb-2">Exploring nearby locations...</h3>
+            <p className="text-muted-foreground">
+              Searching for places with new species, analyzing biodiversity, and calculating distances
+            </p>
+          </div>
+
+          {/* Skeleton cards */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {[1, 2, 3, 4].map((i) => (
+              <div
+                key={i}
+                className="rounded-2xl border bg-white dark:bg-gray-800 p-6 shadow-lg animate-pulse"
+              >
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex-1">
+                    <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-2"></div>
+                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
+                  </div>
+                  <div className="text-right">
+                    <div className="h-8 w-16 bg-gray-200 dark:bg-gray-700 rounded mb-1"></div>
+                    <div className="h-3 w-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div className="h-24 bg-gray-100 dark:bg-gray-700/50 rounded-lg"></div>
+                  <div className="h-24 bg-gray-100 dark:bg-gray-700/50 rounded-lg"></div>
+                </div>
+                <div className="h-12 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+              </div>
+            ))}
+          </div>
+        </motion.div>
+      )}
 
       {/* Recommendations Grid */}
       {!isLoading && recommendations.length > 0 && (

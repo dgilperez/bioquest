@@ -5,6 +5,7 @@ import { Navigation } from '@/components/layout/Navigation';
 import { SyncButton } from '@/components/stats/SyncButton';
 import { SyncProgress } from '@/components/sync/SyncProgress';
 import { ClientErrorBoundary } from '@/components/errors/ClientErrorBoundary';
+import { prisma } from '@/lib/db/prisma';
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -17,6 +18,16 @@ export default async function DashboardLayout({
 
   if (!session?.user) {
     redirect('/signin');
+  }
+
+  // Check if user has completed onboarding
+  const user = await prisma.user.findUnique({
+    where: { email: session.user.email! },
+    select: { onboardingCompleted: true },
+  });
+
+  if (!user?.onboardingCompleted) {
+    redirect('/onboarding');
   }
 
   return (

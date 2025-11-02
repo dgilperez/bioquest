@@ -29,11 +29,6 @@ export default async function DashboardPage() {
     redirect('/signin');
   }
 
-  // Redirect to onboarding if not completed
-  if (!user.onboardingCompleted) {
-    redirect('/onboarding');
-  }
-
   const stats = user.stats || (await getUserStats(user.id));
   const levelTitle = getLevelTitle(stats.level);
 

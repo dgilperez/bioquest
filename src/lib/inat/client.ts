@@ -343,6 +343,25 @@ export class INatClient {
   }
 
   /**
+   * Get detailed information about a specific place
+   */
+  async getPlace(placeId: number): Promise<{
+    id: number;
+    name: string;
+    display_name: string;
+    bounding_box_geojson?: {
+      type: string;
+      coordinates: number[][][];
+    };
+    location?: string;
+    admin_level?: number;
+    bbox_area?: number;
+  }> {
+    const response = await this.request(`/places/${placeId}`);
+    return response.results?.[0] || response;
+  }
+
+  /**
    * Get observations at a specific place
    */
   async getPlaceObservations(

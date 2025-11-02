@@ -401,6 +401,11 @@ export async function syncUserObservations(
 
     // Build final result
     const durationMs = Date.now() - startTime;
+
+    // Calculate totalSynced: cumulative count of observations processed from iNat
+    // This should be oldObservationCount + observations fetched THIS sync
+    const totalSyncedFromINat = oldObservationCount + observations.length;
+
     const result = buildSyncResult({
       achievements,
       stats: {
@@ -419,7 +424,7 @@ export async function syncUserObservations(
       rareFinds,
       xpBreakdown,
       newObservations: newObservationCount,
-      totalSynced: updatedTotalObservations,
+      totalSynced: totalSyncedFromINat,
       hasMore: !fetchedAll,
       totalAvailable,
       oldLevel,

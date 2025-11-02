@@ -425,6 +425,18 @@ function ImmersiveSyncProgress({ progress, userName }: { progress: any; userName
           <p className="text-xl text-nature-100">
             {progress?.observationsProcessed || 0} / {progress?.observationsTotal || 0} observations
           </p>
+
+          {/* Hint about incremental sync */}
+          {progress?.observationsTotal >= 1000 && percentage > 0 && (
+            <motion.p
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-sm text-nature-300 italic"
+            >
+              First {progress.observationsTotal.toLocaleString()} observations processed
+              &mdash; the rest will sync as you explore the app
+            </motion.p>
+          )}
         </div>
 
         <div className="space-y-2">

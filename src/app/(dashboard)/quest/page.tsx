@@ -29,11 +29,6 @@ export default async function QuestPage() {
     redirect('/signin');
   }
 
-  // Redirect to onboarding if not completed
-  if (!user.onboardingCompleted) {
-    redirect('/onboarding');
-  }
-
   // Ensure quests are generated and assigned
   await generateAllQuests();
   await assignAvailableQuestsToUser(user.id);

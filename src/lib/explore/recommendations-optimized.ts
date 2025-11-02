@@ -522,55 +522,81 @@ export async function getLocationRecommendations(
 
   const client = getINatClient(accessToken);
 
-  // Search for nature-focused places using autocomplete (faster than nearby)
-  const searchTerms = ['park', 'reserve', 'national', 'state park', 'wildlife'];
-  const allPlaces: Array<{ id: number; name: string; displayName: string; bbox: number[][] }> = [];
-
+  // Use getNearbyPlaces to get places actually near the user's coordinates
   console.log(`🔍 Searching for places near (${userCoordinates.lat}, ${userCoordinates.lng}) within ${maxDistance}km`);
 
-  // Search in parallel for speed
-  await Promise.all(
-    searchTerms.map(async term => {
-      try {
-        const response = await client.searchPlaces(term, { per_page: 10 });
-        console.log(`  📍 Search "${term}": found ${response.results.length} results`);
-        response.results.forEach((place: any) => {
-          if (place.bounding_box_geojson?.coordinates?.[0]) {
-            const bbox = place.bounding_box_geojson.coordinates[0];
-            const center = calculateCenterFromBbox(bbox);
-            const distance = calculateDistance(
-              userCoordinates.lat,
-              userCoordinates.lng,
-              center.lat,
-              center.lng
-            );
+  let allPlaces: Array<{ id: number; name: string; displayName: string; bbox: number[][] }> = [];
 
-            console.log(`    - ${place.display_name}: ${distance.toFixed(1)}km away (${distance <= maxDistance ? 'INCLUDED' : 'TOO FAR'})`);
+  try {
+    const response = await client.getNearbyPlaces(userCoordinates.lat, userCoordinates.lng, { per_page: 30 });
+    console.log(`  📍 Found ${response.results.standard.length} standard places and ${response.results.community.length} community places nearby`);
 
-            if (distance <= maxDistance) {
-              allPlaces.push({
-                id: place.id,
-                name: place.name,
-                displayName: place.display_name,
-                bbox,
-              });
+    // Combine standard and community places, prioritize standard (better maintained)
+    const nearbyPlaces = [
+      ...response.results.standard.map(p => ({ ...p, type: 'standard' as const })),
+      ...response.results.community.map(p => ({ ...p, type: 'community' as const }))
+    ].slice(0, 20); // Limit to 20 places max for performance
+
+    // Fetch place details in batches of 5 for better performance
+    const batchSize = 5;
+    const placeDetails: Array<{ id: number; name: string; displayName: string; bbox: number[][] } | null> = [];
+
+    for (let i = 0; i < nearbyPlaces.length; i += batchSize) {
+      const batch = nearbyPlaces.slice(i, i + batchSize);
+      const batchResults = await Promise.all(
+        batch.map(async (place) => {
+          try {
+            const details = await client.getPlace(place.id);
+            if (details.bounding_box_geojson?.coordinates?.[0]) {
+              const bbox = details.bounding_box_geojson.coordinates[0];
+              const center = calculateCenterFromBbox(bbox);
+              const distance = calculateDistance(
+                userCoordinates.lat,
+                userCoordinates.lng,
+                center.lat,
+                center.lng
+              );
+
+              console.log(`    - ${place.display_name}: ${distance.toFixed(1)}km away (${distance <= maxDistance ? 'INCLUDED' : 'TOO FAR'})`);
+
+              if (distance <= maxDistance) {
+                return {
+                  id: place.id,
+                  name: place.name,
+                  displayName: place.display_name,
+                  bbox,
+                };
+              }
+            } else {
+              console.log(`    - ${place.display_name}: NO BBOX (skipped)`);
             }
-          } else {
-            console.log(`    - ${place.display_name || place.name}: NO BBOX (skipped)`);
+          } catch (error) {
+            console.error(`Failed to fetch details for place ${place.id}:`, error);
           }
-        });
-      } catch (error) {
-        console.error(`❌ Search failed for term "${term}":`, error);
-      }
-    })
-  );
+          return null;
+        })
+      );
+      placeDetails.push(...batchResults);
 
-  // Deduplicate by place ID
+      // Early exit if we already have 10+ valid places
+      const validCount = placeDetails.filter(p => p !== null).length;
+      if (validCount >= 10) {
+        console.log(`⚡ Early exit: Found ${validCount} valid places`);
+        break;
+      }
+    }
+
+    allPlaces = placeDetails.filter((p): p is NonNullable<typeof p> => p !== null);
+  } catch (error) {
+    console.error(`❌ getNearbyPlaces failed:`, error);
+  }
+
+  // Deduplicate by place ID (shouldn't be needed but just in case)
   const uniquePlaces = Array.from(
     new Map(allPlaces.map(p => [p.id, p])).values()
   ).slice(0, 10); // Limit to top 10
 
-  console.log(`Found ${uniquePlaces.length} unique places within ${maxDistance} miles`);
+  console.log(`Found ${uniquePlaces.length} unique places within ${maxDistance} km`);
 
   // Get user data
   const [userLifeList, userStrengths] = await Promise.all([
@@ -615,21 +641,29 @@ export async function getLocationRecommendations(
  * Get user's current coordinates from observations or location
  */
 export async function getUserCoordinates(userId: string): Promise<{ lat: number; lng: number } | null> {
+  console.log('🔍 getUserCoordinates called for userId:', userId);
+
   const recentObservation = await prisma.observation.findFirst({
     where: {
       userId,
-      location: { not: null },
+      latitude: { not: null },
+      longitude: { not: null },
     },
     orderBy: { observedOn: 'desc' },
-    select: { location: true },
+    select: { latitude: true, longitude: true },
   });
 
-  if (recentObservation?.location) {
-    const [lat, lng] = recentObservation.location.split(',').map(Number);
-    if (!isNaN(lat) && !isNaN(lng)) {
-      return { lat, lng };
-    }
+  console.log('🔍 Found recent observation:', recentObservation);
+
+  if (recentObservation?.latitude && recentObservation?.longitude) {
+    const coords = {
+      lat: recentObservation.latitude,
+      lng: recentObservation.longitude,
+    };
+    console.log('✅ Returning coordinates:', coords);
+    return coords;
   }
 
+  console.log('❌ No observations with coordinates found');
   return null;
 }

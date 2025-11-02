@@ -39,12 +39,19 @@ export async function GET(req: NextRequest) {
 
     // Require coordinates
     if (!userCoordinates) {
+      console.log('❌ No coordinates available for user:', userId);
+      console.log('  - lat/lng params:', lat, lng);
+      console.log('  - getUserCoordinates returned:', userCoordinates);
+
       return NextResponse.json(
         {
+          success: false,
           error: 'Location required',
           message: 'Please provide coordinates or sync observations with location data',
+          recommendations: [],
+          count: 0,
         },
-        { status: 400 }
+        { status: 200 } // Return 200 with empty results instead of 400 error
       );
     }
 

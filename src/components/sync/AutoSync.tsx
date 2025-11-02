@@ -1,7 +1,16 @@
+/**
+ * Automatic Sync Component (Refactored)
+ *
+ * Orchestrates background sync operations with automatic retry logic.
+ * Much simpler now that retry logic is extracted to useRetryableSync hook.
+ */
+
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useRetryableSync } from '@/hooks/useRetryableSync';
+import { RETRY_CONFIG } from '@/lib/sync/retry-strategy';
 
 interface AutoSyncProps {
   userId: string;
@@ -11,122 +20,144 @@ interface AutoSyncProps {
   hasMoreToSync?: boolean;
 }
 
-export function AutoSync({ userId, inatUsername, accessToken, lastSyncedAt, hasMoreToSync }: AutoSyncProps) {
-  const isSyncing = useRef(false);
-  const [syncCount, setSyncCount] = useState(0);
+export function AutoSync({
+  userId,
+  inatUsername,
+  accessToken,
+  lastSyncedAt,
+  hasMoreToSync
+}: AutoSyncProps) {
   const router = useRouter();
 
-  useEffect(() => {
-    // Don't sync if already syncing
-    if (isSyncing.current) return;
+  /**
+   * Hook provides:
+   * - Automatic retry with exponential backoff
+   * - Error classification
+   * - State management
+   */
+  const [retryState, { executeSync, reset }] = useRetryableSync(
+    { userId, inatUsername, accessToken },
+    // onSuccess callback
+    (result) => {
+      console.log('Auto-sync completed:', result);
+      console.log('  hasMore:', result.data?.hasMore);
+      console.log('  totalAvailable:', result.data?.totalAvailable);
+      console.log('  totalSynced:', result.data?.totalSynced);
 
-    const checkExistingSync = async () => {
-      try {
-        // Check if sync is already in progress
-        const progressRes = await fetch('/api/sync/progress');
-        const progressData = await progressRes.json();
+      // Check if there are more observations to sync
+      if (result.data?.hasMore) {
+        const remaining = (result.data.totalAvailable || 0) - (result.data.totalSynced || 0);
+        console.log(`📥 More observations available (${remaining} remaining). Continuing sync...`);
 
-        if (progressData.status === 'syncing') {
-          console.log('Auto-sync: Sync already in progress, not triggering new one');
-          // Dispatch event so progress UI shows up
-          window.dispatchEvent(new Event('sync-started'));
-          isSyncing.current = true;
-          return true;
-        }
-        return false;
-      } catch (error) {
-        console.error('Error checking sync progress:', error);
-        return false;
+        // Wait for DB update and background processing
+        setTimeout(() => {
+          reset(); // Reset retry state for next batch
+          router.refresh(); // Trigger re-render with updated hasMoreToSync
+        }, RETRY_CONFIG.BATCH_DELAY);
+      } else {
+        console.log('✅ All observations synced!');
+        reset();
+
+        // Refresh to show updated stats
+        setTimeout(() => {
+          router.refresh();
+        }, 1000);
       }
-    };
+    },
+    // onFatalError callback
+    (error) => {
+      console.error('❌ Fatal sync error:', error.message);
+      // TODO: Show error notification to user
+      // TODO: If auth error, redirect to sign-in
+    }
+  );
 
-    const shouldSync = () => {
-      // Always sync if there's an incomplete sync (hasMoreToSync is set)
-      if (hasMoreToSync) {
-        return true;
-      }
-
-      // Always sync if never synced before
-      if (!lastSyncedAt) {
-        return true;
-      }
-
-      // For first auto-sync, check if last sync was > 1 hour ago
-      if (syncCount === 0) {
-        const hourAgo = Date.now() - 60 * 60 * 1000;
-        return new Date(lastSyncedAt).getTime() < hourAgo;
-      }
-
-      // For subsequent syncs in the session, always continue
-      // (they're triggered by hasMore flag, not time-based)
+  /**
+   * Check if sync should be triggered
+   */
+  const shouldSync = (): boolean => {
+    // Always sync if there's an incomplete sync
+    if (hasMoreToSync) {
       return true;
-    };
+    }
+
+    // Always sync if never synced before
+    if (!lastSyncedAt) {
+      return true;
+    }
+
+    // Don't auto-sync if recently synced (within 1 hour)
+    const hourAgo = Date.now() - 60 * 60 * 1000;
+    return new Date(lastSyncedAt).getTime() < hourAgo;
+  };
+
+  /**
+   * Check if existing sync is in progress
+   */
+  const checkExistingSync = async (): Promise<boolean> => {
+    try {
+      const progressRes = await fetch('/api/sync/progress');
+      const progressData = await progressRes.json();
+
+      if (progressData.status === 'syncing') {
+        console.log('Auto-sync: Sync already in progress');
+        // Dispatch event so progress UI shows up
+        window.dispatchEvent(new Event('sync-started'));
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Error checking sync progress:', error);
+      return false;
+    }
+  };
+
+  /**
+   * Main sync effect
+   */
+  useEffect(() => {
+    // Don't sync if currently syncing or retrying
+    if (retryState.isSyncing || retryState.isRetrying) {
+      return;
+    }
 
     const triggerSync = async () => {
-      // First check if sync is already running
+      // Check if another sync is already running
       const alreadySyncing = await checkExistingSync();
       if (alreadySyncing) return;
 
+      // Check if sync is needed
       if (!shouldSync()) {
         console.log('Auto-sync: Not needed');
         return;
       }
 
-      console.log(`Auto-sync: Triggering sync (batch ${syncCount + 1})...`);
-      isSyncing.current = true;
+      console.log(`Auto-sync: Triggering sync...`);
 
-      // Dispatch event to trigger progress polling
+      // Dispatch event to show progress UI
       window.dispatchEvent(new Event('sync-started'));
 
-      try {
-        const response = await fetch('/api/sync', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ userId, inatUsername, accessToken }),
-        });
-
-        if (!response.ok) {
-          console.error('Auto-sync failed:', response.statusText);
-          isSyncing.current = false;
-        } else {
-          const result = await response.json();
-          console.log('Auto-sync completed:', result);
-
-          // Check if there are more observations to sync
-          if (result.data?.hasMore) {
-            const remaining = (result.data.totalAvailable || 0) - (result.data.totalSynced || 0);
-            console.log(`📥 More observations available (${remaining} remaining). Continuing sync...`);
-
-            // Wait a moment for DB to update and background processing to complete
-            setTimeout(() => {
-              isSyncing.current = false;
-              setSyncCount(prev => prev + 1); // Trigger next sync
-            }, 3000);
-          } else {
-            console.log('✅ All observations synced!');
-            isSyncing.current = false;
-
-            // Refresh the page to show updated stats
-            setTimeout(() => {
-              router.refresh();
-            }, 1000);
-          }
-        }
-      } catch (error) {
-        console.error('Auto-sync error:', error);
-        isSyncing.current = false;
-      }
+      // Execute sync (hook handles retries automatically)
+      await executeSync();
     };
 
-    // Trigger sync after a short delay (let UI settle)
+    // Trigger sync after short delay (let UI settle)
     const timeout = setTimeout(triggerSync, 1000);
 
     return () => {
       clearTimeout(timeout);
     };
-  }, [userId, inatUsername, accessToken, lastSyncedAt, hasMoreToSync, router, syncCount]);
+  }, [
+    userId,
+    inatUsername,
+    accessToken,
+    lastSyncedAt,
+    hasMoreToSync,
+    retryState.isSyncing,
+    retryState.isRetrying,
+    retryState.triggerCount, // Re-run when retry is triggered
+    executeSync,
+  ]);
 
   // This component renders nothing
   return null;

@@ -300,9 +300,9 @@ describe('Progress Tracking and Race Conditions', () => {
 
       // Verify:
       // - newObservations should be 30 (not 50)
-      // - totalSynced should be 100 + 30 = 130 (cumulative)
+      // - totalSynced should be 100 + 50 FETCHED = 150 (cumulative from iNat)
       expect(result.newObservations).toBe(30);
-      expect(result.totalSynced).toBe(130);
+      expect(result.totalSynced).toBe(150); // 100 old + 50 fetched from iNat
 
       // Verify updateUserStatsInDB was called with correct totals
       const updateCall = updateUserStatsInDB.mock.calls[0];
@@ -404,12 +404,358 @@ describe('Progress Tracking and Race Conditions', () => {
 
       // Verify only NEW observations are counted
       expect(secondResult.newObservations).toBe(50); // Only NEW count
-      expect(secondResult.totalSynced).toBe(150); // Cumulative: 100 + 50
+      expect(secondResult.totalSynced).toBe(200); // Cumulative: 100 + 100 fetched from iNat
 
       // Verify points only added for the 50 NEW observations
       const updateCall = updateUserStatsInDB.mock.calls[0];
       expect(updateCall[1].totalObservations).toBe(150);
       expect(updateCall[1].totalPoints).toBeLessThan(2000); // Not 1000 + 1000 (all 100)
+    });
+
+    it('should correctly track totalSynced even when ALL observations are duplicates', async () => {
+      // CRITICAL EDGE CASE: First sync with 1000 observations, but ALL are duplicates
+      // This is the bug that caused infinite loop in production
+      // totalSynced should be 1000 (fetched from iNat), NOT 0 (new count)
+
+      prisma.userStats.findUnique.mockResolvedValue({
+        userId: mockUserId,
+        totalObservations: 0, // Fresh user
+        totalPoints: 0,
+        level: 1,
+      });
+
+      prisma.user.findUnique.mockResolvedValue({
+        id: mockUserId,
+        inatId: 123,
+      });
+
+      prisma.observation.count.mockResolvedValue(0);
+
+      // Fetch 1000 observations from iNat
+      fetchUserObservations.mockResolvedValue({
+        observations: Array(1000).fill({ id: 1, taxon: { id: 1, name: 'Species 1' } }),
+        fetchedAll: false, // More to sync
+        totalAvailable: 7740,
+        newestObservationDate: new Date(),
+      });
+
+      const enriched = Array.from({ length: 1000 }, (_, i) => ({
+        points: 10,
+        rarity: 'common',
+        observation: { id: i + 1, quality_grade: 'research', taxon: { id: 1 } },
+      }));
+
+      enrichObservations.mockResolvedValue({
+        enrichedObservations: enriched,
+        totalPoints: 10000,
+        rareFinds: [],
+        unclassifiedTaxa: [],
+      });
+
+      // CRITICAL: ALL observations are duplicates (stored but not counted as new)
+      // This can happen if sync was interrupted or observations were pre-existing
+      storeObservations.mockResolvedValue({
+        newCount: 0, // NO new observations
+        updatedCount: 1000, // ALL are updates
+        newObservationIds: new Set(), // Empty set
+      });
+
+      calculateUserStats.mockResolvedValue({
+        level: 1,
+        pointsToNextLevel: 1000,
+        totalSpecies: 0,
+        streakResult: {
+          currentStreak: 0,
+          longestStreak: 0,
+          lastObservationDate: null,
+          streakAtRisk: false,
+          hoursUntilBreak: 48,
+          milestoneReached: undefined,
+        },
+        currentRarityStreak: 0,
+        longestRarityStreak: 0,
+        lastRareObservationDate: null,
+      });
+
+      checkAchievements.mockResolvedValue({
+        newBadges: [],
+        completedQuests: [],
+        questMilestones: [],
+      });
+
+      $executeRaw.mockResolvedValue(1);
+
+      const result = await syncUserObservations(mockUserId, 'testuser', 'mock-token');
+
+      // CRITICAL ASSERTIONS:
+      expect(result.newObservations).toBe(0); // No NEW observations
+      expect(result.totalSynced).toBe(1000); // But we DID sync 1000 from iNat!
+      expect(result.hasMore).toBe(true); // More to sync (7740 total)
+      expect(result.totalAvailable).toBe(7740);
+
+      // This ensures AutoSync can track progress correctly:
+      // - First sync: totalSynced = 1000, totalAvailable = 7740 (6740 remaining)
+      // - Second sync: totalSynced = 2000, totalAvailable = 7740 (5740 remaining)
+      // Without this fix, totalSynced would be 0 forever = infinite loop!
+    });
+
+    it('should correctly track totalSynced when fetching MORE than newCount', async () => {
+      // Another edge case: Fetch 100, but only 10 are NEW
+      // totalSynced should count FETCHED (100), not NEW (10)
+
+      prisma.userStats.findUnique.mockResolvedValue({
+        userId: mockUserId,
+        totalObservations: 500, // User already has 500
+        totalPoints: 5000,
+        level: 3,
+      });
+
+      prisma.user.findUnique.mockResolvedValue({
+        id: mockUserId,
+        inatId: 123,
+      });
+
+      prisma.observation.count.mockResolvedValue(0);
+
+      // Fetch 100 observations
+      fetchUserObservations.mockResolvedValue({
+        observations: Array(100).fill({ id: 1, taxon: { id: 1 } }),
+        fetchedAll: false,
+        totalAvailable: 1000,
+        newestObservationDate: new Date(),
+      });
+
+      const enriched = Array.from({ length: 100 }, (_, i) => ({
+        points: 10,
+        rarity: 'common',
+        observation: { id: i + 1, quality_grade: 'research', taxon: { id: 1 } },
+      }));
+
+      enrichObservations.mockResolvedValue({
+        enrichedObservations: enriched,
+        totalPoints: 1000,
+        rareFinds: [],
+        unclassifiedTaxa: [],
+      });
+
+      // Only 10 NEW, 90 UPDATED
+      const newObsIds = new Set(Array.from({ length: 10 }, (_, i) => i + 1));
+      storeObservations.mockResolvedValue({
+        newCount: 10,
+        updatedCount: 90,
+        newObservationIds: newObsIds,
+      });
+
+      calculateUserStats.mockResolvedValue({
+        level: 3,
+        pointsToNextLevel: 500,
+        totalSpecies: 100,
+        streakResult: {
+          currentStreak: 1,
+          longestStreak: 1,
+          lastObservationDate: new Date(),
+          streakAtRisk: false,
+          hoursUntilBreak: 24,
+          milestoneReached: undefined,
+        },
+        currentRarityStreak: 0,
+        longestRarityStreak: 0,
+        lastRareObservationDate: null,
+      });
+
+      checkAchievements.mockResolvedValue({
+        newBadges: [],
+        completedQuests: [],
+        questMilestones: [],
+      });
+
+      $executeRaw.mockResolvedValue(1);
+
+      const result = await syncUserObservations(mockUserId, 'testuser', 'mock-token');
+
+      // CRITICAL: totalSynced = oldCount (500) + FETCHED (100) = 600
+      // NOT oldCount (500) + NEW (10) = 510
+      expect(result.newObservations).toBe(10);
+      expect(result.totalSynced).toBe(600); // 500 + 100 fetched
+      expect(result.hasMore).toBe(true);
+      expect(result.totalAvailable).toBe(1000);
+
+      // Database should only add 10 NEW observations
+      const updateCall = updateUserStatsInDB.mock.calls[0];
+      expect(updateCall[1].totalObservations).toBe(510); // 500 + 10 NEW
+    });
+
+    it('should track totalSynced correctly across multiple sync batches', async () => {
+      // Simulate multiple syncs to verify cumulative tracking
+      // Batch 1: 0 + 1000 = 1000
+      // Batch 2: 1000 + 1000 = 2000
+      // Batch 3: 2000 + 1000 = 3000
+
+      // First batch
+      prisma.userStats.findUnique.mockResolvedValueOnce({
+        userId: mockUserId,
+        totalObservations: 0,
+        totalPoints: 0,
+        level: 1,
+      });
+
+      fetchUserObservations.mockResolvedValueOnce({
+        observations: Array(1000).fill({ id: 1 }),
+        fetchedAll: false,
+        totalAvailable: 3000,
+        newestObservationDate: new Date(),
+      });
+
+      enrichObservations.mockResolvedValue({
+        enrichedObservations: Array(1000).fill({ points: 10, observation: { id: 1 } }),
+        totalPoints: 10000,
+        rareFinds: [],
+        unclassifiedTaxa: [],
+      });
+
+      storeObservations.mockResolvedValueOnce({
+        newCount: 1000,
+        updatedCount: 0,
+        newObservationIds: new Set(Array.from({ length: 1000 }, (_, i) => i)),
+      });
+
+      calculateUserStats.mockResolvedValue({
+        level: 2,
+        pointsToNextLevel: 500,
+        totalSpecies: 100,
+        streakResult: {
+          currentStreak: 1,
+          longestStreak: 1,
+          lastObservationDate: new Date(),
+          streakAtRisk: false,
+          hoursUntilBreak: 24,
+          milestoneReached: undefined,
+        },
+        currentRarityStreak: 0,
+        longestRarityStreak: 0,
+        lastRareObservationDate: null,
+      });
+
+      checkAchievements.mockResolvedValue({
+        newBadges: [],
+        completedQuests: [],
+        questMilestones: [],
+      });
+
+      prisma.user.findUnique.mockResolvedValue({ id: mockUserId, inatId: 123 });
+      prisma.observation.count.mockResolvedValue(0);
+      $executeRaw.mockResolvedValue(1);
+
+      const batch1 = await syncUserObservations(mockUserId, 'testuser', 'mock-token');
+      expect(batch1.totalSynced).toBe(1000);
+      expect(batch1.hasMore).toBe(true);
+
+      // Second batch
+      vi.clearAllMocks();
+      prisma.userStats.findUnique.mockResolvedValueOnce({
+        userId: mockUserId,
+        totalObservations: 1000,
+        totalPoints: 10000,
+        level: 2,
+      });
+
+      fetchUserObservations.mockResolvedValueOnce({
+        observations: Array(1000).fill({ id: 1 }),
+        fetchedAll: false,
+        totalAvailable: 3000,
+        newestObservationDate: new Date(),
+      });
+
+      storeObservations.mockResolvedValueOnce({
+        newCount: 1000,
+        updatedCount: 0,
+        newObservationIds: new Set(Array.from({ length: 1000 }, (_, i) => i + 1000)),
+      });
+
+      calculateUserStats.mockResolvedValue({
+        level: 3,
+        pointsToNextLevel: 500,
+        totalSpecies: 200,
+        streakResult: {
+          currentStreak: 2,
+          longestStreak: 2,
+          lastObservationDate: new Date(),
+          streakAtRisk: false,
+          hoursUntilBreak: 24,
+          milestoneReached: undefined,
+        },
+        currentRarityStreak: 0,
+        longestRarityStreak: 0,
+        lastRareObservationDate: null,
+      });
+
+      checkAchievements.mockResolvedValue({
+        newBadges: [],
+        completedQuests: [],
+        questMilestones: [],
+      });
+
+      prisma.user.findUnique.mockResolvedValue({ id: mockUserId, inatId: 123 });
+      prisma.observation.count.mockResolvedValue(0);
+      $executeRaw.mockResolvedValue(1);
+
+      const batch2 = await syncUserObservations(mockUserId, 'testuser', 'mock-token');
+      expect(batch2.totalSynced).toBe(2000); // 1000 + 1000
+      expect(batch2.hasMore).toBe(true);
+
+      // Third batch
+      vi.clearAllMocks();
+      prisma.userStats.findUnique.mockResolvedValueOnce({
+        userId: mockUserId,
+        totalObservations: 2000,
+        totalPoints: 20000,
+        level: 3,
+      });
+
+      fetchUserObservations.mockResolvedValueOnce({
+        observations: Array(1000).fill({ id: 1 }),
+        fetchedAll: true, // Last batch
+        totalAvailable: 3000,
+        newestObservationDate: new Date(),
+      });
+
+      storeObservations.mockResolvedValueOnce({
+        newCount: 1000,
+        updatedCount: 0,
+        newObservationIds: new Set(Array.from({ length: 1000 }, (_, i) => i + 2000)),
+      });
+
+      calculateUserStats.mockResolvedValue({
+        level: 4,
+        pointsToNextLevel: 500,
+        totalSpecies: 300,
+        streakResult: {
+          currentStreak: 3,
+          longestStreak: 3,
+          lastObservationDate: new Date(),
+          streakAtRisk: false,
+          hoursUntilBreak: 24,
+          milestoneReached: undefined,
+        },
+        currentRarityStreak: 0,
+        longestRarityStreak: 0,
+        lastRareObservationDate: null,
+      });
+
+      checkAchievements.mockResolvedValue({
+        newBadges: [],
+        completedQuests: [],
+        questMilestones: [],
+      });
+
+      prisma.user.findUnique.mockResolvedValue({ id: mockUserId, inatId: 123 });
+      prisma.observation.count.mockResolvedValue(0);
+      $executeRaw.mockResolvedValue(1);
+
+      const batch3 = await syncUserObservations(mockUserId, 'testuser', 'mock-token');
+      expect(batch3.totalSynced).toBe(3000); // 2000 + 1000
+      expect(batch3.hasMore).toBe(false); // All done!
+      expect(batch3.totalAvailable).toBe(3000);
     });
   });
 
