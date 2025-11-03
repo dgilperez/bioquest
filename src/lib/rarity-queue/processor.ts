@@ -182,10 +182,15 @@ export async function processRarityQueue(
 
 /**
  * Process queue for a specific user (e.g., when they request it)
+ *
+ * NEW: This function now loops internally until all pending items are processed
+ * or a safety limit is reached. This fixes the bug where only one batch (20 items)
+ * was processed, leaving remaining items unprocessed forever.
  */
 export async function processUserQueue(
   userId: string,
-  batchSize: number = 20
+  batchSize: number = 20,
+  maxIterations: number = 50 // Safety: max 50 batches = 1000 items
 ): Promise<{
   processed: number;
   succeeded: number;
@@ -193,65 +198,106 @@ export async function processUserQueue(
 }> {
   console.log(`🎯 Processing queue for user ${userId}...`);
 
-  // Get user's pending items
-  const batch = await prisma.rarityClassificationQueue.findMany({
-    where: {
-      userId,
-      status: 'pending',
-      attempts: { lt: 3 },
-    },
-    orderBy: [
-      { priority: 'desc' },
-      { createdAt: 'asc' },
-    ],
-    take: batchSize,
-  });
+  let totalProcessed = 0;
+  let totalSucceeded = 0;
+  let totalFailed = 0;
+  let iteration = 0;
 
-  if (batch.length === 0) {
-    console.log('✨ No pending taxa for this user');
-    return { processed: 0, succeeded: 0, failed: 0 };
-  }
+  // CONTINUATION LOOP: Process batches until queue is empty
+  while (iteration < maxIterations) {
+    iteration++;
 
-  let succeeded = 0;
-  let failed = 0;
+    // Get user's pending items for this batch
+    const batch = await prisma.rarityClassificationQueue.findMany({
+      where: {
+        userId,
+        status: 'pending',
+        attempts: { lt: 3 },
+      },
+      orderBy: [
+        { priority: 'desc' },
+        { createdAt: 'asc' },
+      ],
+      take: batchSize,
+    });
 
-  for (const item of batch) {
-    try {
-      await markAsProcessing(item.id);
-      const classification = await classifyTaxonRarity(item.taxonId, userId);
-
-      await prisma.observation.updateMany({
-        where: {
-          userId,
-          taxonId: item.taxonId,
-          rarityStatus: 'pending',
-        },
-        data: {
-          rarity: classification.rarity as any,
-          rarityStatus: 'classified',
-          globalCount: classification.globalCount,
-          regionalCount: classification.regionalCount,
-          isFirstGlobal: classification.isFirstGlobal,
-          isFirstRegional: classification.isFirstRegional,
-        },
-      });
-
-      await markAsCompleted(item.id);
-      succeeded++;
-
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      const isTransient = isTransientError(error as Error);
-      await markAsFailed(item.id, errorMessage, isTransient);
-      failed++;
+    // No more items - we're done!
+    if (batch.length === 0) {
+      if (iteration === 1) {
+        console.log('✨ No pending taxa for this user');
+      } else {
+        console.log(`✅ Queue empty after ${iteration - 1} batches`);
+      }
+      break;
     }
 
-    await new Promise(resolve => setTimeout(resolve, 500));
+    console.log(`📦 Batch ${iteration}: Processing ${batch.length} taxa...`);
+
+    let succeeded = 0;
+    let failed = 0;
+
+    for (const item of batch) {
+      try {
+        await markAsProcessing(item.id);
+        const classification = await classifyTaxonRarity(item.taxonId, userId);
+
+        await prisma.observation.updateMany({
+          where: {
+            userId,
+            taxonId: item.taxonId,
+            rarityStatus: 'pending',
+          },
+          data: {
+            rarity: classification.rarity as any,
+            rarityStatus: 'classified',
+            globalCount: classification.globalCount,
+            regionalCount: classification.regionalCount,
+            isFirstGlobal: classification.isFirstGlobal,
+            isFirstRegional: classification.isFirstRegional,
+          },
+        });
+
+        await markAsCompleted(item.id);
+        succeeded++;
+
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        const isTransient = isTransientError(error as Error);
+        await markAsFailed(item.id, errorMessage, isTransient);
+        failed++;
+      }
+
+      // Small delay between taxa to respect rate limits
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+
+    totalProcessed += batch.length;
+    totalSucceeded += succeeded;
+    totalFailed += failed;
+
+    console.log(`  ✓ Batch ${iteration} complete: ${succeeded} succeeded, ${failed} failed`);
+
+    // Check if more items remain
+    const remainingCount = await prisma.rarityClassificationQueue.count({
+      where: { userId, status: 'pending' },
+    });
+
+    if (remainingCount === 0) {
+      console.log(`✅ All taxa processed after ${iteration} batches`);
+      break;
+    }
+
+    // Small delay between batches
+    await new Promise(resolve => setTimeout(resolve, 1000));
+  }
+
+  if (iteration >= maxIterations) {
+    console.warn(`⚠️  Hit safety limit: ${maxIterations} batches processed`);
   }
 
   return {
-    processed: batch.length,
-    succeeded,
-    failed,
+    processed: totalProcessed,
+    succeeded: totalSucceeded,
+    failed: totalFailed,
   };
 }
