@@ -45,14 +45,14 @@ describe('Tree of Life Stats Refresh', () => {
     const observations = [];
     for (let i = 0; i < 50; i++) {
       observations.push({
+        id: 5000 + i, // iNat observation ID (primary key)
         userId: testUserId,
-        inatId: 5000 + i,
         observedOn: new Date(2025, 0, i + 1),
         latitude: 40.0,
         longitude: -3.0,
         taxonId: 47126, // Plantae (iconic taxon)
         taxonName: `Plant Species ${i}`,
-        iconicTaxonName: 'Plantae',
+        iconicTaxon: 'Plantae',
         qualityGrade: 'research',
         rarity: 'common',
         rarityStatus: 'pending', // ← KEY: Initially pending
@@ -95,14 +95,14 @@ describe('Tree of Life Stats Refresh', () => {
     const moreObservations = [];
     for (let i = 50; i < 100; i++) {
       moreObservations.push({
+        id: 5000 + i, // iNat observation ID (primary key)
         userId: testUserId,
-        inatId: 5000 + i,
         observedOn: new Date(2025, 0, i + 1),
         latitude: 40.0,
         longitude: -3.0,
         taxonId: 47126,
         taxonName: `Plant Species ${i}`,
-        iconicTaxonName: 'Plantae',
+        iconicTaxon: 'Plantae',
         qualityGrade: 'research',
         rarity: 'common',
         rarityStatus: 'classified',
@@ -150,7 +150,7 @@ describe('Tree of Life Stats Refresh', () => {
           rarityStatus: 'classified', // Only count classified observations
         },
         _count: {
-          inatId: true,
+          id: true, // Count observations by ID (primary key)
         },
       });
 
@@ -160,31 +160,36 @@ describe('Tree of Life Stats Refresh', () => {
         select: { taxonName: true },
       });
 
-      const observationCount = stats[0]?._count.inatId || 0;
+      const observationCount = stats[0]?._count.id || 0;
       const speciesCount = distinctSpecies.length;
 
-      await prisma.userTaxonProgress.upsert({
-        where: {
-          userId_taxonId_rank_regionId: {
+      // Find existing progress record
+      const existing = await prisma.userTaxonProgress.findFirst({
+        where: { userId, taxonId, regionId: null },
+      });
+
+      if (existing) {
+        // Update existing record
+        await prisma.userTaxonProgress.update({
+          where: { id: existing.id },
+          data: {
+            observationCount,
+            speciesCount,
+          },
+        });
+      } else {
+        // Create new record
+        await prisma.userTaxonProgress.create({
+          data: {
             userId,
             taxonId,
             rank: 'kingdom',
-            regionId: null,
+            observationCount,
+            speciesCount,
+            completionPercent: 0,
           },
-        },
-        create: {
-          userId,
-          taxonId,
-          rank: 'kingdom',
-          observationCount,
-          speciesCount,
-          completionPercent: 0,
-        },
-        update: {
-          observationCount,
-          speciesCount,
-        },
-      });
+        });
+      }
 
       return { observationCount, speciesCount };
     }
@@ -193,14 +198,14 @@ describe('Tree of Life Stats Refresh', () => {
     const observations = [];
     for (let i = 0; i < 100; i++) {
       observations.push({
+        id: 6000 + i, // iNat observation ID (primary key)
         userId: testUserId,
-        inatId: 6000 + i,
         observedOn: new Date(2025, 0, i + 1),
         latitude: 40.0,
         longitude: -3.0,
         taxonId: 47126,
         taxonName: `Plant ${i}`,
-        iconicTaxonName: 'Plantae',
+        iconicTaxon: 'Plantae',
         qualityGrade: 'research',
         rarity: 'common',
         rarityStatus: 'classified',
