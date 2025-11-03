@@ -386,8 +386,32 @@ export async function syncUserObservations(
       const { processUserQueue } = await import('@/lib/rarity-queue/processor');
 
       // Process in background without blocking sync completion
-      processUserQueue(userId, 20).then(result => {
+      processUserQueue(userId, 20).then(async (result) => {
         console.log(`✅ Background classification complete: ${result.succeeded} succeeded, ${result.failed} failed`);
+
+        // Refresh Tree of Life stats after classification completes
+        try {
+          console.log('🌳 Refreshing Tree of Life stats...');
+          const { updateUserTaxonProgress } = await import('@/lib/tree-of-life/progress');
+
+          // Get all iconic taxon IDs (the major groups in Tree of Life)
+          const iconicTaxa = await prisma.observation.findMany({
+            where: { userId, rarityStatus: 'classified' },
+            distinct: ['iconicTaxonId'],
+            select: { iconicTaxonId: true },
+          });
+
+          // Update progress for each iconic taxon
+          for (const { iconicTaxonId } of iconicTaxa) {
+            if (iconicTaxonId) {
+              await updateUserTaxonProgress(userId, iconicTaxonId);
+            }
+          }
+
+          console.log(`✅ Tree of Life stats refreshed for ${iconicTaxa.length} groups`);
+        } catch (error) {
+          console.error('❌ Failed to refresh Tree of Life stats:', error);
+        }
       }).catch(err => {
         console.error(`❌ Background classification error:`, err);
       });
