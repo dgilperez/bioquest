@@ -11,6 +11,9 @@ import { MessageRotator } from './messages';
 // Global message rotators per user (in-memory, resets on server restart)
 const messageRotators = new Map<string, MessageRotator>();
 
+// Track cleanup timers to prevent memory leaks
+const progressCleanupTimers = new Map<string, NodeJS.Timeout>();
+
 function getMessageRotator(userId: string): MessageRotator {
   if (!messageRotators.has(userId)) {
     messageRotators.set(userId, new MessageRotator(7000)); // Rotate every 7 seconds
@@ -157,6 +160,13 @@ export async function completeProgress(userId: string): Promise<void> {
   const current = await prisma.syncProgress.findUnique({ where: { userId } });
   if (!current) return;
 
+  // Clear any existing cleanup timer
+  const existingTimer = progressCleanupTimers.get(userId);
+  if (existingTimer) {
+    clearTimeout(existingTimer);
+    progressCleanupTimers.delete(userId);
+  }
+
   // Use updateMany to avoid race condition if record is deleted between check and update
   const result = await prisma.syncProgress.updateMany({
     where: { userId },
@@ -172,14 +182,25 @@ export async function completeProgress(userId: string): Promise<void> {
 
   // Only schedule cleanup if update succeeded
   if (result.count > 0) {
-    // Clean up after 5 minutes (optional, can keep for history)
-    setTimeout(async () => {
+    // Store timer reference so it can be cancelled
+    const timer = setTimeout(async () => {
       await prisma.syncProgress.delete({ where: { userId } }).catch(() => {});
+      progressCleanupTimers.delete(userId);
+      messageRotators.delete(userId);
     }, 5 * 60 * 1000);
+
+    progressCleanupTimers.set(userId, timer);
   }
 }
 
 export async function errorProgress(userId: string, error: string): Promise<void> {
+  // Clear any existing cleanup timer
+  const existingTimer = progressCleanupTimers.get(userId);
+  if (existingTimer) {
+    clearTimeout(existingTimer);
+    progressCleanupTimers.delete(userId);
+  }
+
   await prisma.syncProgress.updateMany({
     where: { userId },
     data: {
@@ -189,10 +210,21 @@ export async function errorProgress(userId: string, error: string): Promise<void
       completedAt: new Date(),
     },
   });
+
+  // Clean up message rotator
+  messageRotators.delete(userId);
 }
 
 export async function clearProgress(userId: string): Promise<void> {
+  // Clear any existing cleanup timer
+  const existingTimer = progressCleanupTimers.get(userId);
+  if (existingTimer) {
+    clearTimeout(existingTimer);
+    progressCleanupTimers.delete(userId);
+  }
+
   await prisma.syncProgress.delete({ where: { userId } }).catch(() => {});
+
   // Clean up message rotator
   messageRotators.delete(userId);
 }

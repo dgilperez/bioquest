@@ -128,28 +128,42 @@ export async function processRarityQueue(
 
       console.log(`  ✓ Classified as ${classification.rarity} (${classification.globalCount} global observations)`);
 
-      // Update all observations with this taxon for this user
-      const updateResult = await prisma.observation.updateMany({
-        where: {
-          userId: item.userId,
-          taxonId: item.taxonId,
-          rarityStatus: 'pending', // Only update pending ones
-        },
-        data: {
-          rarity: classification.rarity as any,
-          rarityStatus: 'classified',
-          globalCount: classification.globalCount,
-          regionalCount: classification.regionalCount,
-          isFirstGlobal: classification.isFirstGlobal,
-          isFirstRegional: classification.isFirstRegional,
-          // Note: pointsAwarded was already calculated during initial sync
-        },
+      // ATOMIC TRANSACTION: Update observations + mark as completed
+      // If either fails, both roll back - prevents orphaned queue items
+      const updateResult = await prisma.$transaction(async (tx) => {
+        // Update all observations with this taxon for this user
+        const result = await tx.observation.updateMany({
+          where: {
+            userId: item.userId,
+            taxonId: item.taxonId,
+            rarityStatus: 'pending', // Only update pending ones
+          },
+          data: {
+            rarity: classification.rarity as any,
+            rarityStatus: 'classified',
+            globalCount: classification.globalCount,
+            regionalCount: classification.regionalCount,
+            isFirstGlobal: classification.isFirstGlobal,
+            isFirstRegional: classification.isFirstRegional,
+            // Note: pointsAwarded was already calculated during initial sync
+          },
+        });
+
+        // Mark queue item as completed
+        await tx.rarityClassificationQueue.updateMany({
+          where: { id: item.id },
+          data: {
+            status: 'completed',
+            lastAttemptAt: new Date(),
+          },
+        });
+
+        return result;
+      }, {
+        timeout: 30000, // 30 second timeout for transaction
       });
 
       console.log(`  📝 Updated ${updateResult.count} observations`);
-
-      // Mark queue item as completed
-      await markAsCompleted(item.id);
       succeeded++;
 
     } catch (error) {
@@ -241,23 +255,35 @@ export async function processUserQueue(
         await markAsProcessing(item.id);
         const classification = await classifyTaxonRarity(item.taxonId, userId);
 
-        await prisma.observation.updateMany({
-          where: {
-            userId,
-            taxonId: item.taxonId,
-            rarityStatus: 'pending',
-          },
-          data: {
-            rarity: classification.rarity as any,
-            rarityStatus: 'classified',
-            globalCount: classification.globalCount,
-            regionalCount: classification.regionalCount,
-            isFirstGlobal: classification.isFirstGlobal,
-            isFirstRegional: classification.isFirstRegional,
-          },
+        // ATOMIC TRANSACTION: Update observations + mark as completed
+        await prisma.$transaction(async (tx) => {
+          await tx.observation.updateMany({
+            where: {
+              userId,
+              taxonId: item.taxonId,
+              rarityStatus: 'pending',
+            },
+            data: {
+              rarity: classification.rarity as any,
+              rarityStatus: 'classified',
+              globalCount: classification.globalCount,
+              regionalCount: classification.regionalCount,
+              isFirstGlobal: classification.isFirstGlobal,
+              isFirstRegional: classification.isFirstRegional,
+            },
+          });
+
+          await tx.rarityClassificationQueue.updateMany({
+            where: { id: item.id },
+            data: {
+              status: 'completed',
+              lastAttemptAt: new Date(),
+            },
+          });
+        }, {
+          timeout: 30000,
         });
 
-        await markAsCompleted(item.id);
         succeeded++;
 
       } catch (error) {
