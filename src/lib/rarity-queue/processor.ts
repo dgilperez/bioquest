@@ -8,6 +8,7 @@
 import { prisma } from '@/lib/db/prisma';
 import { getINatClient } from '@/lib/inat/client';
 import { INatError, RateLimitError, ErrorCode } from '@/lib/errors';
+import { POINTS_CONFIG, RARITY_BONUS_POINTS } from '@/lib/gamification/constants';
 import {
   getNextBatch,
   markAsProcessing,
@@ -128,28 +129,87 @@ export async function processRarityQueue(
 
       console.log(`  ✓ Classified as ${classification.rarity} (${classification.globalCount} global observations)`);
 
-      // ATOMIC TRANSACTION: Update observations + mark as completed
-      // If either fails, both roll back - prevents orphaned queue items
+      // ATOMIC TRANSACTION: Update observations + recalculate points + mark as completed
+      // If any step fails, all roll back - prevents orphaned queue items or incorrect points
       const updateResult = await prisma.$transaction(async (tx) => {
-        // Update all observations with this taxon for this user
-        const result = await tx.observation.updateMany({
+        // STEP 1: Fetch observations to recalculate points
+        const observations = await tx.observation.findMany({
           where: {
             userId: item.userId,
             taxonId: item.taxonId,
             rarityStatus: 'pending', // Only update pending ones
           },
-          data: {
-            rarity: classification.rarity as any,
-            rarityStatus: 'classified',
-            globalCount: classification.globalCount,
-            regionalCount: classification.regionalCount,
-            isFirstGlobal: classification.isFirstGlobal,
-            isFirstRegional: classification.isFirstRegional,
-            // Note: pointsAwarded was already calculated during initial sync
+          select: {
+            id: true,
+            photosCount: true,
+            qualityGrade: true,
+            pointsAwarded: true,
           },
         });
 
-        // Mark queue item as completed
+        if (observations.length === 0) {
+          // No observations to update (edge case)
+          await tx.rarityClassificationQueue.updateMany({
+            where: { id: item.id },
+            data: { status: 'completed', lastAttemptAt: new Date() },
+          });
+          return { count: 0, pointsDelta: 0 };
+        }
+
+        // STEP 2: Calculate correct points for each observation
+        const rarityBonus = RARITY_BONUS_POINTS[classification.rarity.toLowerCase() as keyof typeof RARITY_BONUS_POINTS] || 0;
+
+        let totalPointsDelta = 0;
+
+        // STEP 3: Update each observation with corrected points
+        for (const obs of observations) {
+          // Calculate new points
+          const basePoints = POINTS_CONFIG.BASE_OBSERVATION_POINTS;
+          const photoBonus = Math.min(obs.photosCount, POINTS_CONFIG.MAX_PHOTO_BONUS) * POINTS_CONFIG.PHOTO_POINTS;
+          const researchBonus = obs.qualityGrade === 'research' ? POINTS_CONFIG.RESEARCH_GRADE_BONUS : 0;
+          const firstGlobalBonus = classification.isFirstGlobal ? 5000 : 0;
+          const firstRegionalBonus = classification.isFirstRegional ? 1000 : 0;
+
+          const newPoints = basePoints + photoBonus + researchBonus + rarityBonus + firstGlobalBonus + firstRegionalBonus;
+          const pointsDelta = newPoints - obs.pointsAwarded;
+
+          totalPointsDelta += pointsDelta;
+
+          // Update observation with new rarity data and corrected points
+          await tx.observation.update({
+            where: { id: obs.id },
+            data: {
+              rarity: classification.rarity as any,
+              rarityStatus: 'classified',
+              globalCount: classification.globalCount,
+              regionalCount: classification.regionalCount,
+              isFirstGlobal: classification.isFirstGlobal,
+              isFirstRegional: classification.isFirstRegional,
+              pointsAwarded: newPoints, // FIXED: Now recalculated with correct rarity bonus
+            },
+          });
+        }
+
+        // STEP 4: Update user's total points with the delta
+        if (totalPointsDelta !== 0) {
+          // Use upsert to handle case where UserStats doesn't exist yet
+          await tx.userStats.upsert({
+            where: { userId: item.userId },
+            update: {
+              totalPoints: { increment: totalPointsDelta },
+            },
+            create: {
+              userId: item.userId,
+              totalObservations: 0,
+              totalSpecies: 0,
+              totalPoints: totalPointsDelta,
+              level: 1,
+              pointsToNextLevel: 100,
+            },
+          });
+        }
+
+        // STEP 5: Mark queue item as completed
         await tx.rarityClassificationQueue.updateMany({
           where: { id: item.id },
           data: {
@@ -158,7 +218,7 @@ export async function processRarityQueue(
           },
         });
 
-        return result;
+        return { count: observations.length, pointsDelta: totalPointsDelta };
       }, {
         timeout: 30000, // 30 second timeout for transaction
       });
@@ -255,23 +315,75 @@ export async function processUserQueue(
         await markAsProcessing(item.id);
         const classification = await classifyTaxonRarity(item.taxonId, userId);
 
-        // ATOMIC TRANSACTION: Update observations + mark as completed
+        // ATOMIC TRANSACTION: Update observations + recalculate points + mark as completed
         await prisma.$transaction(async (tx) => {
-          await tx.observation.updateMany({
+          // Fetch observations to recalculate points
+          const observations = await tx.observation.findMany({
             where: {
               userId,
               taxonId: item.taxonId,
               rarityStatus: 'pending',
             },
-            data: {
-              rarity: classification.rarity as any,
-              rarityStatus: 'classified',
-              globalCount: classification.globalCount,
-              regionalCount: classification.regionalCount,
-              isFirstGlobal: classification.isFirstGlobal,
-              isFirstRegional: classification.isFirstRegional,
+            select: {
+              id: true,
+              photosCount: true,
+              qualityGrade: true,
+              pointsAwarded: true,
             },
           });
+
+          if (observations.length > 0) {
+            // Calculate correct points for each observation
+            const rarityBonus = RARITY_BONUS_POINTS[classification.rarity.toLowerCase() as keyof typeof RARITY_BONUS_POINTS] || 0;
+
+            let totalPointsDelta = 0;
+
+            // Update each observation with corrected points
+            for (const obs of observations) {
+              const basePoints = POINTS_CONFIG.BASE_OBSERVATION_POINTS;
+              const photoBonus = Math.min(obs.photosCount, POINTS_CONFIG.MAX_PHOTO_BONUS) * POINTS_CONFIG.PHOTO_POINTS;
+              const researchBonus = obs.qualityGrade === 'research' ? POINTS_CONFIG.RESEARCH_GRADE_BONUS : 0;
+              const firstGlobalBonus = classification.isFirstGlobal ? 5000 : 0;
+              const firstRegionalBonus = classification.isFirstRegional ? 1000 : 0;
+
+              const newPoints = basePoints + photoBonus + researchBonus + rarityBonus + firstGlobalBonus + firstRegionalBonus;
+              const pointsDelta = newPoints - obs.pointsAwarded;
+
+              totalPointsDelta += pointsDelta;
+
+              await tx.observation.update({
+                where: { id: obs.id },
+                data: {
+                  rarity: classification.rarity as any,
+                  rarityStatus: 'classified',
+                  globalCount: classification.globalCount,
+                  regionalCount: classification.regionalCount,
+                  isFirstGlobal: classification.isFirstGlobal,
+                  isFirstRegional: classification.isFirstRegional,
+                  pointsAwarded: newPoints,
+                },
+              });
+            }
+
+            // Update user's total points
+            if (totalPointsDelta !== 0) {
+              // Use upsert to handle case where UserStats doesn't exist yet
+              await tx.userStats.upsert({
+                where: { userId },
+                update: {
+                  totalPoints: { increment: totalPointsDelta },
+                },
+                create: {
+                  userId,
+                  totalObservations: 0,
+                  totalSpecies: 0,
+                  totalPoints: totalPointsDelta,
+                  level: 1,
+                  pointsToNextLevel: 100,
+                },
+              });
+            }
+          }
 
           await tx.rarityClassificationQueue.updateMany({
             where: { id: item.id },
