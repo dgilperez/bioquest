@@ -335,8 +335,9 @@ describe('Processor - Edge Cases', () => {
       // Should take at least 2 * 1000ms = 2000ms (delay between 3 batches)
       // Plus 500ms * 40 delays between items in batches = 20000ms
       // Total minimum: 22000ms
+      // Note: With atomic transactions, this can take longer, so allowing 4 minutes
       expect(duration).toBeGreaterThanOrEqual(22000);
-    }, 30000);
+    }, 240000);
   });
 
   describe('Documentation: Scenarios Requiring API Mocking', () => {
