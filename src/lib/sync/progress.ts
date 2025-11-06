@@ -116,7 +116,8 @@ export async function updateProgress(
     }
   }
 
-  await prisma.syncProgress.update({
+  // Use updateMany to avoid race condition if record is deleted
+  await prisma.syncProgress.updateMany({
     where: { userId },
     data: {
       ...updates,
@@ -156,7 +157,8 @@ export async function completeProgress(userId: string): Promise<void> {
   const current = await prisma.syncProgress.findUnique({ where: { userId } });
   if (!current) return;
 
-  await prisma.syncProgress.update({
+  // Use updateMany to avoid race condition if record is deleted between check and update
+  const result = await prisma.syncProgress.updateMany({
     where: { userId },
     data: {
       status: 'completed',
@@ -168,10 +170,13 @@ export async function completeProgress(userId: string): Promise<void> {
     },
   });
 
-  // Clean up after 5 minutes (optional, can keep for history)
-  setTimeout(async () => {
-    await prisma.syncProgress.delete({ where: { userId } }).catch(() => {});
-  }, 5 * 60 * 1000);
+  // Only schedule cleanup if update succeeded
+  if (result.count > 0) {
+    // Clean up after 5 minutes (optional, can keep for history)
+    setTimeout(async () => {
+      await prisma.syncProgress.delete({ where: { userId } }).catch(() => {});
+    }, 5 * 60 * 1000);
+  }
 }
 
 export async function errorProgress(userId: string, error: string): Promise<void> {

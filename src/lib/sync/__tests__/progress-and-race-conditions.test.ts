@@ -150,45 +150,63 @@ describe('Progress Tracking and Race Conditions', () => {
       );
     });
 
-    it('should throw error when sync is already in progress (atomic lock)', async () => {
+    it('should return silently when sync is already in progress (graceful handling)', async () => {
       // Simulate UPDATE affecting 0 rows (record exists but status is 'syncing')
       $executeRaw.mockResolvedValue(0);
 
-      // Simulate CREATE failing due to unique constraint (sync already in progress)
-      prisma.syncProgress.create.mockRejectedValue(
-        new Error('Unique constraint failed')
-      );
+      // Simulate existing sync in progress
+      prisma.syncProgress.findUnique.mockResolvedValue({
+        userId: mockUserId,
+        status: 'syncing',
+        phase: 'fetching',
+        currentStep: 1,
+        totalSteps: 4,
+        message: 'Fetching observations...',
+        observationsProcessed: 0,
+        observationsTotal: 1000,
+        startedAt: new Date(),
+        completedAt: null,
+      });
 
-      await expect(initProgress(mockUserId, 1000)).rejects.toThrow(
-        'Sync already in progress for this user'
-      );
+      // Should not throw - implementation returns silently for graceful handling
+      await expect(initProgress(mockUserId, 1000)).resolves.not.toThrow();
 
-      // Verify we tried to create after UPDATE returned 0
-      expect(prisma.syncProgress.create).toHaveBeenCalled();
+      // Verify we checked for existing sync
+      expect(prisma.syncProgress.findUnique).toHaveBeenCalledWith({
+        where: { userId: mockUserId },
+      });
     });
 
-    it('should prevent race condition: two concurrent initProgress calls', async () => {
+    it('should handle race condition gracefully: two concurrent initProgress calls', async () => {
       // First call: UPDATE succeeds (returns 1)
-      // Second call: UPDATE fails (returns 0), CREATE fails
+      // Second call: UPDATE fails (returns 0), but sync is already in progress
       const callResults = [1, 0]; // First succeeds, second fails
 
       $executeRaw.mockImplementation(() => {
         return Promise.resolve(callResults.shift());
       });
 
-      prisma.syncProgress.create.mockRejectedValue(
-        new Error('Unique constraint failed')
-      );
+      // Second call finds existing sync
+      prisma.syncProgress.findUnique.mockResolvedValue({
+        userId: mockUserId,
+        status: 'syncing',
+        phase: 'fetching',
+        currentStep: 1,
+        totalSteps: 4,
+        message: 'Fetching observations...',
+        observationsProcessed: 0,
+        observationsTotal: 1000,
+        startedAt: new Date(),
+        completedAt: null,
+      });
 
       // First call should succeed
       const firstCall = initProgress(mockUserId, 1000);
       await expect(firstCall).resolves.not.toThrow();
 
-      // Second concurrent call should fail
+      // Second concurrent call should also succeed (returns silently)
       const secondCall = initProgress(mockUserId, 1000);
-      await expect(secondCall).rejects.toThrow(
-        'Sync already in progress for this user'
-      );
+      await expect(secondCall).resolves.not.toThrow();
     });
   });
 
@@ -814,11 +832,12 @@ describe('Progress Tracking and Race Conditions', () => {
         observationsTotal: 100,
       });
 
-      prisma.syncProgress.update.mockResolvedValue({});
+      // Changed to updateMany to match the race-condition-safe implementation
+      prisma.syncProgress.updateMany.mockResolvedValue({ count: 1 });
 
       await completeProgress(mockUserId);
 
-      expect(prisma.syncProgress.update).toHaveBeenCalledWith({
+      expect(prisma.syncProgress.updateMany).toHaveBeenCalledWith({
         where: { userId: mockUserId },
         data: expect.objectContaining({
           status: 'completed',

@@ -8,6 +8,12 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: ['./tests/setup.ts'],
+    // Run tests sequentially to avoid database conflicts
+    poolOptions: {
+      threads: {
+        singleThread: true,
+      },
+    },
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
@@ -24,6 +30,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
+      '@tests': path.resolve(__dirname, './tests'),
     },
   },
 });

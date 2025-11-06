@@ -123,7 +123,8 @@ export async function getNextBatch(
  * Mark queue item as processing
  */
 export async function markAsProcessing(queueItemId: string): Promise<void> {
-  await prisma.rarityClassificationQueue.update({
+  // Use updateMany to avoid race condition if record is deleted
+  await prisma.rarityClassificationQueue.updateMany({
     where: { id: queueItemId },
     data: { status: 'processing' },
   });
@@ -133,7 +134,8 @@ export async function markAsProcessing(queueItemId: string): Promise<void> {
  * Mark queue item as completed
  */
 export async function markAsCompleted(queueItemId: string): Promise<void> {
-  await prisma.rarityClassificationQueue.update({
+  // Use updateMany to avoid race condition if record is deleted
+  await prisma.rarityClassificationQueue.updateMany({
     where: { id: queueItemId },
     data: {
       status: 'completed',
@@ -158,7 +160,8 @@ export async function markAsFailed(
 
   const newAttempts = item.attempts + 1;
 
-  await prisma.rarityClassificationQueue.update({
+  // Use updateMany to avoid race condition if record is deleted between check and update
+  await prisma.rarityClassificationQueue.updateMany({
     where: { id: queueItemId },
     data: {
       status: isTransient ? 'pending' : 'failed', // Retry transient, fail persistent

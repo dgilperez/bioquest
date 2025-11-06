@@ -14,6 +14,8 @@
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { prisma } from '@/lib/db/prisma';
+import { mockClassifyObservationRarity, restoreRarityMocks } from '@tests/helpers/mock-rarity';
+import { processUserQueue } from '@/lib/rarity-queue/processor';
 
 describe('Sync Interruption & Recovery', () => {
   const testUserId = 'test-interruption-user';
@@ -46,6 +48,13 @@ describe('Sync Interruption & Recovery', () => {
         pointsToNextLevel: 100,
       },
     });
+
+    // Set up rarity classification mock
+    await mockClassifyObservationRarity({
+      defaultRarity: 'common',
+      defaultGlobalCount: 5000,
+      defaultRegionalCount: 500,
+    });
   });
 
   afterEach(async () => {
@@ -53,6 +62,7 @@ describe('Sync Interruption & Recovery', () => {
     await prisma.userStats.deleteMany({ where: { userId: testUserId } });
     await prisma.rarityClassificationQueue.deleteMany({ where: { userId: testUserId } });
     await prisma.user.deleteMany({ where: { id: testUserId } });
+    restoreRarityMocks();
   });
 
   it('SCENARIO: User closes browser mid-sync, restarts - should continue, not duplicate', async () => {
@@ -183,9 +193,7 @@ describe('Sync Interruption & Recovery', () => {
     console.log('✅ Sync cursor is only set by sync process, not by direct DB writes');
   });
 
-  it.skip('SCENARIO: Background classification interrupted - should resume on next visit', async () => {
-    // NOTE: This test is skipped because it requires mocking the iNat API
-    // See background-processing-integration.test.ts for the full integration test
+  it('SCENARIO: Background classification interrupted - should resume on next visit', async () => {
     // Create observations and queue items
     const observations = [];
     const queueItems = [];
@@ -216,8 +224,6 @@ describe('Sync Interruption & Recovery', () => {
     await prisma.rarityClassificationQueue.createMany({ data: queueItems });
 
     // STEP 1: Process 20 items
-    const { processUserQueue } = await import('@/lib/rarity-queue/processor');
-
     // Simulate processing (but with the OLD buggy version that stops after 1 batch)
     // Just process one batch manually to simulate interruption
     const firstBatch = await prisma.rarityClassificationQueue.findMany({
@@ -255,7 +261,7 @@ describe('Sync Interruption & Recovery', () => {
     expect(finalRemaining).toBe(0);
 
     console.log('✅ Background classification resumption works correctly');
-  });
+  }, 60000);
 
   it('DOCUMENTS EXPECTED: hasMoreToSync flag drives automatic continuation', async () => {
     // The AutoSync component checks hasMoreToSync

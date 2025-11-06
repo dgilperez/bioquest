@@ -394,17 +394,17 @@ export async function syncUserObservations(
           console.log('🌳 Refreshing Tree of Life stats...');
           const { updateUserTaxonProgress } = await import('@/lib/tree-of-life/progress');
 
-          // Get all iconic taxon IDs (the major groups in Tree of Life)
+          // Get all iconic taxon groups (the major groups in Tree of Life)
           const iconicTaxa = await prisma.observation.findMany({
             where: { userId, rarityStatus: 'classified' },
-            distinct: ['iconicTaxonId'],
-            select: { iconicTaxonId: true },
+            distinct: ['iconicTaxon'],
+            select: { iconicTaxon: true },
           });
 
           // Update progress for each iconic taxon
-          for (const { iconicTaxonId } of iconicTaxa) {
-            if (iconicTaxonId) {
-              await updateUserTaxonProgress(userId, iconicTaxonId);
+          for (const { iconicTaxon } of iconicTaxa) {
+            if (iconicTaxon) {
+              await updateUserTaxonProgress(userId, iconicTaxon);
             }
           }
 
