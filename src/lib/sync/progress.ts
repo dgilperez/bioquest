@@ -181,7 +181,8 @@ export async function completeProgress(userId: string): Promise<void> {
   });
 
   // Only schedule cleanup if update succeeded
-  if (result.count > 0) {
+  // Defensive check: result might be undefined in edge cases (e.g., database issues)
+  if (result && result.count > 0) {
     // Store timer reference so it can be cancelled
     const timer = setTimeout(async () => {
       await prisma.syncProgress.delete({ where: { userId } }).catch(() => {});
