@@ -8,6 +8,7 @@ import {
   createSuccessResponse,
   UnauthorizedError,
 } from '@/lib/errors';
+import { ICONIC_TAXA } from '@/lib/taxonomy/iconic-taxa';
 
 interface IconicTaxonSummary {
   id: number;
@@ -26,23 +27,13 @@ async function handleGetStartingTaxa(_req: NextRequest): Promise<NextResponse> {
   }
   const userId = (session.user as any).id;
 
-  // Iconic taxon IDs from iNaturalist
-  // These are the main kingdoms/groups that iNat organizes observations by
-  const iconicTaxa = [
-    { id: 47126, name: 'Animalia', iconicName: 'Animalia' },
-    { id: 47170, name: 'Plantae', iconicName: 'Plantae' },
-    { id: 47169, name: 'Fungi', iconicName: 'Fungi' },
-    { id: 48222, name: 'Mollusca', iconicName: 'Mollusca' },
-    { id: 47115, name: 'Actinopterygii', iconicName: 'Actinopterygii' }, // Ray-finned Fishes
-    { id: 26036, name: 'Arachnida', iconicName: 'Arachnida' },
-    { id: 47158, name: 'Aves', iconicName: 'Aves' }, // Birds
-    { id: 47119, name: 'Mammalia', iconicName: 'Mammalia' },
-    { id: 47178, name: 'Reptilia', iconicName: 'Reptilia' },
-    { id: 20978, name: 'Amphibia', iconicName: 'Amphibia' },
-    { id: 47120, name: 'Insecta', iconicName: 'Insecta' },
-    { id: 54960, name: 'Chromista', iconicName: 'Chromista' }, // Kelp, diatoms, etc.
-    { id: 48460, name: 'Protozoa', iconicName: 'Protozoa' },
-  ];
+  // Use centralized iconic taxa definitions
+  // Prevents hardcoded ID errors and ensures consistency across the app
+  const iconicTaxa = ICONIC_TAXA.map(taxon => ({
+    id: taxon.id,
+    name: taxon.name,
+    iconicName: taxon.name,
+  }));
 
   const client = getINatClient();
 

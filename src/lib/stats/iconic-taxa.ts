@@ -4,6 +4,7 @@
  */
 
 import { prisma } from '@/lib/db/prisma';
+import { ICONIC_TAXA, getIconicTaxonIds } from '@/lib/taxonomy/iconic-taxa';
 
 export interface IconicTaxonProgress {
   id: number;
@@ -15,20 +16,6 @@ export interface IconicTaxonProgress {
   totalSpeciesGlobal: number;
 }
 
-// Iconic taxa IDs from iNaturalist
-export const ICONIC_TAXA_IDS = {
-  Animalia: 1,       // Animals
-  Plantae: 47126,    // Plants
-  Fungi: 47170,      // Fungi
-  Mollusca: 47115,   // Mollusks
-  Arachnida: 47119,  // Arachnids
-  Insecta: 47158,    // Insects
-  Aves: 3,           // Birds
-  Mammalia: 40151,   // Mammals
-  Reptilia: 26036,   // Reptiles
-  Amphibia: 20978,   // Amphibians
-} as const;
-
 /**
  * Get user's progress for all iconic taxa efficiently
  * Uses a single aggregation query instead of N queries
@@ -36,8 +23,8 @@ export const ICONIC_TAXA_IDS = {
 export async function getIconicTaxaProgress(
   userId: string
 ): Promise<IconicTaxonProgress[]> {
-  const taxonIds = Object.values(ICONIC_TAXA_IDS);
-  const taxonNames = Object.keys(ICONIC_TAXA_IDS);
+  const taxonIds = getIconicTaxonIds();
+  const taxonNames = ICONIC_TAXA.map(t => t.name);
 
   // Single query to get taxon nodes
   const taxonNodes = await prisma.taxonNode.findMany({
