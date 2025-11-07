@@ -1,6 +1,23 @@
 import { prisma } from '@/lib/db/prisma';
 import { getINatClient } from '@/lib/inat/client';
 
+// Reverse mapping: taxonId → iconic taxon name (for Tree of Life optimization)
+const TAXON_ID_TO_ICONIC: Record<number, string> = {
+  47126: 'Plantae',
+  1: 'Animalia',
+  47170: 'Fungi',
+  47115: 'Mollusca',
+  47119: 'Arachnida',
+  47158: 'Insecta',
+  3: 'Aves',
+  40151: 'Mammalia',
+  26036: 'Reptilia',
+  20978: 'Amphibia',
+  47178: 'Actinopterygii',
+  48222: 'Chromista',
+  47686: 'Protozoa',
+};
+
 export interface TaxonProgress {
   taxonId: number;
   rank: string;
@@ -20,35 +37,48 @@ export async function calculateTaxonProgress(
   taxonId: number,
   regionId?: number
 ): Promise<TaxonProgress> {
-  // Get user's observations under this taxon
-  const observations = await prisma.observation.findMany({
-    where: {
-      userId,
-      taxonId: { not: null },
-    },
-    select: {
-      id: true,
-      taxonId: true,
-    },
-  });
+  // OPTIMIZATION: For iconic taxa (Tree of Life), use iconicTaxon field directly
+  // This is much faster than ancestry checks and covers 99% of use cases
+  const iconicTaxonName = TAXON_ID_TO_ICONIC[taxonId];
+
+  let relevantObs;
+  if (iconicTaxonName) {
+    // Fast path: Filter by iconicTaxon field (pre-computed during sync)
+    relevantObs = await prisma.observation.findMany({
+      where: {
+        userId,
+        iconicTaxon: iconicTaxonName,
+        taxonId: { not: null },
+      },
+      select: {
+        id: true,
+        taxonId: true,
+      },
+    });
+  } else {
+    // Slow path: For non-iconic taxa, exact match only
+    // TODO: Full ancestry check requires joining with TaxonNode table
+    relevantObs = await prisma.observation.findMany({
+      where: {
+        userId,
+        taxonId: taxonId,
+      },
+      select: {
+        id: true,
+        taxonId: true,
+      },
+    });
+  }
 
   // Get the taxon node to find its rank
   const taxonNode = await prisma.taxonNode.findUnique({
     where: { id: taxonId },
-    select: { rank: true, ancestorIds: true },
+    select: { rank: true },
   });
 
   if (!taxonNode) {
     throw new Error(`Taxon ${taxonId} not found`);
   }
-
-  // Filter observations that are descendants of this taxon
-  const ancestorIds = taxonNode.ancestorIds ? JSON.parse(taxonNode.ancestorIds) : [];
-  const relevantObs = observations.filter((obs) => {
-    // Check if this observation's taxon is this taxon or a descendant
-    // This is a simplified check - in production, we'd need to check the full ancestry
-    return obs.taxonId === taxonId || ancestorIds.includes(obs.taxonId);
-  });
 
   const observationCount = relevantObs.length;
   const uniqueTaxonIds = new Set(relevantObs.map((obs) => obs.taxonId));
