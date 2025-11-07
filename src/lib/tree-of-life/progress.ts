@@ -1,22 +1,6 @@
 import { prisma } from '@/lib/db/prisma';
 import { getINatClient } from '@/lib/inat/client';
-
-// Reverse mapping: taxonId → iconic taxon name (for Tree of Life optimization)
-const TAXON_ID_TO_ICONIC: Record<number, string> = {
-  47126: 'Plantae',
-  1: 'Animalia',
-  47170: 'Fungi',
-  47115: 'Mollusca',
-  47119: 'Arachnida',
-  47158: 'Insecta',
-  3: 'Aves',
-  40151: 'Mammalia',
-  26036: 'Reptilia',
-  20978: 'Amphibia',
-  47178: 'Actinopterygii',
-  48222: 'Chromista',
-  47686: 'Protozoa',
-};
+import { TAXON_ID_TO_ICONIC } from '@/lib/taxonomy/iconic-taxa';
 
 export interface TaxonProgress {
   taxonId: number;

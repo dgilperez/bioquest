@@ -7,23 +7,8 @@ import { SYNC_CONFIG, LEVEL_CONFIG, getLevelTitle as getTitle } from '@/lib/gami
 export { getLevelTitle } from '@/lib/gamification/constants';
 export { calculateLevel } from '@/lib/sync/user-stats-helpers';
 
-// Mapping of iconic taxon names to their iNaturalist taxon IDs
-// These are the major life groups shown in the Tree of Life feature
-const ICONIC_TAXON_IDS: Record<string, number> = {
-  'Plantae': 47126,
-  'Animalia': 1,
-  'Fungi': 47170,
-  'Mollusca': 47115,
-  'Arachnida': 47119,
-  'Insecta': 47158,
-  'Aves': 3,
-  'Mammalia': 40151,
-  'Reptilia': 26036,
-  'Amphibia': 20978,
-  'Actinopterygii': 47178,
-  'Chromista': 48222,
-  'Protozoa': 47686,
-};
+// Import iconic taxon mappings from centralized module
+import { ICONIC_TAXON_IDS } from '@/lib/taxonomy/iconic-taxa';
 
 export interface UserStatsData {
   totalObservations: number;
