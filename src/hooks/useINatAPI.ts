@@ -77,7 +77,10 @@ export function useINatAPI() {
    */
   const request = useCallback(
     async <T,>(endpoint: string, options?: RequestInit): Promise<T> => {
-      if (!session?.user?.accessToken) {
+      // Access token is stored on session object directly (not session.user)
+      const accessToken = (session as any)?.accessToken;
+
+      if (!accessToken) {
         const error = new Error('No access token available') as INatAPIError;
         error.name = 'AuthenticationError';
         throw error;
@@ -99,14 +102,13 @@ export function useINatAPI() {
         const response = await fetch(url, {
           ...options,
           headers: {
-            Authorization: `Bearer ${session.user.accessToken}`,
+            Authorization: `Bearer ${accessToken}`,
             'Content-Type': 'application/json',
             ...options?.headers,
           },
         });
 
         if (!response.ok) {
-          const errorText = await response.text();
           const error = new Error(
             `iNat API error: ${response.statusText}`
           ) as INatAPIError;
@@ -295,7 +297,7 @@ export function useINatAPI() {
     error,
 
     // Utility
-    isAuthenticated: !!session?.user?.accessToken,
+    isAuthenticated: !!(session as any)?.accessToken,
   };
 }
 

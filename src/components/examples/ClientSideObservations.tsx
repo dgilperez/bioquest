@@ -52,11 +52,13 @@ export function ClientSideObservations() {
   // Load user's observations on mount
   useEffect(() => {
     async function loadObservations() {
-      if (!session?.user?.inatUsername) return;
+      // inatUsername is stored on session.user with type assertion
+      const inatUsername = (session?.user as any)?.inatUsername;
+      if (!inatUsername) return;
 
       try {
         console.log('📡 Fetching observations from browser (user IP quota)...');
-        const data = await getUserObservations(session.user.inatUsername, {
+        const data = await getUserObservations(inatUsername, {
           per_page: 10,
           order_by: 'observed_on',
           order: 'desc',
