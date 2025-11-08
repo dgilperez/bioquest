@@ -591,10 +591,10 @@ describe('Progress Tracking and Race Conditions', () => {
 
       const result = await syncUserObservations(mockUserId, 'testuser', 'mock-token');
 
-      // CRITICAL: totalSynced = oldCount (500) + FETCHED (100) = 600
-      // NOT oldCount (500) + NEW (10) = 510
+      // FIXED: totalSynced = oldCount (500) + STORED (10) = 510
+      // Correctly reports STORED count, not FETCHED count (which includes duplicates)
       expect(result.newObservations).toBe(10);
-      expect(result.totalSynced).toBe(600); // 500 + 100 fetched
+      expect(result.totalSynced).toBe(510); // 500 + 10 STORED (not 600 fetched!)
       expect(result.hasMore).toBe(true);
       expect(result.totalAvailable).toBe(1000);
 

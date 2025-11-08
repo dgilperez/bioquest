@@ -10,7 +10,7 @@ interface Organism {
   size: number;
   duration: number;
   delay: number;
-  type: 'cell' | 'spore' | 'microbe' | 'particle' | 'morula' | 'euglena' | 'tardigrade' | 'bacterium' | 'algae' | 'pollen';
+  type: 'cell' | 'spore' | 'microbe' | 'particle' | 'morula' | 'euglena' | 'tardigrade' | 'bacterium' | 'algae' | 'pollen' | 'spirillum' | 'volvox' | 'hydra';
   opacity: number;
   colorVariant: number; // 0-1 for color variation
 }
@@ -43,8 +43,7 @@ function OrganicBackgroundComponent() {
         size: Math.random() * 40 + 20, // 20-60px (middle ground)
         duration: Math.random() * 80 + 60, // 60-140 seconds (3-4x longer for more wandering)
         delay: Math.random() * -20, // Stagger starts
-        // Distribution: bacteria & pollen (10x each), simple organisms (5x each), complex organisms (1x each)
-        // This gives ~42% bacteria/pollen, ~52% simple, ~6% complex (morula/euglena/tardigrade will be 2-3 total)
+        // Distribution: bacteria & pollen (10x each), simple organisms (5x each), spirillum/volvox (3x), complex (1x)
         type: [
           // Bacteria (10x)
           'bacterium', 'bacterium', 'bacterium', 'bacterium', 'bacterium',
@@ -58,9 +57,12 @@ function OrganicBackgroundComponent() {
           'microbe', 'microbe', 'microbe', 'microbe', 'microbe',
           'particle', 'particle', 'particle', 'particle', 'particle',
           'algae', 'algae', 'algae', 'algae', 'algae',
-          // Complex organisms (1x each) - very rare, only 2-3 will appear out of 30 organisms
-          'morula', 'euglena', 'tardigrade',
-        ][Math.floor(Math.random() * 48)] as Organism['type'],
+          // New organisms (3x each)
+          'spirillum', 'spirillum', 'spirillum',
+          'volvox', 'volvox', 'volvox',
+          // Complex organisms (1x each) - very rare
+          'morula', 'euglena', 'tardigrade', 'hydra',
+        ][Math.floor(Math.random() * 55)] as Organism['type'],
         opacity: Math.random() * 0.15 + 0.15, // More visible: 0.15-0.30 (doubled from 0.05-0.20)
         colorVariant: Math.random(), // 0-1 for color mixing
       });
@@ -173,6 +175,33 @@ function OrganicBackgroundComponent() {
                 scale: [0.4, 1.0, 1.2, 1.0, 0.4], // Born, mature, die
                 opacity: [0, organism.opacity * 2.4, organism.opacity * 2.6, organism.opacity * 2.1, 0],
               };
+            case 'spirillum':
+              // Spirillum: Corkscrew bacterium screwing through the medium
+              return {
+                x: [0, travelX * 0.5, travelX * 0.6, travelX * 0.8, travelX],
+                y: [0, travelY * 0.4, travelY * 0.5, travelY * 0.6, travelY],
+                rotate: [0, 180, 360, 540, 720], // Lots of spinning - corkscrew motion
+                scale: [0.4, 1.0, 1.1, 1.0, 0.4],
+                opacity: [0, organism.opacity * 2.5, organism.opacity * 2.7, organism.opacity * 2.3, 0],
+              };
+            case 'volvox':
+              // Volvox: Colony starts small, grows larger, then dies
+              return {
+                x: [0, travelX * 0.3, travelX * 0.5, travelX * 0.7, travelX],
+                y: [0, travelY * 0.3, travelY * 0.4, travelY * 0.6, travelY],
+                rotate: [0, 60, 120, 180, 240], // Slow rolling
+                scale: [0.3, 0.8, 1.3, 1.5, 0.3], // Starts small, grows large
+                opacity: [0, organism.opacity * 2.2, organism.opacity * 2.6, organism.opacity * 2.4, 0],
+              };
+            case 'hydra':
+              // Hydra: Medium sized, gentle swaying motion
+              return {
+                x: [0, travelX * 0.2, travelX * 0.4, travelX * 0.6, travelX],
+                y: [0, travelY * 0.3, travelY * 0.5, travelY * 0.4, travelY],
+                rotate: [0, -10, 10, -10, 0], // Gentle swaying
+                scale: [0.4, 1.0, 1.2, 1.1, 0.4],
+                opacity: [0, organism.opacity * 2.3, organism.opacity * 2.7, organism.opacity * 2.5, 0],
+              };
           }
         };
 
@@ -232,6 +261,15 @@ function OrganicBackgroundComponent() {
             )}
             {organism.type === 'pollen' && (
               <PollenOrganism size={organism.size} opacity={organism.opacity} colorVariant={organism.colorVariant} />
+            )}
+            {organism.type === 'spirillum' && (
+              <SpirillumOrganism size={organism.size} opacity={organism.opacity} colorVariant={organism.colorVariant} />
+            )}
+            {organism.type === 'volvox' && (
+              <VolvoxOrganism size={organism.size} opacity={organism.opacity} colorVariant={organism.colorVariant} />
+            )}
+            {organism.type === 'hydra' && (
+              <HydraOrganism size={organism.size} opacity={organism.opacity} colorVariant={organism.colorVariant} />
             )}
           </motion.div>
         );
@@ -983,6 +1021,148 @@ function PollenOrganism({ size, opacity, colorVariant }: OrganismProps) {
       <circle cx="47" cy="47" r="1.5" fill={spikeColor} opacity={opacity * 2.2} />
       <circle cx="53" cy="47" r="1.5" fill={spikeColor} opacity={opacity * 2.2} />
       <circle cx="50" cy="53" r="1.5" fill={spikeColor} opacity={opacity * 2.2} />
+    </svg>
+  );
+}
+
+// SpirillumOrganism: Corkscrew-shaped bacterium
+function SpirillumOrganism({ size, opacity, colorVariant }: OrganismProps) {
+  const spirillumId = useMemo(() => `spirillum-${Math.random()}`, []);
+
+  const bodyColor = useMemo(() =>
+    colorVariant < 0.33 ? '#8B7355' : colorVariant < 0.66 ? '#A67C52' : '#7A5C42',
+    [colorVariant]
+  );
+
+  return (
+    <svg width={size} height={size} viewBox="0 0 100 100" style={{ overflow: 'visible' }}>
+      {/* Corkscrew/spiral shape */}
+      <path
+        d="M 30 50 Q 35 35, 40 40 T 50 50 T 60 60 T 70 50"
+        stroke={bodyColor}
+        strokeWidth="3"
+        fill="none"
+        strokeLinecap="round"
+        opacity={opacity * 2.6}
+      />
+      {/* Inner spiral detail */}
+      <path
+        d="M 32 50 Q 36 38, 41 42 T 50 50 T 59 58 T 68 50"
+        stroke={bodyColor}
+        strokeWidth="1.5"
+        fill="none"
+        strokeLinecap="round"
+        opacity={opacity * 2.2}
+      />
+    </svg>
+  );
+}
+
+// VolvoxOrganism: Hollow spherical colony of cells
+function VolvoxOrganism({ size, opacity, colorVariant }: OrganismProps) {
+  const volvoxId = useMemo(() => `volvox-${Math.random()}`, []);
+
+  const colonyColor = useMemo(() =>
+    colorVariant < 0.33 ? '#4A7C59' : colorVariant < 0.66 ? '#588157' : '#52796F',
+    [colorVariant]
+  );
+  const cellColor = useMemo(() =>
+    colorVariant < 0.5 ? '#2D5016' : '#1B4332',
+    [colorVariant]
+  );
+
+  return (
+    <svg width={size} height={size} viewBox="0 0 100 100" style={{ overflow: 'visible' }}>
+      {/* Hollow sphere outline */}
+      <circle
+        cx="50"
+        cy="50"
+        r="18"
+        stroke={colonyColor}
+        strokeWidth="2"
+        fill="none"
+        opacity={opacity * 2.4}
+      />
+
+      {/* Individual cells on the surface - arranged in a pattern */}
+      <circle cx="50" cy="32" r="2" fill={cellColor} opacity={opacity * 2.5} />
+      <circle cx="50" cy="68" r="2" fill={cellColor} opacity={opacity * 2.5} />
+      <circle cx="32" cy="50" r="2" fill={cellColor} opacity={opacity * 2.5} />
+      <circle cx="68" cy="50" r="2" fill={cellColor} opacity={opacity * 2.5} />
+      <circle cx="40" cy="40" r="2" fill={cellColor} opacity={opacity * 2.4} />
+      <circle cx="60" cy="40" r="2" fill={cellColor} opacity={opacity * 2.4} />
+      <circle cx="40" cy="60" r="2" fill={cellColor} opacity={opacity * 2.4} />
+      <circle cx="60" cy="60" r="2" fill={cellColor} opacity={opacity * 2.4} />
+      <circle cx="44" cy="36" r="1.5" fill={cellColor} opacity={opacity * 2.3} />
+      <circle cx="56" cy="36" r="1.5" fill={cellColor} opacity={opacity * 2.3} />
+      <circle cx="44" cy="64" r="1.5" fill={cellColor} opacity={opacity * 2.3} />
+      <circle cx="56" cy="64" r="1.5" fill={cellColor} opacity={opacity * 2.3} />
+      <circle cx="36" cy="44" r="1.5" fill={cellColor} opacity={opacity * 2.3} />
+      <circle cx="36" cy="56" r="1.5" fill={cellColor} opacity={opacity * 2.3} />
+      <circle cx="64" cy="44" r="1.5" fill={cellColor} opacity={opacity * 2.3} />
+      <circle cx="64" cy="56" r="1.5" fill={cellColor} opacity={opacity * 2.3} />
+    </svg>
+  );
+}
+
+// HydraOrganism: Small polyp with tentacles
+function HydraOrganism({ size, opacity, colorVariant }: OrganismProps) {
+  const hydraId = useMemo(() => `hydra-${Math.random()}`, []);
+
+  const bodyColor = useMemo(() =>
+    colorVariant < 0.33 ? '#F4A460' : colorVariant < 0.66 ? '#DAA520' : '#E6B84D',
+    [colorVariant]
+  );
+  const tentacleColor = useMemo(() =>
+    colorVariant < 0.5 ? '#CD853F' : '#B8860B',
+    [colorVariant]
+  );
+
+  return (
+    <svg width={size} height={size} viewBox="0 0 100 100" style={{ overflow: 'visible' }}>
+      <defs>
+        <linearGradient id={`${hydraId}-gradient`} x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stopColor={bodyColor} stopOpacity={opacity * 2.6} />
+          <stop offset="100%" stopColor={tentacleColor} stopOpacity={opacity * 2.2} />
+        </linearGradient>
+      </defs>
+
+      {/* Body column */}
+      <ellipse
+        cx="50"
+        cy="55"
+        rx="6"
+        ry="15"
+        fill={`url(#${hydraId}-gradient)`}
+      />
+
+      {/* Mouth/oral disc at top */}
+      <ellipse
+        cx="50"
+        cy="40"
+        rx="7"
+        ry="4"
+        fill={bodyColor}
+        opacity={opacity * 2.5}
+      />
+
+      {/* Tentacles - 6 wavy lines extending from top */}
+      <path d="M 43 40 Q 38 35, 36 30" stroke={tentacleColor} strokeWidth="1.5" fill="none" opacity={opacity * 2.4} />
+      <path d="M 46 39 Q 42 32, 40 26" stroke={tentacleColor} strokeWidth="1.5" fill="none" opacity={opacity * 2.4} />
+      <path d="M 50 38 Q 48 30, 47 24" stroke={tentacleColor} strokeWidth="1.5" fill="none" opacity={opacity * 2.4} />
+      <path d="M 50 38 Q 52 30, 53 24" stroke={tentacleColor} strokeWidth="1.5" fill="none" opacity={opacity * 2.4} />
+      <path d="M 54 39 Q 58 32, 60 26" stroke={tentacleColor} strokeWidth="1.5" fill="none" opacity={opacity * 2.4} />
+      <path d="M 57 40 Q 62 35, 64 30" stroke={tentacleColor} strokeWidth="1.5" fill="none" opacity={opacity * 2.4} />
+
+      {/* Basal disc (foot) at bottom */}
+      <ellipse
+        cx="50"
+        cy="70"
+        rx="4"
+        ry="3"
+        fill={bodyColor}
+        opacity={opacity * 2.3}
+      />
     </svg>
   );
 }

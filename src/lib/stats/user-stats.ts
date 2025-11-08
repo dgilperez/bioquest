@@ -431,9 +431,10 @@ export async function syncUserObservations(
     // Build final result
     const durationMs = Date.now() - startTime;
 
-    // Calculate totalSynced: cumulative count of observations processed from iNat
-    // This should be oldObservationCount + observations fetched THIS sync
-    const totalSyncedFromINat = oldObservationCount + observations.length;
+    // Calculate totalSynced: cumulative count of observations STORED in DB
+    // Use updatedTotalObservations (which counts only NEW observations stored)
+    // NOT observations.length (which includes duplicates that were rejected)
+    const totalSyncedFromINat = updatedTotalObservations;
 
     const result = buildSyncResult({
       achievements,
