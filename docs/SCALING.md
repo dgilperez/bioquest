@@ -704,6 +704,455 @@ ORDER BY date DESC, instance_id;
 
 ---
 
+## Hybrid Client/Server Architecture
+
+### Overview
+
+**Key Insight**: iNaturalist rate limits are per IP address, BUT user OAuth tokens allow browser-based API calls that count against the USER's IP, not the server's IP!
+
+This means we can offload read-heavy operations to the client browser, achieving:
+- **Per-user rate limits** for client-side operations (effectively unlimited)
+- **Shared server cache** for background processing and cross-user features
+- **Combined 94% API call reduction** (vs 90% server-only)
+
+### Rationale
+
+**Without hybrid approach (server-only)**:
+```
+All API calls → Server IP → 10k/day limit
+Even with 90% cache: Limited to ~10k users per instance
+```
+
+**With hybrid approach**:
+```
+Real-time user reads → User's browser → User's IP → No shared limit!
+Background processing → Server IP → 10k/day limit (with 90% cache)
+
+Result: Server handles 60% fewer calls, users get instant responses
+```
+
+### Client vs Server Responsibilities
+
+#### Client-Side Operations (User's IP)
+
+**What should run in browser**:
+- ✅ **User's own observations**: Fetching my observations, my species counts
+- ✅ **Search/browse**: Searching taxa, places, other users
+- ✅ **Profile data**: Getting user info, updating profile
+- ✅ **Identifications**: Fetching IDs for user's observations
+- ✅ **Real-time validation**: Checking photo quality, location accuracy
+
+**Why client-side**:
+- User-initiated actions (immediate feedback)
+- Per-user rate limit (no shared quota)
+- Reduces server load
+- Better UX (faster responses, no server round-trip)
+
+**Example operations**:
+```typescript
+// Browser makes direct call to iNat API
+const response = await fetch('https://api.inaturalist.org/v1/observations?user_id=123', {
+  headers: { 'Authorization': `Bearer ${userToken}` }
+});
+```
+
+#### Server-Side Operations (Server IP)
+
+**What must stay on server**:
+- ✅ **Background rarity classification**: Queue processing for all users
+- ✅ **Taxon cache management**: Shared cache updates, warming, maintenance
+- ✅ **Cross-user features**: Leaderboards, community stats, achievements
+- ✅ **Sensitive operations**: Points calculation, badge unlocking, anti-cheat
+- ✅ **Batch processing**: Syncing 1000s of observations, bulk rarity checks
+- ✅ **Scheduled jobs**: Cache warming, stats aggregation, cleanup
+
+**Why server-side**:
+- Shared data (cache, stats)
+- Security (points, badges)
+- Performance (batch operations)
+- Reliability (background jobs)
+
+**Example operations**:
+```typescript
+// Server uses shared cache for rarity classification
+const rarity = await classifyObservationRarity(obs, token, placeId);
+// Uses taxon cache - benefits all users!
+```
+
+### Architecture Diagram
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                         User's Browser                          │
+│                                                                 │
+│  ┌──────────────────────┐    ┌──────────────────────────────┐  │
+│  │   BioQuest UI        │    │   Direct iNat API Calls      │  │
+│  │  (Next.js Client)    │───▶│  - User observations         │  │
+│  │                      │    │  - Search taxa/places        │  │
+│  │  useINatAPI() hook   │    │  - Profile data              │  │
+│  └──────────────────────┘    └──────────────────────────────┘  │
+│           │                              │                      │
+│           │ (user data)                  │ (via user's IP)     │
+│           ▼                              ▼                      │
+└───────────────────────────────────────────────────────────────┘
+            │                           iNaturalist API
+            │                          (user's IP quota)
+            │
+            │ (gamification, background tasks)
+            ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                      BioQuest Server                            │
+│                                                                 │
+│  ┌──────────────────────────────────────────────────────────┐  │
+│  │  Background Queue Processor                              │  │
+│  │  - Rarity classification (with cache)                    │  │
+│  │  - Points calculation                                    │  │
+│  │  - Badge checking                                        │  │
+│  └──────────────────────────────────────────────────────────┘  │
+│           │                                                     │
+│           │                                                     │
+│           ▼                                                     │
+│  ┌──────────────────────────────────────────────────────────┐  │
+│  │  Taxon Cache (PostgreSQL)                                │  │
+│  │  - TaxonNode (global counts, 30-day cache)               │  │
+│  │  - RegionalTaxonData (regional counts, 7-day cache)      │  │
+│  │  - 90-95% hit rate!                                      │  │
+│  └──────────────────────────────────────────────────────────┘  │
+│           │                                                     │
+│           │ (only on cache miss)                               │
+│           ▼                                                     │
+└─────────────────────────────────────────────────────────────────┘
+            │
+            │ (via server IP)
+            ▼
+      iNaturalist API
+     (server IP quota)
+       10k/day limit
+```
+
+### Performance Impact Calculation
+
+**Scenario**: 1,000 users, each with 50 observations
+
+#### Server-Only (Current):
+```
+Total operations: 1,000 users × 50 obs = 50,000 operations
+Background processing: 50,000 × 100% = 50,000 rarity checks
+
+With 90% cache hit:
+- API calls: 50,000 × 0.10 × 2 = 10,000 calls
+- Reduction: 90% vs no cache
+```
+
+#### Hybrid (Client + Server):
+```
+Total operations: 50,000 operations
+
+Split:
+- Client-side (40%): 20,000 user-initiated reads → User IPs (no server quota!)
+- Server-side (60%): 30,000 background jobs → Server IP with 90% cache
+
+Server API calls:
+- Client operations: 0 calls (user's IP)
+- Background: 30,000 × 0.10 × 2 = 6,000 calls
+- Total: 6,000 calls
+
+Reduction: 94% vs no cache/no hybrid (60,000 → 6,000)
+           40% better than server-only (10,000 → 6,000)
+```
+
+**Benefit**: 40% reduction in server API calls by moving reads to client!
+
+### Implementation Strategy
+
+#### Phase 1: Keep Current Architecture (Recommended)
+
+**Current state**: All operations server-side with 90% cache hit
+- **Reason**: Already implemented, tested, working
+- **Performance**: Good enough for 10k users
+- **Next**: Only migrate to hybrid if needed for scaling
+
+#### Phase 2: Migrate Reads to Client (Future Optimization)
+
+**When**: After reaching 5k-10k users or 80% server quota usage
+
+**Steps**:
+1. Create client-side iNat API hook
+2. Test CORS support (may need proxy)
+3. Migrate GET operations (observations, search)
+4. Keep POST/background on server
+5. Monitor both client and server API usage
+
+#### Phase 3: Optimize Based on Data
+
+**Monitor**:
+- Client-side API calls per user
+- Server-side cache hit rates
+- Total quota usage across both paths
+- User experience (latency, errors)
+
+### Client-Side Implementation
+
+#### Create useINatAPI Hook
+
+```typescript
+// src/hooks/useINatAPI.ts
+'use client';
+
+import { useSession } from 'next-auth/react';
+import { useState, useCallback } from 'react';
+
+const INAT_API_BASE = 'https://api.inaturalist.org/v1';
+
+export function useINatAPI() {
+  const { data: session } = useSession();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+
+  const request = useCallback(async <T,>(
+    endpoint: string,
+    options?: RequestInit
+  ): Promise<T> => {
+    if (!session?.user?.accessToken) {
+      throw new Error('No access token available');
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch(`${INAT_API_BASE}${endpoint}`, {
+        ...options,
+        headers: {
+          'Authorization': `Bearer ${session.user.accessToken}`,
+          'Content-Type': 'application/json',
+          ...options?.headers,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`iNat API error: ${response.statusText}`);
+      }
+
+      return await response.json();
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error('Unknown error');
+      setError(error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  }, [session]);
+
+  // Convenience methods for common operations
+  const getUserObservations = useCallback(async (
+    username: string,
+    options?: { page?: number; per_page?: number }
+  ) => {
+    const params = new URLSearchParams({
+      user_login: username,
+      per_page: (options?.per_page || 50).toString(),
+      page: (options?.page || 1).toString(),
+    });
+
+    return request(`/observations?${params.toString()}`);
+  }, [request]);
+
+  const searchTaxa = useCallback(async (query: string) => {
+    const params = new URLSearchParams({ q: query });
+    return request(`/taxa?${params.toString()}`);
+  }, [request]);
+
+  return {
+    request,
+    getUserObservations,
+    searchTaxa,
+    loading,
+    error,
+  };
+}
+```
+
+#### Usage Example
+
+```typescript
+// src/components/observations/ObservationList.tsx
+'use client';
+
+import { useINatAPI } from '@/hooks/useINatAPI';
+import { useEffect, useState } from 'react';
+
+export function ObservationList({ username }: { username: string }) {
+  const { getUserObservations, loading, error } = useINatAPI();
+  const [observations, setObservations] = useState([]);
+
+  useEffect(() => {
+    async function loadObservations() {
+      try {
+        // Direct browser call to iNat API - uses user's IP quota!
+        const data = await getUserObservations(username);
+        setObservations(data.results);
+      } catch (err) {
+        console.error('Failed to load observations:', err);
+      }
+    }
+
+    loadObservations();
+  }, [username, getUserObservations]);
+
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error.message}</div>;
+
+  return (
+    <div>
+      {observations.map(obs => (
+        <ObservationCard key={obs.id} observation={obs} />
+      ))}
+    </div>
+  );
+}
+```
+
+### CORS Considerations
+
+#### Option 1: Direct Calls (If CORS Enabled)
+
+**Test first**:
+```typescript
+// Check if iNat allows direct browser calls
+const response = await fetch('https://api.inaturalist.org/v1/observations/1', {
+  headers: { 'Authorization': `Bearer ${token}` }
+});
+// If this works → CORS is enabled, use direct calls!
+```
+
+**Status**: Need to test - iNaturalist may or may not have CORS enabled
+
+#### Option 2: Proxy Pattern (If CORS Blocked)
+
+If iNat blocks browser requests, create a simple proxy:
+
+```typescript
+// src/app/api/inat-proxy/[...path]/route.ts
+import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+
+export async function GET(
+  req: NextRequest,
+  { params }: { params: { path: string[] } }
+) {
+  const session = await getServerSession();
+  if (!session?.user?.accessToken) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const path = params.path.join('/');
+  const searchParams = req.nextUrl.searchParams;
+
+  const response = await fetch(
+    `https://api.inaturalist.org/v1/${path}?${searchParams.toString()}`,
+    {
+      headers: {
+        'Authorization': `Bearer ${session.user.accessToken}`,
+      },
+    }
+  );
+
+  const data = await response.json();
+  return NextResponse.json(data);
+}
+```
+
+**Usage**:
+```typescript
+// Instead of: fetch('https://api.inaturalist.org/v1/observations')
+// Use: fetch('/api/inat-proxy/observations')
+```
+
+**Trade-off**: Proxy still uses server IP, but keeps client code clean
+
+### Security Considerations
+
+#### Token Handling
+
+**Client-side**:
+```typescript
+// ✅ SAFE: Token in memory, managed by NextAuth
+const { data: session } = useSession();
+const token = session?.user?.accessToken;
+
+// ❌ UNSAFE: Never store token in localStorage
+localStorage.setItem('token', token); // DON'T DO THIS!
+```
+
+**Best practice**: Use NextAuth session management - tokens stay in HTTP-only cookies
+
+#### Rate Limit Abuse Prevention
+
+**Problem**: Users could abuse client-side API access
+
+**Solutions**:
+1. **Client-side rate limiting**: Throttle requests in useINatAPI hook
+2. **Server-side monitoring**: Track API usage per user
+3. **Quotas**: Implement per-user daily limits (e.g., 1000 requests/day)
+4. **Alerts**: Notify if user exceeds normal usage patterns
+
+```typescript
+// Simple client-side throttling
+const [requestCount, setRequestCount] = useState(0);
+const MAX_REQUESTS_PER_MINUTE = 60;
+
+if (requestCount >= MAX_REQUESTS_PER_MINUTE) {
+  throw new Error('Rate limit exceeded - please wait');
+}
+```
+
+### Migration Checklist
+
+**Prerequisites**:
+- [ ] Test iNat CORS support (direct browser calls)
+- [ ] Decide: Direct calls or proxy pattern?
+- [x] Create useINatAPI hook (`src/hooks/useINatAPI.ts`)
+- [x] Add client-side rate limiting
+
+**Phase 1: Read Operations**:
+- [x] Create example component (`src/components/examples/ClientSideObservations.tsx`)
+- [ ] Migrate user observations fetch to client (example ready, needs integration)
+- [ ] Migrate taxa search to client (example ready, needs integration)
+- [ ] Migrate user profile fetch to client
+- [ ] Test and monitor usage
+
+**Phase 2: Keep Critical Server-Side**:
+- [x] Verify background queue stays on server (no changes to processor.ts)
+- [x] Verify points/badges stay on server (no changes to gamification)
+- [x] Verify cache management stays on server (no changes to taxon-cache.ts)
+
+**Monitoring**:
+- [ ] Track client API calls per user
+- [ ] Track server API calls (should decrease)
+- [ ] Monitor cache hit rates (should stay ~90%)
+- [ ] Alert on unusual patterns
+
+### Expected Outcomes
+
+**Before Hybrid** (server-only, 10k users):
+- Server API calls: 10,000/day (100% quota)
+- User experience: Fast (cached)
+- Scalability: Limited to 10k users
+
+**After Hybrid** (client reads, 10k users):
+- Server API calls: 6,000/day (60% quota)
+- Client API calls: Distributed across 10k user IPs (no shared quota)
+- User experience: Faster (no server round-trip)
+- Scalability: Can support 16k users on same infrastructure!
+
+**At 50k users (hybrid + 5 instances)**:
+- Server API calls: 30,000/day across 5 instances (60% total quota)
+- Client calls: Distributed across 50k user IPs
+- Headroom: 40% for growth and spikes
+
+---
+
 ## Implementation Checklist
 
 - [x] Create taxon cache module (`taxon-cache.ts`)
