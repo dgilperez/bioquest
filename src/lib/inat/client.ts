@@ -69,6 +69,7 @@ export class INatClient {
     const url = `${INatClient.BASE_URL}${endpoint}`;
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
+      'User-Agent': 'BioQuest/0.1.0 (https://github.com/dgilperez)',
     };
 
     if (this.accessToken) {
