@@ -350,35 +350,357 @@ console.log(`⚠️ Cache MISS: taxon ${taxonId}`);
 
 ---
 
-## Horizontal Scaling (Future)
+## Horizontal Scaling for Rapid Growth
 
-If we exceed 10,000 users, we'll need to scale horizontally.
+### Single IP Limitations
 
-### Options
+**Maximum sustainable growth on single IP**:
+- ~10,000 users with 90% cache hit rate
+- ~6 months to reach from beta launch
+- Growth rate: ~100 new users/week maximum
 
-1. **Multiple deployment instances** (different IP addresses)
-   - Split users across 2-3 Vercel deployments
-   - Each gets 10k req/day quota
-   - Total capacity: 30,000 users (3 instances)
+**What if you need to scale faster?**
 
-2. **Shared database cache**
-   - All instances share same database
-   - Cache benefits multiply
-   - Reduces per-instance API usage
+### Rapid Scaling Scenario: 50,000 Users in 1 Month
 
-3. **Smart load balancing**
-   - Route users by region
-   - Each region has its own instance
-   - Better cache locality
+**Problem**: Not feasible on single IP address
+
+```
+Monthly API budget: 10,000 calls/day × 30 days = 300,000 calls
+
+50,000 users (even with 90% cache hit):
+- Initial onboarding: 50,000 × 50 species × 0.10 × 2 = 500,000 calls
+- ❌ 67% OVER budget
+
+Even with 95% cache hit + aggressive pre-warming:
+- Minimum needed: ~250,000 calls onboarding
+- Plus syncs/updates: +50,000 calls
+- Total: 300,000 calls (100% of budget, zero margin)
+```
+
+**Solution**: Horizontal scaling with multiple IP addresses
+
+---
+
+## Horizontal Scaling Architecture
+
+### Overview
+
+Deploy multiple instances of the app (each with different IP address), all sharing the same database cache.
+
+**Key Insight**: Cache is shared, rate limits are not!
+
+```
+Instance 1 (IP #1): 10,000 calls/day + shared cache
+Instance 2 (IP #2): 10,000 calls/day + shared cache
+Instance 3 (IP #3): 10,000 calls/day + shared cache
+...
+
+Total capacity: N instances × 10,000 calls/day
+Cache efficiency: Multiplies across all instances!
+```
+
+### Architecture Diagram
+
+```
+                    Load Balancer
+                         |
+        +----------------+----------------+
+        |                |                |
+    Instance 1       Instance 2       Instance 3
+    (IP #1)          (IP #2)          (IP #3)
+    10k/day          10k/day          10k/day
+        |                |                |
+        +----------------+----------------+
+                         |
+                  Shared PostgreSQL
+                  (TaxonNode cache)
+                         |
+                  iNaturalist API
+```
+
+### Capacity Calculation for 50k Users
+
+**Configuration**: 5 instances (5 different IPs)
+
+```
+Total API capacity: 5 × 10,000 = 50,000 calls/day
+
+50,000 users distributed across 5 instances = 10,000 users/instance
+
+Per instance monthly (90% cache hit):
+- 10,000 users × 50 species × 0.10 miss × 2 = 100,000 calls/month
+- Daily average: 3,333 calls/day
+- ✅ 67% under limit per instance
+
+Total monthly: 500,000 calls
+Total capacity: 1,500,000 calls (5 × 300k)
+✅ 67% headroom for growth/spikes
+```
+
+### Deployment Options
+
+#### Option 1: Vercel (Easiest)
+
+**Pros**:
+- Zero-config horizontal scaling
+- Each project gets separate IP
+- Automatic HTTPS, CDN
+- Simple deployment
+
+**Setup**:
+```bash
+# Deploy 5 separate Vercel projects
+vercel --prod --project bioquest-1
+vercel --prod --project bioquest-2
+vercel --prod --project bioquest-3
+vercel --prod --project bioquest-4
+vercel --prod --project bioquest-5
+
+# All share same DATABASE_URL environment variable
+```
+
+**Load Balancing**:
+- Cloudflare Load Balancer ($5/month)
+- Or simple user-based routing (see below)
+
+**Cost**:
+- Free tier: 100 GB-hours/month (sufficient for 5 instances)
+- Pro: $20/month per project if needed = $100/month
+- Database: $25-50/month (Neon, Railway, Supabase)
+- Load balancer: $5/month (Cloudflare)
+- **Total: $30-155/month**
+
+#### Option 2: Railway / Fly.io
+
+**Pros**:
+- More control over infrastructure
+- Cheaper for high traffic
+- Better for background jobs
+
+**Setup**:
+```bash
+# Deploy 5 instances
+railway up --project bioquest-1
+railway up --project bioquest-2
+# ... etc
+```
+
+**Cost**:
+- $5-10/month per instance = $25-50/month
+- Database: $25/month
+- Load balancer: Included or $5/month
+- **Total: $50-80/month**
+
+#### Option 3: Self-Hosted (Maximum Control)
+
+**Pros**:
+- Full control
+- Potentially cheapest at scale
+- Custom optimizations
+
+**Cons**:
+- More complexity
+- Requires DevOps expertise
+
+**Cost**: $20-40/month (DigitalOcean, Hetzner, Linode)
+
+### Load Balancing Strategies
+
+#### Strategy 1: Hash-Based Routing (Simplest)
+
+Route users deterministically based on user ID:
+
+```typescript
+// In your main domain (bioquest.com)
+// Redirect to instance based on user ID
+
+function getInstanceForUser(userId: string): string {
+  const instances = [
+    'https://bioquest-1.vercel.app',
+    'https://bioquest-2.vercel.app',
+    'https://bioquest-3.vercel.app',
+    'https://bioquest-4.vercel.app',
+    'https://bioquest-5.vercel.app',
+  ];
+
+  const hash = userId.split('').reduce((acc, char) =>
+    acc + char.charCodeAt(0), 0);
+  const index = hash % instances.length;
+
+  return instances[index];
+}
+
+// Middleware: redirect to assigned instance
+export async function middleware(req: NextRequest) {
+  const session = await getSession(req);
+  if (!session?.user?.id) return NextResponse.next();
+
+  const assignedInstance = getInstanceForUser(session.user.id);
+  const currentHost = req.headers.get('host');
+
+  if (!currentHost?.includes(assignedInstance)) {
+    return NextResponse.redirect(assignedInstance + req.nextUrl.pathname);
+  }
+
+  return NextResponse.next();
+}
+```
+
+**Pros**:
+- No external dependencies
+- Free
+- Consistent user → instance mapping
+- Users always hit same instance (better cache locality)
+
+**Cons**:
+- Manual instance updates
+- No automatic failover
+
+#### Strategy 2: Cloudflare Load Balancer (Recommended)
+
+**Setup**:
+1. Add all instance URLs as origin servers
+2. Configure round-robin or least-connections
+3. Enable health checks
+4. Configure sticky sessions (optional)
+
+**Pros**:
+- Automatic failover
+- Health monitoring
+- DDoS protection
+- Geographic routing
+
+**Cons**:
+- $5/month cost
+
+**Configuration**:
+```yaml
+# Cloudflare Load Balancer Config
+pools:
+  - name: bioquest-instances
+    origins:
+      - name: instance-1
+        address: bioquest-1.vercel.app
+      - name: instance-2
+        address: bioquest-2.vercel.app
+      # ... etc
+
+    monitor:
+      path: /api/health
+      interval: 60
+
+load_balancer:
+  default_pool: bioquest-instances
+  session_affinity: cookie
+  steering_policy: least_outstanding_requests
+```
+
+#### Strategy 3: DNS Round-Robin (Free but Basic)
+
+**Setup**:
+```
+bioquest.com A 1.2.3.4 (instance 1)
+bioquest.com A 5.6.7.8 (instance 2)
+bioquest.com A 9.10.11.12 (instance 3)
+# ... etc
+```
+
+**Pros**: Free, simple
+**Cons**: No health checks, no sticky sessions, DNS caching issues
+
+### Shared Database Configuration
+
+**Critical**: All instances MUST share the same database to share cache!
+
+```typescript
+// .env (same for all instances)
+DATABASE_URL=postgresql://user:pass@shared-db.railway.app/bioquest
+```
+
+**Database Requirements**:
+- Connection pooling (all instances connect)
+- Sufficient connections: `instances × 10 connections`
+- For 5 instances: ~50 connection pool
+
+**Recommended Providers**:
+1. **Neon** (Serverless Postgres)
+   - Auto-scaling connections
+   - ~$25/month for 5-instance setup
+
+2. **Railway** (Managed Postgres)
+   - Simple, good performance
+   - ~$25/month
+
+3. **Supabase** (Postgres + realtime)
+   - Free tier generous
+   - $25/month pro tier
+
+### Implementation Checklist
+
+- [ ] Choose deployment platform (Vercel recommended)
+- [ ] Set up shared database with connection pooling
+- [ ] Deploy 5 instances with same `DATABASE_URL`
+- [ ] Configure load balancer (Cloudflare or hash-based routing)
+- [ ] Test API rate limiting per instance
+- [ ] Pre-warm cache before launch
+- [ ] Set up monitoring per instance
+- [ ] Configure alerts for rate limits
+- [ ] Test failover (disable one instance, verify traffic shifts)
+
+### Capacity Planning Table
+
+| Instances | Total API Calls/Day | Max Users (90% cache hit) | Monthly Cost |
+|-----------|--------------------|-----------------------------|--------------|
+| 1         | 10,000             | 10,000                      | $0-25        |
+| 2         | 20,000             | 20,000                      | $10-50       |
+| 3         | 30,000             | 30,000                      | $20-75       |
+| 5         | 50,000             | 50,000                      | $30-155      |
+| 10        | 100,000            | 100,000                     | $60-310      |
+
+**Note**: Assumes 90% cache hit rate after warm-up period
 
 ### When to Scale Horizontally
 
 **Triggers**:
-- Consistent API usage >9,000 req/day for 7+ days
-- User base >8,000 active users
-- Multiple rate limit errors per day
+1. Consistent API usage >9,000 req/day for 7+ days
+2. User base >8,000 active users on single instance
+3. Multiple rate limit errors per day
+4. Need to onboard >500 users/week
 
-**Cost**: Proportional to number of instances (database, hosting)
+**Recommendations**:
+- **0-10k users**: Single instance (current setup)
+- **10k-50k users**: 5 instances (as documented above)
+- **50k-100k users**: 10 instances
+- **100k+ users**: Consider iNaturalist partnership for higher limits
+
+### Monitoring Multi-Instance Setup
+
+**Per-Instance Metrics**:
+```sql
+-- Track which instance is making calls
+-- Add instance_id to request logs
+
+SELECT
+  instance_id,
+  DATE(created_at) as date,
+  COUNT(*) as api_calls
+FROM api_request_log
+GROUP BY instance_id, date
+ORDER BY date DESC, instance_id;
+```
+
+**Aggregate Monitoring**:
+- Total API calls across all instances
+- Cache hit rate (should be same for all - shared cache!)
+- Per-instance load distribution
+- Failover events
+
+**Alerts**:
+- Any single instance >9,500 calls/day
+- Aggregate >45,000 calls/day (for 5 instances)
+- Cache hit rate <80%
+- Instance health check failures
 
 ---
 
