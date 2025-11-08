@@ -34,7 +34,10 @@ export class INatClient {
   private static readonly BASE_URL = 'https://api.inaturalist.org/v1';
   private static readonly RATE_LIMIT_PER_MINUTE = 60;
   private accessToken?: string;
-  private requestTimestamps: number[] = [];
+
+  // GLOBAL rate limiter: shared across ALL instances to properly enforce iNat's 60 req/min limit
+  // Multiple client instances (different tokens) still count toward the same global limit
+  private static requestTimestamps: number[] = [];
 
   constructor(options?: INatClientOptions) {
     this.accessToken = options?.accessToken;
@@ -44,12 +47,12 @@ export class INatClient {
     const now = Date.now();
     const oneMinuteAgo = now - 60000;
 
-    // Remove timestamps older than 1 minute
-    this.requestTimestamps = this.requestTimestamps.filter(ts => ts > oneMinuteAgo);
+    // Remove timestamps older than 1 minute (clean up the global tracker)
+    INatClient.requestTimestamps = INatClient.requestTimestamps.filter(ts => ts > oneMinuteAgo);
 
-    // If we've hit the rate limit, wait
-    if (this.requestTimestamps.length >= INatClient.RATE_LIMIT_PER_MINUTE) {
-      const oldestRequest = this.requestTimestamps[0];
+    // If we've hit the GLOBAL rate limit, wait
+    if (INatClient.requestTimestamps.length >= INatClient.RATE_LIMIT_PER_MINUTE) {
+      const oldestRequest = INatClient.requestTimestamps[0];
       const waitTime = 60000 - (now - oldestRequest) + 100; // Add 100ms buffer
       if (waitTime > 0) {
         await new Promise(resolve => setTimeout(resolve, waitTime));
@@ -57,7 +60,7 @@ export class INatClient {
       }
     }
 
-    this.requestTimestamps.push(now);
+    INatClient.requestTimestamps.push(now);
   }
 
   async request<T>(endpoint: string, options?: RequestInit): Promise<T> {

@@ -9,6 +9,7 @@ import { prisma } from '@/lib/db/prisma';
 import { getINatClient } from '@/lib/inat/client';
 import { INatError, RateLimitError, ErrorCode } from '@/lib/errors';
 import { POINTS_CONFIG, RARITY_BONUS_POINTS } from '@/lib/gamification/constants';
+import { calculateLevel } from '@/lib/sync/user-stats-helpers';
 import {
   getNextBatch,
   markAsProcessing,
@@ -190,21 +191,32 @@ export async function processRarityQueue(
           });
         }
 
-        // STEP 4: Update user's total points with the delta
+        // STEP 4: Update user's total points with the delta AND recalculate level
         if (totalPointsDelta !== 0) {
+          // Fetch current stats to calculate new level
+          const currentStats = await tx.userStats.findUnique({
+            where: { userId: item.userId },
+            select: { totalPoints: true },
+          });
+
+          const newTotalPoints = (currentStats?.totalPoints || 0) + totalPointsDelta;
+          const { level, pointsToNextLevel } = calculateLevel(newTotalPoints);
+
           // Use upsert to handle case where UserStats doesn't exist yet
           await tx.userStats.upsert({
             where: { userId: item.userId },
             update: {
-              totalPoints: { increment: totalPointsDelta },
+              totalPoints: newTotalPoints,
+              level,
+              pointsToNextLevel,
             },
             create: {
               userId: item.userId,
               totalObservations: 0,
               totalSpecies: 0,
-              totalPoints: totalPointsDelta,
-              level: 1,
-              pointsToNextLevel: 100,
+              totalPoints: newTotalPoints,
+              level,
+              pointsToNextLevel,
             },
           });
         }
@@ -365,21 +377,32 @@ export async function processUserQueue(
               });
             }
 
-            // Update user's total points
+            // Update user's total points AND recalculate level
             if (totalPointsDelta !== 0) {
+              // Fetch current stats to calculate new level
+              const currentStats = await tx.userStats.findUnique({
+                where: { userId },
+                select: { totalPoints: true },
+              });
+
+              const newTotalPoints = (currentStats?.totalPoints || 0) + totalPointsDelta;
+              const { level, pointsToNextLevel } = calculateLevel(newTotalPoints);
+
               // Use upsert to handle case where UserStats doesn't exist yet
               await tx.userStats.upsert({
                 where: { userId },
                 update: {
-                  totalPoints: { increment: totalPointsDelta },
+                  totalPoints: newTotalPoints,
+                  level,
+                  pointsToNextLevel,
                 },
                 create: {
                   userId,
                   totalObservations: 0,
                   totalSpecies: 0,
-                  totalPoints: totalPointsDelta,
-                  level: 1,
-                  pointsToNextLevel: 100,
+                  totalPoints: newTotalPoints,
+                  level,
+                  pointsToNextLevel,
                 },
               });
             }

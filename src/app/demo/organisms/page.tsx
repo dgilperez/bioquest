@@ -12,8 +12,8 @@ const OrganicBackground = dynamic(
 export default function OrganismsShowcasePage() {
   return (
     <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-nature-900 via-nature-800 to-nature-900">
-      {/* The living background */}
-      <OrganicBackground />
+      {/* The living background - key ensures it persists across re-renders */}
+      <OrganicBackground key="organic-bg-persistent" />
 
       {/* Overlay with organism descriptions */}
       <div className="relative z-10 p-8 max-w-6xl mx-auto">
