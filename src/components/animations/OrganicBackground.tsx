@@ -1,7 +1,7 @@
 'use client';
 
 import { motion, useAnimationControls } from 'framer-motion';
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, memo } from 'react';
 
 interface Organism {
   id: number;
@@ -24,10 +24,14 @@ interface Organism {
  * - Microorganisms pulsing
  * - Growth and decay cycles
  * - All in subtle, natural motion
+ *
+ * Memoized to prevent re-renders from parent component updates
  */
-export function OrganicBackground() {
+function OrganicBackgroundComponent() {
   // Generate organisms with varied characteristics
-  const organisms = useMemo(() => {
+  // Use useState with lazy initializer to ensure organisms are generated only once
+  // and persist across remounts (prevents jumping on navigation/fetch)
+  const [organisms] = useState<Organism[]>(() => {
     const items: Organism[] = [];
     const count = 50; // 1.66x organisms to ensure 3-4 complex ones (morula/euglena/tardigrade) are visible
 
@@ -63,7 +67,7 @@ export function OrganicBackground() {
     }
 
     return items;
-  }, []);
+  });
 
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -235,6 +239,9 @@ export function OrganicBackground() {
     </div>
   );
 }
+
+// Export memoized version to prevent re-renders
+export const OrganicBackground = memo(OrganicBackgroundComponent);
 
 // Cell organism - organic blob with prominent nucleus and organelles
 function CellOrganism({ size, opacity, colorVariant }: { size: number; opacity: number; colorVariant: number }) {

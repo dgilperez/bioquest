@@ -180,8 +180,8 @@ export function OnboardingClient({
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-nature-900 via-nature-800 to-nature-900 overflow-hidden relative">
-      {/* Organic life background animation */}
-      <OrganicBackground />
+      {/* Organic life background animation - key ensures it persists across re-renders */}
+      <OrganicBackground key="organic-bg-persistent" />
 
       <AnimatePresence mode="wait">
         {/* Step 1: Welcome */}
