@@ -14,6 +14,11 @@ const messageRotators = new Map<string, MessageRotator>();
 // Track cleanup timers to prevent memory leaks
 const progressCleanupTimers = new Map<string, NodeJS.Timeout>();
 
+// Throttle progress updates to prevent SQLite lock contention
+const progressUpdateTimers = new Map<string, NodeJS.Timeout>();
+const pendingUpdates = new Map<string, Partial<Omit<SyncProgress, 'userId'>>>();
+const PROGRESS_UPDATE_THROTTLE_MS = 500; // Max one update per 500ms
+
 function getMessageRotator(userId: string): MessageRotator {
   if (!messageRotators.has(userId)) {
     messageRotators.set(userId, new MessageRotator(7000)); // Rotate every 7 seconds
@@ -100,33 +105,81 @@ export async function initProgress(userId: string, totalObservations: number): P
   }
 }
 
+/**
+ * Flush pending updates to database immediately
+ * Used internally by the throttle mechanism
+ */
+async function flushProgressUpdate(userId: string): Promise<void> {
+  const updates = pendingUpdates.get(userId);
+  if (!updates) return;
+
+  // Clear pending updates before writing
+  pendingUpdates.delete(userId);
+  progressUpdateTimers.delete(userId);
+
+  try {
+    const current = await prisma.syncProgress.findUnique({ where: { userId } });
+    if (!current) return;
+
+    // Calculate estimated time remaining
+    let estimatedTimeRemaining = updates.estimatedTimeRemaining;
+    if (!estimatedTimeRemaining && current.observationsProcessed > 0) {
+      const elapsed = Date.now() - current.startedAt.getTime();
+      const processed = updates.observationsProcessed ?? current.observationsProcessed;
+      if (processed > 0) {
+        const rate = processed / (elapsed / 1000);
+        const remaining = current.observationsTotal - processed;
+        estimatedTimeRemaining = Math.round(remaining / rate);
+      }
+    }
+
+    // Use updateMany to avoid race condition if record is deleted
+    await prisma.syncProgress.updateMany({
+      where: { userId },
+      data: {
+        ...updates,
+        estimatedTimeRemaining,
+      },
+    });
+  } catch (error: any) {
+    // Gracefully handle SQLite timeout errors (P1008)
+    // These are non-critical - sync can succeed even if progress updates fail
+    if (error?.code === 'P1008') {
+      console.warn(`[Progress] SQLite timeout for user ${userId}, skipping update (non-critical)`);
+    } else {
+      // Log other errors but don't throw - progress tracking is non-critical
+      console.error('[Progress] Update failed:', error);
+    }
+  }
+}
+
+/**
+ * Update sync progress (throttled to prevent database lock contention)
+ *
+ * Updates are batched and written at most once every 500ms to prevent
+ * SQLite lock contention when many updates happen rapidly (e.g., during
+ * rarity classification where we update for each taxon processed).
+ */
 export async function updateProgress(
   userId: string,
   updates: Partial<Omit<SyncProgress, 'userId'>>
 ): Promise<void> {
-  const current = await prisma.syncProgress.findUnique({ where: { userId } });
-  if (!current) return;
+  // Merge with any pending updates
+  const existing = pendingUpdates.get(userId) || {};
+  pendingUpdates.set(userId, { ...existing, ...updates });
 
-  // Calculate estimated time remaining
-  let estimatedTimeRemaining = updates.estimatedTimeRemaining;
-  if (!estimatedTimeRemaining && current.observationsProcessed > 0) {
-    const elapsed = Date.now() - current.startedAt.getTime();
-    const processed = updates.observationsProcessed ?? current.observationsProcessed;
-    if (processed > 0) {
-      const rate = processed / (elapsed / 1000);
-      const remaining = current.observationsTotal - processed;
-      estimatedTimeRemaining = Math.round(remaining / rate);
-    }
+  // Clear any existing timer
+  const existingTimer = progressUpdateTimers.get(userId);
+  if (existingTimer) {
+    clearTimeout(existingTimer);
   }
 
-  // Use updateMany to avoid race condition if record is deleted
-  await prisma.syncProgress.updateMany({
-    where: { userId },
-    data: {
-      ...updates,
-      estimatedTimeRemaining,
-    },
-  });
+  // Schedule flush after throttle period
+  const timer = setTimeout(async () => {
+    await flushProgressUpdate(userId);
+  }, PROGRESS_UPDATE_THROTTLE_MS);
+
+  progressUpdateTimers.set(userId, timer);
 }
 
 export async function getProgress(userId: string): Promise<SyncProgress | null> {
@@ -157,6 +210,13 @@ export async function getProgress(userId: string): Promise<SyncProgress | null> 
 }
 
 export async function completeProgress(userId: string): Promise<void> {
+  // Flush any pending progress updates before marking complete
+  const updateTimer = progressUpdateTimers.get(userId);
+  if (updateTimer) {
+    clearTimeout(updateTimer);
+    await flushProgressUpdate(userId);
+  }
+
   const current = await prisma.syncProgress.findUnique({ where: { userId } });
   if (!current) return;
 
