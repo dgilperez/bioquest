@@ -52,11 +52,17 @@ export function ClientSideObservations() {
   // Load user's observations on mount
   useEffect(() => {
     async function loadObservations() {
-      // inatUsername is stored on session.user with type assertion
+      // ARCHITECTURE NOTE: inatUsername is stored on session.user (requires type assertion)
+      // See /src/lib/auth.ts for NextAuth session configuration
       const inatUsername = (session?.user as any)?.inatUsername;
       if (!inatUsername) return;
 
       try {
+        // SCALABILITY: This API call goes directly from browser → iNaturalist
+        // Benefits:
+        // 1. Uses USER's IP quota (60 req/min), not server's shared quota
+        // 2. Faster response (no server round-trip)
+        // 3. Server resources freed for background jobs (rarity classification, etc.)
         console.log('📡 Fetching observations from browser (user IP quota)...');
         const data = await getUserObservations(inatUsername, {
           per_page: 10,
@@ -76,11 +82,16 @@ export function ClientSideObservations() {
     loadObservations();
   }, [session, getUserObservations]);
 
-  // Search taxa
+  // Search taxa - another example of client-side API usage
   async function handleSearch() {
     if (!searchQuery) return;
 
     try {
+      // HYBRID ARCHITECTURE: Search queries are perfect for client-side execution
+      // - User-initiated action (not background job)
+      // - Results needed immediately for UI
+      // - No caching benefit (search terms vary widely)
+      // - Using user's IP quota instead of server's shared quota
       console.log(
         `🔍 Searching taxa from browser (user IP quota): "${searchQuery}"`
       );

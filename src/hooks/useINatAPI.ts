@@ -74,10 +74,19 @@ export function useINatAPI() {
    *
    * IMPORTANT: This makes a direct call from the browser to iNat's API.
    * The request uses the user's IP address, NOT the server's IP.
+   *
+   * @param endpoint - The API endpoint path (e.g., '/observations' or '/taxa')
+   * @param options - Optional fetch options (headers, method, body, etc.)
+   * @returns Parsed JSON response typed as T
+   * @throws INatAPIError - If authentication fails, rate limit exceeded, or API error
+   *
+   * @example
+   * const data = await request<{ results: INatTaxon[] }>('/taxa?q=sparrow');
    */
   const request = useCallback(
     async <T,>(endpoint: string, options?: RequestInit): Promise<T> => {
       // Access token is stored on session object directly (not session.user)
+      // See /src/lib/auth.ts - NextAuth stores it via: (session as any).accessToken = token.accessToken
       const accessToken = (session as any)?.accessToken;
 
       if (!accessToken) {
@@ -141,8 +150,32 @@ export function useINatAPI() {
   /**
    * Get observations for a user
    *
+   * Fetches observations directly from iNaturalist using the user's OAuth token.
+   * This call uses the USER's IP quota, not the server's quota.
+   *
+   * @param username - iNaturalist username (e.g., 'dgilperez')
+   * @param options - Query options for filtering and pagination
+   * @param options.page - Page number (default: 1)
+   * @param options.per_page - Results per page (default: 50, max: 200)
+   * @param options.order_by - Sort field: 'created_at', 'observed_on', or 'id'
+   * @param options.order - Sort direction: 'desc' or 'asc'
+   * @param options.quality_grade - Filter by quality: 'research', 'needs_id', or 'casual'
+   * @returns Promise with paginated observation results
+   *
    * @example
-   * const data = await getUserObservations('dgilperez', { page: 1, per_page: 50 });
+   * // Get user's most recent observations
+   * const data = await getUserObservations('dgilperez', {
+   *   per_page: 50,
+   *   order_by: 'observed_on',
+   *   order: 'desc'
+   * });
+   *
+   * @example
+   * // Get only research-grade observations
+   * const data = await getUserObservations('dgilperez', {
+   *   quality_grade: 'research',
+   *   per_page: 100
+   * });
    */
   const getUserObservations = useCallback(
     async (
@@ -182,10 +215,27 @@ export function useINatAPI() {
   );
 
   /**
-   * Search for taxa
+   * Search for taxa (species, genera, families, etc.)
+   *
+   * Searches iNaturalist's taxonomy database. Returns matches ranked by relevance.
+   * This call uses the USER's IP quota, not the server's quota.
+   *
+   * @param query - Search term (common name, scientific name, or partial match)
+   * @param options - Search options
+   * @param options.per_page - Number of results to return (default: 20, max: 200)
+   * @returns Promise with search results
    *
    * @example
+   * // Search by common name
    * const data = await searchTaxa('sparrow');
+   *
+   * @example
+   * // Search by scientific name
+   * const data = await searchTaxa('Passer domesticus');
+   *
+   * @example
+   * // Get more results
+   * const data = await searchTaxa('oak', { per_page: 50 });
    */
   const searchTaxa = useCallback(
     async (query: string, options?: { per_page?: number }) => {
@@ -203,10 +253,23 @@ export function useINatAPI() {
   );
 
   /**
-   * Search for places
+   * Search for places (countries, states, parks, etc.)
+   *
+   * Searches iNaturalist's places database using autocomplete.
+   * This call uses the USER's IP quota, not the server's quota.
+   *
+   * @param query - Place name or partial match
+   * @param options - Search options
+   * @param options.per_page - Number of results to return (default: 20, max: 200)
+   * @returns Promise with place search results
    *
    * @example
+   * // Search for a state
    * const data = await searchPlaces('california');
+   *
+   * @example
+   * // Search for a park
+   * const data = await searchPlaces('yosemite');
    */
   const searchPlaces = useCallback(
     async (query: string, options?: { per_page?: number }) => {
@@ -229,10 +292,17 @@ export function useINatAPI() {
   );
 
   /**
-   * Get user info
+   * Get user info (profile data, stats)
+   *
+   * Fetches public profile information for an iNaturalist user.
+   * This call uses the USER's IP quota, not the server's quota.
+   *
+   * @param username - iNaturalist username
+   * @returns Promise with user profile data
    *
    * @example
    * const data = await getUserInfo('dgilperez');
+   * console.log(`User has ${data.results[0].observations_count} observations`);
    */
   const getUserInfo = useCallback(
     async (username: string) => {
@@ -251,10 +321,29 @@ export function useINatAPI() {
   );
 
   /**
-   * Get species counts for a user
+   * Get species counts for a user (life list)
+   *
+   * Fetches aggregated counts of how many times a user has observed each species.
+   * Useful for building life lists, species rankings, etc.
+   * This call uses the USER's IP quota, not the server's quota.
+   *
+   * @param username - iNaturalist username
+   * @param options - Filter options
+   * @param options.taxon_id - Filter to descendants of this taxon (e.g., 3 for birds)
+   * @param options.place_id - Filter to observations in this place
+   * @returns Promise with species counts and taxon details
    *
    * @example
+   * // Get all species observed by user
    * const data = await getUserSpeciesCounts('dgilperez');
+   *
+   * @example
+   * // Get only bird species (taxon_id 3 = Aves)
+   * const data = await getUserSpeciesCounts('dgilperez', { taxon_id: 3 });
+   *
+   * @example
+   * // Get species observed in California (place_id 14)
+   * const data = await getUserSpeciesCounts('dgilperez', { place_id: 14 });
    */
   const getUserSpeciesCounts = useCallback(
     async (username: string, options?: { taxon_id?: number; place_id?: number }) => {
