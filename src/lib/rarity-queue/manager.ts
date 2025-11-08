@@ -126,7 +126,10 @@ export async function markAsProcessing(queueItemId: string): Promise<void> {
   // Use updateMany to avoid race condition if record is deleted
   await prisma.rarityClassificationQueue.updateMany({
     where: { id: queueItemId },
-    data: { status: 'processing' },
+    data: {
+      status: 'processing',
+      lastAttemptAt: new Date(), // Track when processing started for stale detection
+    },
   });
 }
 
@@ -207,6 +210,43 @@ export async function retryFailed(maxAge?: number): Promise<number> {
       lastError: null,
     },
   });
+
+  return result.count;
+}
+
+/**
+ * Reset stale processing items to pending on server startup
+ *
+ * When the server crashes or is forcefully terminated, items marked as "processing"
+ * can get stuck in that state forever. This function resets them to "pending" so they
+ * can be reprocessed.
+ *
+ * Stale = items that have been "processing" for more than staleThresholdMs
+ *
+ * @param staleThresholdMs - Items processing for longer than this are considered stale (default: 5 minutes)
+ * @returns Number of items reset
+ */
+export async function resetStaleProcessingItems(
+  staleThresholdMs: number = 5 * 60 * 1000 // 5 minutes
+): Promise<number> {
+  const cutoffDate = new Date(Date.now() - staleThresholdMs);
+
+  const result = await prisma.rarityClassificationQueue.updateMany({
+    where: {
+      status: 'processing',
+      lastAttemptAt: {
+        lt: cutoffDate,
+      },
+    },
+    data: {
+      status: 'pending',
+      lastError: 'Reset due to stale processing state (likely server crash)',
+    },
+  });
+
+  if (result.count > 0) {
+    console.log(`🔄 Reset ${result.count} stale processing items to pending`);
+  }
 
   return result.count;
 }
