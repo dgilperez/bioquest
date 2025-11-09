@@ -210,19 +210,28 @@ describe('Crash Recovery - Sync Status Verification', () => {
         };
       });
 
-      // Verify status - should detect deletion and reconcile
+      // Verify status - should detect deletion and QUEUE reconciliation (not immediate)
       const result = await verifySyncStatus(testUserId, testUsername, testToken);
 
-      // After reconciliation, should have 7000 observations (deleted 500 orphans)
+      // After verification (reconciliation is QUEUED, not yet processed)
       expect(result.localCount).toBe(7500); // Before reconciliation
       expect(result.inatTotal).toBe(7000);
       expect(result.hasMoreToSync).toBe(false); // No more to sync
       expect(result.needsDeletionReconciliation).toBe(true);
-      expect(result.deletionsReconciled).toBe(500); // Deleted the extra 500
+      expect(result.reconciliationQueued).toBe(true); // Queued for lazy processing
+      expect(result.deletionsReconciled).toBeUndefined(); // Not reconciled yet
 
-      // Verify deletion actually happened
-      const finalCount = await prisma.observation.count({ where: { userId: testUserId } });
-      expect(finalCount).toBe(7000);
+      // BEFORE lazy processing, orphaned observations are still there
+      const countBeforeQueue = await prisma.observation.count({ where: { userId: testUserId } });
+      expect(countBeforeQueue).toBe(7500);
+
+      // Lazy processing (THE FIX!) - simulates what AutoSync does on next page load
+      const processed = await processUserPendingReconciliation(testUserId);
+      expect(processed).toBe(true);
+
+      // AFTER lazy processing, orphaned observations should be gone
+      const countAfterQueue = await prisma.observation.count({ where: { userId: testUserId } });
+      expect(countAfterQueue).toBe(7000);
     });
   });
 
@@ -354,8 +363,8 @@ describe('Crash Recovery - Sync Status Verification', () => {
       expect(countAfterQueue).toBe(inatTotal);
     });
 
-    it('should NOT block verification for large datasets (>10k observations)', async () => {
-      // PERFORMANCE TEST: Large dataset should return quickly, not block for minutes
+    it('should NOT block verification for ALL datasets (queue pattern prevents race)', async () => {
+      // PERFORMANCE TEST: ALL datasets now return quickly (queued, not immediate)
       // Setup: User with 50,000 observations, deleted 1,000
       const largeDatasetSize = 50000;
       const inatTotal = 49000;
@@ -391,7 +400,7 @@ describe('Crash Recovery - Sync Status Verification', () => {
       expect(result.inatTotal).toBe(inatTotal);
       expect(result.needsDeletionReconciliation).toBe(true);
 
-      // Should NOT have reconciled yet (too large, queued for background)
+      // Should NOT have reconciled yet (ALL datasets now queued to avoid race)
       expect(result.deletionsReconciled).toBeUndefined();
       expect(result.reconciliationQueued).toBe(true);
 
@@ -399,8 +408,8 @@ describe('Crash Recovery - Sync Status Verification', () => {
       expect(duration).toBeLessThan(1000);
     });
 
-    it('should reconcile small datasets (<10k) immediately', async () => {
-      // Small datasets can be reconciled synchronously without blocking
+    it('should queue reconciliation (ALL datasets now use queue to avoid race conditions)', async () => {
+      // ALL datasets are now queued to prevent race conditions with sync
       const smallDatasetSize = 7000;
       const inatTotal = 5000;
 
@@ -437,9 +446,18 @@ describe('Crash Recovery - Sync Status Verification', () => {
       const result = await verifySyncStatus(testUserId, testUsername, testToken);
 
       expect(result.needsDeletionReconciliation).toBe(true);
-      expect(result.deletionsReconciled).toBe(2000); // Reconciled immediately
-      expect(result.reconciliationQueued).toBeUndefined();
+      expect(result.reconciliationQueued).toBe(true); // Queued for lazy processing
+      expect(result.deletionsReconciled).toBeUndefined(); // Not reconciled yet
 
+      // BEFORE lazy processing, orphaned observations are still there
+      const countBeforeQueue = await prisma.observation.count({ where: { userId: testUserId } });
+      expect(countBeforeQueue).toBe(smallDatasetSize);
+
+      // Lazy processing - simulates what AutoSync does on next page load
+      const processed = await processUserPendingReconciliation(testUserId);
+      expect(processed).toBe(true);
+
+      // AFTER lazy processing, orphaned observations should be gone
       const finalCount = await prisma.observation.count({ where: { userId: testUserId } });
       expect(finalCount).toBe(5000);
     });
@@ -487,9 +505,18 @@ describe('Crash Recovery - Sync Status Verification', () => {
       expect(result.inatTotal).toBe(5000);
       expect(result.hasMoreToSync).toBe(false); // No MORE to sync
       expect(result.needsDeletionReconciliation).toBe(true); // But need to delete orphans
-      expect(result.deletionsReconciled).toBe(2000); // Deleted 2000 orphans
+      expect(result.reconciliationQueued).toBe(true); // Queued for lazy processing
+      expect(result.deletionsReconciled).toBeUndefined(); // Not reconciled yet
 
-      // Verify deletion actually happened
+      // BEFORE lazy processing, orphaned observations are still there
+      const countBeforeQueue = await prisma.observation.count({ where: { userId: testUserId } });
+      expect(countBeforeQueue).toBe(7000);
+
+      // Lazy processing - simulates what AutoSync does on next page load
+      const processed = await processUserPendingReconciliation(testUserId);
+      expect(processed).toBe(true);
+
+      // AFTER lazy processing, orphaned observations should be gone
       const finalCount = await prisma.observation.count({ where: { userId: testUserId } });
       expect(finalCount).toBe(5000);
     });

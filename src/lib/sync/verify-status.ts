@@ -21,173 +21,6 @@ export interface SyncVerificationResult {
 }
 
 /**
- * Reconcile deleted observations
- *
- * When user deletes observations on iNaturalist, local DB may have orphaned records.
- * This function fetches all current iNat observation IDs, compares with local,
- * and deletes observations that no longer exist on iNat.
- *
- * @param userId - User ID
- * @param inatUsername - iNaturalist username
- * @param accessToken - iNaturalist access token
- * @param inatTotal - Total observations on iNat (from verifySyncStatus)
- * @returns Number of observations deleted
- */
-async function reconcileDeletedObservations(
-  userId: string,
-  inatUsername: string,
-  accessToken: string,
-  inatTotal: number
-): Promise<number> {
-  console.log(`🗑️  Starting deletion reconciliation for ${inatUsername}...`);
-
-  // Update progress to show in UI
-  await updateProgress(userId, {
-    status: 'syncing',
-    phase: 'storing',
-    message: 'Checking for deleted observations...',
-  });
-
-  const client = getINatClient(accessToken);
-  const inatIds = new Set<number>();
-
-  // 1. Fetch ALL observation IDs from iNaturalist (paginated)
-  const perPage = 200; // Maximum allowed by API
-  const totalPages = Math.ceil(inatTotal / perPage);
-
-  console.log(`  Fetching ${inatTotal} observation IDs across ${totalPages} pages...`);
-
-  await updateProgress(userId, {
-    message: `Fetching observation IDs from iNaturalist (0/${totalPages} pages)...`,
-  });
-
-  for (let page = 1; page <= totalPages; page++) {
-    try {
-      const response = await client.getUserObservations(inatUsername, {
-        per_page: perPage,
-        page,
-        order_by: 'id', // Consistent ordering
-        order: 'asc',
-      });
-
-      // Extract IDs from results
-      for (const obs of response.results) {
-        inatIds.add(obs.id);
-      }
-
-      if (page % 10 === 0) {
-        console.log(`  Progress: ${page}/${totalPages} pages fetched (${inatIds.size} IDs)`);
-        await updateProgress(userId, {
-          message: `Fetching observation IDs from iNaturalist (${page}/${totalPages} pages)...`,
-        });
-      }
-    } catch (error) {
-      console.error(`  Error fetching page ${page}:`, error);
-      throw error;
-    }
-  }
-
-  console.log(`  ✅ Fetched ${inatIds.size} observation IDs from iNaturalist`);
-
-  await updateProgress(userId, {
-    message: `Comparing with local database...`,
-  });
-
-  // 2. Get all local observation IDs
-  const localObservations = await prisma.observation.findMany({
-    where: { userId },
-    select: { id: true },
-  });
-
-  const localIds = new Set(localObservations.map(obs => obs.id));
-  console.log(`  Local database has ${localIds.size} observations`);
-
-  // 3. Find orphaned IDs (local but not in iNat)
-  const orphanedIds: number[] = [];
-  for (const localId of localIds) {
-    if (!inatIds.has(localId)) {
-      orphanedIds.push(localId);
-    }
-  }
-
-  if (orphanedIds.length === 0) {
-    console.log(`  ✅ No orphaned observations found`);
-    await updateProgress(userId, {
-      message: `No deleted observations found`,
-    });
-    return 0;
-  }
-
-  console.log(`  ⚠️  Found ${orphanedIds.length} orphaned observations to delete`);
-
-  await updateProgress(userId, {
-    message: `Deleting ${orphanedIds.length} orphaned observations...`,
-  });
-
-  // 4. Delete orphaned observations
-  const deleteResult = await prisma.observation.deleteMany({
-    where: {
-      id: { in: orphanedIds },
-      userId, // Safety: only delete for this user
-    },
-  });
-
-  console.log(`  ✅ Deleted ${deleteResult.count} orphaned observations`);
-
-  // 5. Recalculate stats after deletion
-  if (deleteResult.count > 0) {
-    console.log(`  📊 Recalculating stats after deletion...`);
-
-    await updateProgress(userId, {
-      message: `Recalculating statistics after deletion...`,
-    });
-
-    // Count remaining observations
-    const totalObservations = await prisma.observation.count({
-      where: { userId },
-    });
-
-    // Count distinct species
-    const distinctSpecies = await prisma.observation.groupBy({
-      by: ['taxonId'],
-      where: { userId },
-    });
-    const totalSpecies = distinctSpecies.length;
-
-    // Sum points
-    const pointsSum = await prisma.observation.aggregate({
-      where: { userId },
-      _sum: { pointsAwarded: true },
-    });
-    const totalPoints = pointsSum._sum.pointsAwarded || 0;
-
-    // Count rare/legendary observations
-    const rareCount = await prisma.observation.count({
-      where: { userId, rarity: 'rare' },
-    });
-    const legendaryCount = await prisma.observation.count({
-      where: { userId, rarity: 'legendary' },
-    });
-
-    // Update UserStats with recalculated values
-    await prisma.userStats.updateMany({
-      where: { userId },
-      data: {
-        totalObservations,
-        totalSpecies,
-        totalPoints,
-        rareObservations: rareCount,
-        legendaryObservations: legendaryCount,
-      },
-    });
-
-    console.log(`  ✅ Stats updated: ${totalObservations} obs, ${totalSpecies} species, ${totalPoints} points`);
-  }
-
-  return deleteResult.count;
-}
-
-/**
  * Verify that hasMoreToSync flag is accurate by comparing local vs iNat counts
  *
  * CRITICAL for crash recovery:
@@ -235,37 +68,15 @@ export async function verifySyncStatus(
     const deletionCount = localCount - inatTotal;
     console.log(`  ⚠️  Deletions detected: local has ${deletionCount} more observations than iNat`);
 
-    // PERFORMANCE: Use threshold to decide between immediate vs background reconciliation
-    // The expensive operation is fetching ALL observation IDs from iNat (not the deletion count)
-    // Small datasets (<= 10k total obs on iNat): Reconcile immediately (~50 API requests, ~1 min)
-    // Large datasets (> 10k total obs on iNat): Queue for background (>50 API requests, >1 min, would block)
-    const IMMEDIATE_RECONCILIATION_THRESHOLD = 10000;
+    // ALWAYS queue reconciliation to avoid race conditions with sync
+    // Lazy processing (in AutoSync) will handle the queued job on next page load
+    console.log(`  📋 Queuing reconciliation for lazy processing (prevents race with sync)`);
 
-    if (inatTotal > IMMEDIATE_RECONCILIATION_THRESHOLD) {
-      console.log(`  📋 Large dataset (iNat has ${inatTotal} > ${IMMEDIATE_RECONCILIATION_THRESHOLD} obs), queuing for background processing`);
+    // Queue the reconciliation job
+    await queueReconciliation(userId, inatUsername, accessToken, inatTotal);
+    reconciliationQueued = true;
 
-      // Queue the reconciliation job
-      await queueReconciliation(userId, inatUsername, accessToken, inatTotal);
-      reconciliationQueued = true;
-
-      console.log(`  ✅ Reconciliation queued for background processing`);
-    } else {
-      console.log(`  🔄 Small dataset (iNat has ${inatTotal} <= ${IMMEDIATE_RECONCILIATION_THRESHOLD} obs), reconciling immediately`);
-
-      // Automatically reconcile deletions
-      try {
-        deletionsReconciled = await reconcileDeletedObservations(
-          userId,
-          inatUsername,
-          accessToken,
-          inatTotal
-        );
-        console.log(`  ✅ Reconciliation complete: ${deletionsReconciled} observations deleted`);
-      } catch (error) {
-        console.error(`  ❌ Failed to reconcile deletions:`, error);
-        // Don't throw - verification can continue even if reconciliation fails
-      }
-    }
+    console.log(`  ✅ Reconciliation queued for lazy processing`);
   }
 
   // 4. Get current flag from database (it's in UserStats, not User)
