@@ -3,8 +3,14 @@
  * for consistent animations across the app
  */
 
-import { Variants } from 'framer-motion';
+import { Variants, Variant } from 'framer-motion';
 import { ANIMATION_DURATIONS, SPRING_CONFIGS, EASINGS } from '@/styles/design-tokens';
+
+// Custom type for variants that support both static and dynamic (function) values
+// Framer Motion's Variants type is too strict for computed properties and functions
+export type FlexibleVariants = {
+  [key: string]: Variant | ((custom?: any) => Variant);
+};
 
 // Fade animations
 export const fadeIn: Variants = {
@@ -380,16 +386,16 @@ export const createFlutterVariants = (
   scaleRange: [number, number] = [0.9, 1],
   duration: number = 1.5,
   delay: number = 0
-): Variants => ({
+): FlexibleVariants => ({
   idle: {
-    [`scale${axis}`]: [scaleRange[0], scaleRange[1], scaleRange[0]],
+    [`scale${axis}`]: [scaleRange[0], scaleRange[1], scaleRange[0]] as any,
     transition: {
       duration,
       delay,
       repeat: Infinity,
       ease: 'easeInOut',
     },
-  },
+  } as any,
 });
 
 /**

@@ -99,7 +99,7 @@ export async function getQueueStatus(userId: string): Promise<QueueStatus> {
 export async function getNextBatch(
   batchSize: number = 20,
   maxRetries: number = 3
-): Promise<Array<{ id: string; userId: string; taxonId: number; taxonName?: string }>> {
+): Promise<Array<{ id: string; userId: string; taxonId: number; taxonName?: string | null }>> {
   return prisma.rarityClassificationQueue.findMany({
     where: {
       status: 'pending',

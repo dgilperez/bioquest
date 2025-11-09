@@ -97,7 +97,7 @@ describe('Crash Recovery - Sync Status Verification', () => {
         createdAt: new Date(),
         updatedAt: new Date(),
       }));
-      await prisma.observation.createMany({ data: observations });
+      await prisma.observation.createMany({ data: observations as any });
 
       // Verify status (should detect local=1000, iNat=7000, and set hasMoreToSync=true)
       const result = await verifySyncStatus(testUserId, testUsername, testToken);
@@ -133,7 +133,7 @@ describe('Crash Recovery - Sync Status Verification', () => {
         createdAt: new Date(),
         updatedAt: new Date(),
       }));
-      await prisma.observation.createMany({ data: observations });
+      await prisma.observation.createMany({ data: observations as any });
 
       // Verify status (should detect local=7000, iNat=7000, keep hasMoreToSync=false)
       const result = await verifySyncStatus(testUserId, testUsername, testToken);
@@ -187,11 +187,11 @@ describe('Crash Recovery - Sync Status Verification', () => {
         createdAt: new Date(),
         updatedAt: new Date(),
       }));
-      await prisma.observation.createMany({ data: observations });
+      await prisma.observation.createMany({ data: observations as any });
 
       // Mock iNat to return 7000 observations (IDs 3000-9999)
       // The first 7000 match local, last 500 are orphaned
-      mockGetUserObservations = vi.fn().mockImplementation(async (username, options) => {
+      mockGetUserObservations = vi.fn().mockImplementation(async (_username, options) => {
         const page = options?.page || 1;
         const perPage = options?.per_page || 50;
         const start = (page - 1) * perPage;
@@ -263,7 +263,7 @@ describe('Crash Recovery - Sync Status Verification', () => {
         createdAt: new Date(),
         updatedAt: new Date(),
       }));
-      await prisma.observation.createMany({ data: observations });
+      await prisma.observation.createMany({ data: observations as any });
 
       // Step 3-6: Server restarts, verification runs
       const userStats = await prisma.userStats.findUnique({
@@ -299,10 +299,12 @@ describe('Crash Recovery - Sync Status Verification', () => {
 
   describe('Deletion Detection & Reconciliation', () => {
     it('should actually queue and process large dataset reconciliation (not just say "queued")', async () => {
-      // CRITICAL BUG TEST: Proves that "queued" is a lie - nothing is actually queued
+      // Test validates that ALL datasets are queued for lazy processing (new queue-only behavior)
       const largeDatasetSize = 50000;
       const inatTotal = 49000;
-      const orphanedCount = 1000;
+
+      // Clean up ALL existing observations (aggressive cleanup for large data tests)
+      await prisma.observation.deleteMany({});
 
       // Create 50k local observations
       const batchSize = 5000;
@@ -319,24 +321,26 @@ describe('Crash Recovery - Sync Status Verification', () => {
         });
       }
 
-      // Mock iNat to return 49k total (1k deletions)
+      // Mock iNat to return 49k total (1k deletions detected)
       mockGetUserObservations = vi.fn().mockResolvedValue({
         results: [],
         total_results: inatTotal,
       });
 
-      // Run verification - should queue for background
+      // Run verification - ALL datasets now queue for lazy processing
       const result = await verifySyncStatus(testUserId, testUsername, testToken);
 
+      // Verification should queue reconciliation (not process immediately)
       expect(result.reconciliationQueued).toBe(true);
       expect(result.deletionsReconciled).toBeUndefined();
+      expect(result.needsDeletionReconciliation).toBe(true);
 
-      // THE BUG (BEFORE FIX): Orphaned observations are still there
+      // Before lazy processing, orphaned observations are still there
       const countBeforeQueue = await prisma.observation.count({ where: { userId: testUserId } });
       expect(countBeforeQueue).toBe(largeDatasetSize);
 
       // Mock iNat to return paginated IDs for reconciliation
-      mockGetUserObservations = vi.fn().mockImplementation(async (username, options) => {
+      mockGetUserObservations = vi.fn().mockImplementation(async (_username, options) => {
         const page = options?.page || 1;
         const perPage = options?.per_page || 50;
         const start = (page - 1) * perPage;
@@ -354,27 +358,31 @@ describe('Crash Recovery - Sync Status Verification', () => {
         };
       });
 
-      // Lazy processing (THE FIX!) - simulates what AutoSync does on next page load
+      // Lazy processing - simulates what AutoSync does on next page load
       const processed = await processUserPendingReconciliation(testUserId);
       expect(processed).toBe(true);
 
-      // AFTER lazy processing, orphaned observations should be gone
+      // After lazy processing, orphaned observations should be gone
       const countAfterQueue = await prisma.observation.count({ where: { userId: testUserId } });
       expect(countAfterQueue).toBe(inatTotal);
     });
 
     it('should NOT block verification for ALL datasets (queue pattern prevents race)', async () => {
-      // PERFORMANCE TEST: ALL datasets now return quickly (queued, not immediate)
-      // Setup: User with 50,000 observations, deleted 1,000
+      // PERFORMANCE TEST: ALL datasets now queue immediately (new queue-only behavior)
+      // Validates that verification completes quickly even for large datasets
       const largeDatasetSize = 50000;
       const inatTotal = 49000;
 
-      // Create 50k local observations
+      // Clean up ALL existing observations (aggressive cleanup for large data tests)
+      await prisma.observation.deleteMany({});
+
+      // Create 50k local observations (using different ID range to avoid conflicts)
       const batchSize = 5000;
+      const idOffset = 100000; // Use IDs 100001-150000 to avoid conflict with other test
       for (let i = 0; i < largeDatasetSize / batchSize; i++) {
         await prisma.observation.createMany({
           data: Array.from({ length: batchSize }, (_, j) => ({
-            id: i * batchSize + j + 1,
+            id: idOffset + i * batchSize + j + 1,
             userId: testUserId,
             observedOn: new Date('2024-01-01'),
             qualityGrade: 'needs_id',
@@ -390,7 +398,7 @@ describe('Crash Recovery - Sync Status Verification', () => {
         total_results: inatTotal,
       });
 
-      // CRITICAL: Verification should complete in < 1 second, NOT 4 minutes
+      // Verification should complete quickly by queueing (not processing immediately)
       const startTime = Date.now();
       const result = await verifySyncStatus(testUserId, testUsername, testToken);
       const duration = Date.now() - startTime;
@@ -400,11 +408,11 @@ describe('Crash Recovery - Sync Status Verification', () => {
       expect(result.inatTotal).toBe(inatTotal);
       expect(result.needsDeletionReconciliation).toBe(true);
 
-      // Should NOT have reconciled yet (ALL datasets now queued to avoid race)
+      // Should queue for lazy processing (not reconcile immediately)
       expect(result.deletionsReconciled).toBeUndefined();
       expect(result.reconciliationQueued).toBe(true);
 
-      // Should complete quickly (< 1 second, NOT minutes)
+      // Should complete quickly by queueing (< 1 second)
       expect(duration).toBeLessThan(1000);
     });
 
@@ -425,7 +433,7 @@ describe('Crash Recovery - Sync Status Verification', () => {
       });
 
       // Mock iNat to return paginated results
-      mockGetUserObservations = vi.fn().mockImplementation(async (username, options) => {
+      mockGetUserObservations = vi.fn().mockImplementation(async (_username, options) => {
         const page = options?.page || 1;
         const perPage = options?.per_page || 50;
         const start = (page - 1) * perPage;
@@ -480,7 +488,7 @@ describe('Crash Recovery - Sync Status Verification', () => {
 
       // Mock iNat to return only 5000 observations (IDs 1-5000)
       // The last 2000 (IDs 5001-7000) are orphaned
-      mockGetUserObservations = vi.fn().mockImplementation(async (username, options) => {
+      mockGetUserObservations = vi.fn().mockImplementation(async (_username, options) => {
         const page = options?.page || 1;
         const perPage = options?.per_page || 50;
         const start = (page - 1) * perPage;

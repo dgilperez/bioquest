@@ -84,7 +84,7 @@ export function VirusIcon({ size = 32, className = '', animate = true }: VirusIc
           <motion.g
             key={`spike-${i}`}
             animate={animate ? 'idle' : undefined}
-            variants={spikeWaveVariants(delay)}
+            variants={spikeWaveVariants(delay) as any}
             style={{ transformOrigin: x + 'px ' + y + 'px' }}
           >
             {/* Spike stem */}
@@ -136,7 +136,7 @@ export function VirusIcon({ size = 32, className = '', animate = true }: VirusIc
       {/* ===== VIRAL CAPSID (protein shell) ===== */}
       <motion.g
         animate={animate ? 'idle' : undefined}
-        variants={capsidPulseVariants}
+        variants={capsidPulseVariants as any}
       >
         {/* Outer capsid layer */}
         <circle
@@ -205,7 +205,7 @@ export function VirusIcon({ size = 32, className = '', animate = true }: VirusIc
       {/* ===== VIRAL GENOME (genetic material inside) ===== */}
       <motion.g
         animate={animate ? 'idle' : undefined}
-        variants={genomePulseVariants}
+        variants={genomePulseVariants as any}
       >
         {/* Coiled RNA/DNA strands */}
         <circle

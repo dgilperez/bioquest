@@ -92,12 +92,12 @@ export function ReptiliaIcon({ size = 32, className = '', animate = true }: Rept
 
       <motion.g
         animate={animate ? 'idle' : undefined}
-        variants={climbingWaveVariants}
+        variants={climbingWaveVariants as any}
       >
         {/* ===== TAIL (regenerating, prehensile) ===== */}
         <motion.g
           animate={animate ? 'idle' : undefined}
-          variants={tailSwayVariants}
+          variants={tailSwayVariants as any}
           style={{ transformOrigin: '38px 52px' }}
         >
           {/* Tail base */}
@@ -129,7 +129,7 @@ export function ReptiliaIcon({ size = 32, className = '', animate = true }: Rept
         {/* ===== REAR LEFT LEG ===== */}
         <motion.g
           animate={animate ? 'idle' : undefined}
-          variants={legStepVariants(0.3)}
+          variants={legStepVariants(0.3) as any}
         >
           {/* Thigh - extends sideways */}
           <path
@@ -148,7 +148,7 @@ export function ReptiliaIcon({ size = 32, className = '', animate = true }: Rept
           {/* Foot with splayed toes */}
           <motion.g
             animate={animate ? 'idle' : undefined}
-            variants={toePadPulseVariants(0.3)}
+            variants={toePadPulseVariants(0.3) as any}
             style={{ transformOrigin: '14px 56px' }}
           >
             <line x1="14" y1="56" x2="10" y2="54" stroke="#7A8D4A" strokeWidth="2.5" strokeLinecap="round" />
@@ -166,7 +166,7 @@ export function ReptiliaIcon({ size = 32, className = '', animate = true }: Rept
         {/* ===== REAR RIGHT LEG ===== */}
         <motion.g
           animate={animate ? 'idle' : undefined}
-          variants={legStepVariants(0.9)}
+          variants={legStepVariants(0.9) as any}
         >
           {/* Thigh - extends sideways */}
           <path
@@ -184,7 +184,7 @@ export function ReptiliaIcon({ size = 32, className = '', animate = true }: Rept
           />
           <motion.g
             animate={animate ? 'idle' : undefined}
-            variants={toePadPulseVariants(0.9)}
+            variants={toePadPulseVariants(0.9) as any}
             style={{ transformOrigin: '66px 56px' }}
           >
             <line x1="66" y1="56" x2="70" y2="54" stroke="#7A8D4A" strokeWidth="2.5" strokeLinecap="round" />
@@ -226,7 +226,7 @@ export function ReptiliaIcon({ size = 32, className = '', animate = true }: Rept
         {/* ===== FRONT LEFT LEG ===== */}
         <motion.g
           animate={animate ? 'idle' : undefined}
-          variants={legStepVariants(0)}
+          variants={legStepVariants(0) as any}
         >
           {/* Thigh - extends sideways */}
           <path
@@ -244,7 +244,7 @@ export function ReptiliaIcon({ size = 32, className = '', animate = true }: Rept
           />
           <motion.g
             animate={animate ? 'idle' : undefined}
-            variants={toePadPulseVariants(0)}
+            variants={toePadPulseVariants(0) as any}
             style={{ transformOrigin: '14px 28px' }}
           >
             <line x1="14" y1="28" x2="10" y2="26" stroke="#7A8D4A" strokeWidth="2.5" strokeLinecap="round" />
@@ -261,7 +261,7 @@ export function ReptiliaIcon({ size = 32, className = '', animate = true }: Rept
         {/* ===== FRONT RIGHT LEG ===== */}
         <motion.g
           animate={animate ? 'idle' : undefined}
-          variants={legStepVariants(0.6)}
+          variants={legStepVariants(0.6) as any}
         >
           {/* Thigh - extends sideways */}
           <path
@@ -279,7 +279,7 @@ export function ReptiliaIcon({ size = 32, className = '', animate = true }: Rept
           />
           <motion.g
             animate={animate ? 'idle' : undefined}
-            variants={toePadPulseVariants(0.6)}
+            variants={toePadPulseVariants(0.6) as any}
             style={{ transformOrigin: '66px 28px' }}
           >
             <line x1="66" y1="28" x2="70" y2="26" stroke="#7A8D4A" strokeWidth="2.5" strokeLinecap="round" />
@@ -321,7 +321,7 @@ export function ReptiliaIcon({ size = 32, className = '', animate = true }: Rept
           ry="3.5"
           fill="#3A4A2A"
           animate={animate ? 'idle' : undefined}
-          variants={eyeBlinkVariants}
+          variants={eyeBlinkVariants as any}
         />
         <motion.ellipse
           cx="43"
@@ -330,7 +330,7 @@ export function ReptiliaIcon({ size = 32, className = '', animate = true }: Rept
           ry="3.5"
           fill="#3A4A2A"
           animate={animate ? 'idle' : undefined}
-          variants={eyeBlinkVariants}
+          variants={eyeBlinkVariants as any}
         />
 
         {/* Eye highlights */}

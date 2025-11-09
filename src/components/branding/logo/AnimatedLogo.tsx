@@ -53,17 +53,17 @@ export default function AnimatedLogo({
         delayChildren: duration(0.2),
       },
     },
-  };
+  } as any;
 
   const breatheVariants = loop
-    ? {
+    ? ({
         scale: [1, 1.015, 1],
         transition: {
           duration: 8,
           repeat: Infinity,
           ease: 'easeInOut',
         },
-      }
+      } as any)
     : {};
 
   return (

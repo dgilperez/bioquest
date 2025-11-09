@@ -99,7 +99,7 @@ export function InsectaIcon({ size = 32, className = '', animate = true }: Insec
       {/* Front left leg - coxa, femur, tibia, tarsus */}
       <motion.g id="front-left-leg"
         animate={animate ? 'idle' : undefined}
-        variants={legWalkVariants(0)}>
+        variants={legWalkVariants(0) as any}>
         <motion.path
           d="M 33 32 L 30 34"
           stroke="#7A5530"
@@ -108,7 +108,7 @@ export function InsectaIcon({ size = 32, className = '', animate = true }: Insec
           fill="none"
           initial={false}
           animate={animate ? 'idle' : undefined}
-          variants={legVariants(0.1)}
+          variants={legVariants(0.1) as any}
         />
         <circle cx="30" cy="34" r="0.9" fill="#7A5530" />
         <motion.path
@@ -119,7 +119,7 @@ export function InsectaIcon({ size = 32, className = '', animate = true }: Insec
           fill="none"
           initial={false}
           animate={animate ? 'idle' : undefined}
-          variants={legVariants(0.15)}
+          variants={legVariants(0.15) as any}
         />
         <circle cx="23" cy="41" r="0.7" fill="#7A5530" />
         <motion.path
@@ -130,7 +130,7 @@ export function InsectaIcon({ size = 32, className = '', animate = true }: Insec
           fill="none"
           initial={false}
           animate={animate ? 'idle' : undefined}
-          variants={legVariants(0.2)}
+          variants={legVariants(0.2) as any}
         />
         <motion.path
           d="M 20 46 L 19 47 L 18 48"
@@ -140,14 +140,14 @@ export function InsectaIcon({ size = 32, className = '', animate = true }: Insec
           fill="none"
           initial={false}
           animate={animate ? 'idle' : undefined}
-          variants={legVariants(0.25)}
+          variants={legVariants(0.25) as any}
         />
       </motion.g>
 
       {/* Middle left leg */}
       <motion.g id="middle-left-leg"
         animate={animate ? 'idle' : undefined}
-        variants={legWalkVariants(0.3)}>
+        variants={legWalkVariants(0.3) as any}>
         <motion.path
           d="M 32 43 L 29 45"
           stroke="#7A5530"
@@ -156,7 +156,7 @@ export function InsectaIcon({ size = 32, className = '', animate = true }: Insec
           fill="none"
           initial={false}
           animate={animate ? 'idle' : undefined}
-          variants={legVariants(0.3)}
+          variants={legVariants(0.3) as any}
         />
         <circle cx="29" cy="45" r="0.9" fill="#7A5530" />
         <motion.path
@@ -167,7 +167,7 @@ export function InsectaIcon({ size = 32, className = '', animate = true }: Insec
           fill="none"
           initial={false}
           animate={animate ? 'idle' : undefined}
-          variants={legVariants(0.35)}
+          variants={legVariants(0.35) as any}
         />
         <circle cx="22" cy="52" r="0.7" fill="#7A5530" />
         <motion.path
@@ -178,7 +178,7 @@ export function InsectaIcon({ size = 32, className = '', animate = true }: Insec
           fill="none"
           initial={false}
           animate={animate ? 'idle' : undefined}
-          variants={legVariants(0.4)}
+          variants={legVariants(0.4) as any}
         />
         <motion.path
           d="M 19 57 L 18 58 L 17 59"
@@ -188,14 +188,14 @@ export function InsectaIcon({ size = 32, className = '', animate = true }: Insec
           fill="none"
           initial={false}
           animate={animate ? 'idle' : undefined}
-          variants={legVariants(0.45)}
+          variants={legVariants(0.45) as any}
         />
       </motion.g>
 
       {/* Back left leg */}
       <motion.g id="back-left-leg"
         animate={animate ? 'idle' : undefined}
-        variants={legWalkVariants(0.6)}>
+        variants={legWalkVariants(0.6) as any}>
         <motion.path
           d="M 33 52 L 30 54"
           stroke="#7A5530"
@@ -204,7 +204,7 @@ export function InsectaIcon({ size = 32, className = '', animate = true }: Insec
           fill="none"
           initial={false}
           animate={animate ? 'idle' : undefined}
-          variants={legVariants(0.5)}
+          variants={legVariants(0.5) as any}
         />
         <circle cx="30" cy="54" r="0.9" fill="#7A5530" />
         <motion.path
@@ -215,7 +215,7 @@ export function InsectaIcon({ size = 32, className = '', animate = true }: Insec
           fill="none"
           initial={false}
           animate={animate ? 'idle' : undefined}
-          variants={legVariants(0.55)}
+          variants={legVariants(0.55) as any}
         />
         <circle cx="25" cy="62" r="0.7" fill="#7A5530" />
         <motion.path
@@ -226,7 +226,7 @@ export function InsectaIcon({ size = 32, className = '', animate = true }: Insec
           fill="none"
           initial={false}
           animate={animate ? 'idle' : undefined}
-          variants={legVariants(0.6)}
+          variants={legVariants(0.6) as any}
         />
         <motion.path
           d="M 23 67 L 22 68 L 21 69"
@@ -236,14 +236,14 @@ export function InsectaIcon({ size = 32, className = '', animate = true }: Insec
           fill="none"
           initial={false}
           animate={animate ? 'idle' : undefined}
-          variants={legVariants(0.65)}
+          variants={legVariants(0.65) as any}
         />
       </motion.g>
 
       {/* Front right leg */}
       <motion.g id="front-right-leg"
         animate={animate ? 'idle' : undefined}
-        variants={legWalkVariants(0.15)}>
+        variants={legWalkVariants(0.15) as any}>
         <motion.path
           d="M 47 32 L 50 34"
           stroke="#7A5530"
@@ -252,7 +252,7 @@ export function InsectaIcon({ size = 32, className = '', animate = true }: Insec
           fill="none"
           initial={false}
           animate={animate ? 'idle' : undefined}
-          variants={legVariants(0.12)}
+          variants={legVariants(0.12) as any}
         />
         <circle cx="50" cy="34" r="0.9" fill="#7A5530" />
         <motion.path
@@ -263,7 +263,7 @@ export function InsectaIcon({ size = 32, className = '', animate = true }: Insec
           fill="none"
           initial={false}
           animate={animate ? 'idle' : undefined}
-          variants={legVariants(0.17)}
+          variants={legVariants(0.17) as any}
         />
         <circle cx="57" cy="41" r="0.7" fill="#7A5530" />
         <motion.path
@@ -274,7 +274,7 @@ export function InsectaIcon({ size = 32, className = '', animate = true }: Insec
           fill="none"
           initial={false}
           animate={animate ? 'idle' : undefined}
-          variants={legVariants(0.22)}
+          variants={legVariants(0.22) as any}
         />
         <motion.path
           d="M 60 46 L 61 47 L 62 48"
@@ -284,14 +284,14 @@ export function InsectaIcon({ size = 32, className = '', animate = true }: Insec
           fill="none"
           initial={false}
           animate={animate ? 'idle' : undefined}
-          variants={legVariants(0.27)}
+          variants={legVariants(0.27) as any}
         />
       </motion.g>
 
       {/* Middle right leg */}
       <motion.g id="middle-right-leg"
         animate={animate ? 'idle' : undefined}
-        variants={legWalkVariants(0.45)}>
+        variants={legWalkVariants(0.45) as any}>
         <motion.path
           d="M 48 43 L 51 45"
           stroke="#7A5530"
@@ -300,7 +300,7 @@ export function InsectaIcon({ size = 32, className = '', animate = true }: Insec
           fill="none"
           initial={false}
           animate={animate ? 'idle' : undefined}
-          variants={legVariants(0.32)}
+          variants={legVariants(0.32) as any}
         />
         <circle cx="51" cy="45" r="0.9" fill="#7A5530" />
         <motion.path
@@ -311,7 +311,7 @@ export function InsectaIcon({ size = 32, className = '', animate = true }: Insec
           fill="none"
           initial={false}
           animate={animate ? 'idle' : undefined}
-          variants={legVariants(0.37)}
+          variants={legVariants(0.37) as any}
         />
         <circle cx="58" cy="52" r="0.7" fill="#7A5530" />
         <motion.path
@@ -322,7 +322,7 @@ export function InsectaIcon({ size = 32, className = '', animate = true }: Insec
           fill="none"
           initial={false}
           animate={animate ? 'idle' : undefined}
-          variants={legVariants(0.42)}
+          variants={legVariants(0.42) as any}
         />
         <motion.path
           d="M 61 57 L 62 58 L 63 59"
@@ -332,14 +332,14 @@ export function InsectaIcon({ size = 32, className = '', animate = true }: Insec
           fill="none"
           initial={false}
           animate={animate ? 'idle' : undefined}
-          variants={legVariants(0.47)}
+          variants={legVariants(0.47) as any}
         />
       </motion.g>
 
       {/* Back right leg */}
       <motion.g id="back-right-leg"
         animate={animate ? 'idle' : undefined}
-        variants={legWalkVariants(0.75)}>
+        variants={legWalkVariants(0.75) as any}>
         <motion.path
           d="M 47 52 L 50 54"
           stroke="#7A5530"
@@ -348,7 +348,7 @@ export function InsectaIcon({ size = 32, className = '', animate = true }: Insec
           fill="none"
           initial={false}
           animate={animate ? 'idle' : undefined}
-          variants={legVariants(0.52)}
+          variants={legVariants(0.52) as any}
         />
         <circle cx="50" cy="54" r="0.9" fill="#7A5530" />
         <motion.path
@@ -359,7 +359,7 @@ export function InsectaIcon({ size = 32, className = '', animate = true }: Insec
           fill="none"
           initial={false}
           animate={animate ? 'idle' : undefined}
-          variants={legVariants(0.57)}
+          variants={legVariants(0.57) as any}
         />
         <circle cx="55" cy="62" r="0.7" fill="#7A5530" />
         <motion.path
@@ -370,7 +370,7 @@ export function InsectaIcon({ size = 32, className = '', animate = true }: Insec
           fill="none"
           initial={false}
           animate={animate ? 'idle' : undefined}
-          variants={legVariants(0.62)}
+          variants={legVariants(0.62) as any}
         />
         <motion.path
           d="M 57 67 L 58 68 L 59 69"
@@ -380,14 +380,14 @@ export function InsectaIcon({ size = 32, className = '', animate = true }: Insec
           fill="none"
           initial={false}
           animate={animate ? 'idle' : undefined}
-          variants={legVariants(0.67)}
+          variants={legVariants(0.67) as any}
         />
       </motion.g>
 
       {/* ===== ABDOMEN (segmented) ===== */}
       <motion.g
         animate={animate ? 'idle' : undefined}
-        variants={bodyWiggleVariants}
+        variants={bodyWiggleVariants as any}
         style={{ transformOrigin: '40px 50px' }}
       >
       <ellipse cx="40" cy="50" rx="12" ry="17" fill="#A87340" />
@@ -462,7 +462,7 @@ export function InsectaIcon({ size = 32, className = '', animate = true }: Insec
       {/* Left elytron */}
       <motion.path
         animate={animate ? 'idle' : undefined}
-        variants={elytraShimmerVariants}
+        variants={elytraShimmerVariants as any}
         d="M 40 27
            C 36 28, 32 31, 30 35
            C 28 39, 28 45, 28 51
@@ -486,7 +486,7 @@ export function InsectaIcon({ size = 32, className = '', animate = true }: Insec
       {/* Right elytron */}
       <motion.path
         animate={animate ? 'idle' : undefined}
-        variants={elytraShimmerVariants}
+        variants={elytraShimmerVariants as any}
         d="M 40 27
            C 44 28, 48 31, 50 35
            C 52 39, 52 45, 52 51
@@ -577,7 +577,7 @@ export function InsectaIcon({ size = 32, className = '', animate = true }: Insec
       <motion.g
         id="left-antenna"
         animate={animate ? 'idle' : undefined}
-        variants={antennaWaveVariants}
+        variants={antennaWaveVariants as any}
         style={{ transformOrigin: '37px 19px' }}
       >
         <path

@@ -94,7 +94,7 @@ export async function storeObservations(
     },
     select: { id: true }
   });
-  const existingIdSet = new Set(existingIds.map(o => o.id));
+  const existingIdSet = new Set(existingIds.map((o: { id: number }) => o.id));
 
   // Separate new vs existing observations
   const toCreate = enrichedObservations.filter(e => !existingIdSet.has(e.observation.id));

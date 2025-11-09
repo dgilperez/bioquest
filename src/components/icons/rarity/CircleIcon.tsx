@@ -23,7 +23,7 @@ export function CircleIcon({ size = 16, className = '', animate = true }: Circle
         ease: 'easeInOut',
       },
     },
-  };
+  } as any;
 
   return (
     <motion.svg

@@ -19,7 +19,7 @@ export default function OrangeBranches({ shouldAnimate, duration }: OrangeBranch
         ease: [0.4, 0, 0.2, 1],
       },
     }),
-  };
+  } as any;
 
   const sporeVariants = {
     hidden: { scale: 0, opacity: 0 },
@@ -32,7 +32,7 @@ export default function OrangeBranches({ shouldAnimate, duration }: OrangeBranch
         ease: 'easeOut',
       },
     }),
-  };
+  } as any;
 
   // Main branch paths with organic curves
   const branches = [

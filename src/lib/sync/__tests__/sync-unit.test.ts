@@ -54,6 +54,7 @@ describe('Sync System Unit Tests', () => {
             lastObservationDate: mockDate,
             streakAtRisk: false,
             hoursUntilBreak: 20,
+            bonusPoints: 0,
           },
           currentRarityStreak: 1,
           longestRarityStreak: 2,
@@ -94,6 +95,7 @@ describe('Sync System Unit Tests', () => {
             lastObservationDate: mockDate,
             streakAtRisk: false,
             hoursUntilBreak: 18,
+            bonusPoints: 0,
           },
           currentRarityStreak: 2,
           longestRarityStreak: 5,
@@ -128,16 +130,17 @@ describe('Sync System Unit Tests', () => {
           streakResult: {
             currentStreak: 0,
             longestStreak: 0,
-            lastObservationDate: null,
+            lastObservationDate: new Date(),
+            bonusPoints: 0,
             streakAtRisk: false,
             hoursUntilBreak: 24,
           },
           currentRarityStreak: 0,
           longestRarityStreak: 0,
-          lastRareObservationDate: null,
+          lastRareObservationDate: undefined as any,
         },
         fetchedAll: false,
-        newestObservationDate: null, // No observations fetched
+        newestObservationDate: null as any, // No observations fetched
       });
 
       const upsertCall = prisma.userStats.upsert.mock.calls[0][0];
@@ -167,7 +170,7 @@ describe('Sync System Unit Tests', () => {
       ];
 
       // Call with transaction context
-      const result = await storeObservations('test-user', enrichedObservations, mockTx as any);
+      const result = await storeObservations('test-user', enrichedObservations as any, mockTx as any);
 
       // Should use transaction context instead of global prisma
       expect(mockTx.observation.findMany).toHaveBeenCalled();
@@ -190,7 +193,7 @@ describe('Sync System Unit Tests', () => {
       ];
 
       // Call without transaction context
-      const result = await storeObservations('test-user', enrichedObservations);
+      await storeObservations('test-user', enrichedObservations as any);
 
       // Should use global prisma
       expect(prisma.observation.findMany).toHaveBeenCalled();
@@ -232,7 +235,7 @@ describe('Sync System Unit Tests', () => {
       };
 
       // Call with transaction context
-      await updateUserStatsInDB(mockUserId, updateInput, mockTx as any);
+      await updateUserStatsInDB(mockUserId, updateInput as any, mockTx as any);
 
       // Should use transaction context
       expect(mockTx.userStats.upsert).toHaveBeenCalled();
@@ -265,7 +268,7 @@ describe('Sync System Unit Tests', () => {
       };
 
       // Call without transaction context
-      await updateUserStatsInDB(mockUserId, updateInput);
+      await updateUserStatsInDB(mockUserId, updateInput as any);
 
       // Should use global prisma
       expect(prisma.userStats.upsert).toHaveBeenCalled();
@@ -334,7 +337,7 @@ describe('Sync System Unit Tests', () => {
           },
           currentRarityStreak: 0,
           longestRarityStreak: 0,
-          lastRareObservationDate: null,
+          lastRareObservationDate: undefined,
         },
         fetchedAll: true,
       };
@@ -342,8 +345,8 @@ describe('Sync System Unit Tests', () => {
       // Execute transaction
       await expect(
         prisma.$transaction(async (tx: any) => {
-          await storeObservations(mockUserId, enrichedObservations, tx);
-          await updateUserStatsInDB(mockUserId, updateInput, tx);
+          await storeObservations(mockUserId, enrichedObservations as any, tx);
+          await updateUserStatsInDB(mockUserId, updateInput as any, tx);
         })
       ).rejects.toThrow('Storage failed');
 
@@ -408,7 +411,7 @@ describe('Sync System Unit Tests', () => {
           },
           currentRarityStreak: 0,
           longestRarityStreak: 0,
-          lastRareObservationDate: null,
+          lastRareObservationDate: undefined,
         },
         fetchedAll: true,
       };
@@ -416,8 +419,8 @@ describe('Sync System Unit Tests', () => {
       // Execute transaction
       await expect(
         prisma.$transaction(async (tx: any) => {
-          await storeObservations(mockUserId, enrichedObservations, tx);
-          await updateUserStatsInDB(mockUserId, updateInput, tx);
+          await storeObservations(mockUserId, enrichedObservations as any, tx);
+          await updateUserStatsInDB(mockUserId, updateInput as any, tx);
         })
       ).rejects.toThrow('Stats update failed');
 
@@ -476,15 +479,15 @@ describe('Sync System Unit Tests', () => {
           },
           currentRarityStreak: 0,
           longestRarityStreak: 0,
-          lastRareObservationDate: null,
+          lastRareObservationDate: undefined,
         },
         fetchedAll: true,
       };
 
       // Execute transaction
       await prisma.$transaction(async (tx: any) => {
-        await storeObservations(mockUserId, enrichedObservations, tx);
-        await updateUserStatsInDB(mockUserId, updateInput, tx);
+        await storeObservations(mockUserId, enrichedObservations as any, tx);
+        await updateUserStatsInDB(mockUserId, updateInput as any, tx);
       });
 
       // Verify both operations completed
@@ -523,7 +526,7 @@ describe('Sync System Unit Tests', () => {
           },
           currentRarityStreak: 0,
           longestRarityStreak: 0,
-          lastRareObservationDate: null,
+          lastRareObservationDate: undefined,
         },
         fetchedAll: true,
       };
@@ -531,8 +534,8 @@ describe('Sync System Unit Tests', () => {
       // Attempt transaction
       await expect(
         prisma.$transaction(async (tx: any) => {
-          await storeObservations(mockUserId, enrichedObservations, tx);
-          await updateUserStatsInDB(mockUserId, updateInput, tx);
+          await storeObservations(mockUserId, enrichedObservations as any, tx);
+          await updateUserStatsInDB(mockUserId, updateInput as any, tx);
         })
       ).rejects.toThrow('Transaction failed');
 

@@ -7,7 +7,7 @@ interface GreenFrondsProps {
   duration: (d: number) => number;
 }
 
-export default function GreenFronds({ shouldAnimate, duration }: GreenFrondsProps) {
+export default function GreenFronds({ duration }: GreenFrondsProps) {
   const frondVariants = {
     hidden: { scale: 0, opacity: 0, rotate: -18 },
     visible: (delay: number) => ({
@@ -22,7 +22,7 @@ export default function GreenFronds({ shouldAnimate, duration }: GreenFrondsProp
         damping: 13,
       },
     }),
-  };
+  } as any;
 
   const veinVariants = {
     hidden: { pathLength: 0, opacity: 0 },
@@ -35,7 +35,7 @@ export default function GreenFronds({ shouldAnimate, duration }: GreenFrondsProp
         ease: 'easeOut',
       },
     }),
-  };
+  } as any;
 
   const pinnaVariants = {
     hidden: { scale: 0, opacity: 0 },
@@ -49,7 +49,7 @@ export default function GreenFronds({ shouldAnimate, duration }: GreenFrondsProp
         stiffness: 120,
       },
     }),
-  };
+  } as any;
 
   // Helper function to create a compound frond with pinnae (leaflets)
   const createPinnateFromd = (
@@ -62,7 +62,6 @@ export default function GreenFronds({ shouldAnimate, duration }: GreenFrondsProp
     baseDelay: number,
     frondId: string
   ) => {
-    const rachisLength = Math.sqrt(Math.pow(endX - startX, 2) + Math.pow(endY - startY, 2));
     const angle = Math.atan2(endY - startY, endX - startX);
     const pinnae = [];
 

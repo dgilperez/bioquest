@@ -37,7 +37,7 @@ export function SparklesIcon({ size = 16, className = '', animate = true }: Spar
         ease: 'easeInOut',
       },
     },
-  };
+  } as any;
 
   return (
     <motion.svg
@@ -70,7 +70,7 @@ export function SparklesIcon({ size = 16, className = '', animate = true }: Spar
       {/* Large central sparkle */}
       <motion.g
         animate={animate ? 'idle' : undefined}
-        variants={sparkleVariants(0, 1)}
+        variants={sparkleVariants(0, 1) as any}
       >
         <path
           d="M12 2 L13 11 L22 12 L13 13 L12 22 L11 13 L2 12 L11 11 Z"
@@ -87,7 +87,7 @@ export function SparklesIcon({ size = 16, className = '', animate = true }: Spar
 
       {/* Top right sparkle */}
       {animate && (
-        <motion.g variants={sparkleVariants(0.3, 0.6)} animate="idle">
+        <motion.g variants={sparkleVariants(0.3, 0.6) as any} animate="idle">
           <path
             d="M18 4 L18.5 7 L21 7.5 L18.5 8 L18 11 L17.5 8 L15 7.5 L17.5 7 Z"
             fill="#fbbf24"
@@ -99,7 +99,7 @@ export function SparklesIcon({ size = 16, className = '', animate = true }: Spar
 
       {/* Bottom left sparkle */}
       {animate && (
-        <motion.g variants={sparkleVariants(0.6, 0.5)} animate="idle">
+        <motion.g variants={sparkleVariants(0.6, 0.5) as any} animate="idle">
           <path
             d="M6 16 L6.5 18 L8 18.5 L6.5 19 L6 21 L5.5 19 L4 18.5 L5.5 18 Z"
             fill="#fbbf24"
@@ -111,7 +111,7 @@ export function SparklesIcon({ size = 16, className = '', animate = true }: Spar
 
       {/* Top left small sparkle */}
       {animate && (
-        <motion.g variants={sparkleVariants(0.9, 0.4)} animate="idle">
+        <motion.g variants={sparkleVariants(0.9, 0.4) as any} animate="idle">
           <path
             d="M5 6 L5.3 7 L6 7.3 L5.3 7.6 L5 9 L4.7 7.6 L4 7.3 L4.7 7 Z"
             fill="#fef3c7"
@@ -122,7 +122,7 @@ export function SparklesIcon({ size = 16, className = '', animate = true }: Spar
 
       {/* Bottom right small sparkle */}
       {animate && (
-        <motion.g variants={sparkleVariants(1.2, 0.4)} animate="idle">
+        <motion.g variants={sparkleVariants(1.2, 0.4) as any} animate="idle">
           <path
             d="M19 17 L19.3 18 L20 18.3 L19.3 18.6 L19 20 L18.7 18.6 L18 18.3 L18.7 18 Z"
             fill="#fef3c7"

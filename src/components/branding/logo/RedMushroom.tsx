@@ -22,7 +22,7 @@ export default function RedMushroom({ shouldAnimate, duration }: RedMushroomProp
         damping: 11,
       },
     },
-  };
+  } as any;
 
   const spotVariants = {
     hidden: { scale: 0, opacity: 0 },
@@ -36,7 +36,7 @@ export default function RedMushroom({ shouldAnimate, duration }: RedMushroomProp
         stiffness: 180,
       },
     }),
-  };
+  } as any;
 
   return (
     <motion.g

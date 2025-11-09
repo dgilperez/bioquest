@@ -361,7 +361,7 @@ export class INatClient {
     admin_level?: number;
     bbox_area?: number;
   }> {
-    const response = await this.request(`/places/${placeId}`);
+    const response = await this.request(`/places/${placeId}`) as any;
     return response.results?.[0] || response;
   }
 

@@ -96,7 +96,6 @@ describe('Incremental Sync System', () => {
   let calculateUserStats: any;
   let updateUserStatsInDB: any;
   let checkAchievements: any;
-  let manageLeaderboards: any;
   let queueTaxaForClassification: any;
   let processUserQueue: any;
   let prisma: any;
@@ -120,7 +119,6 @@ describe('Incremental Sync System', () => {
     calculateUserStats = statsModule.calculateUserStats;
     updateUserStatsInDB = statsModule.updateUserStatsInDB;
     checkAchievements = achievementsModule.checkAchievements;
-    manageLeaderboards = achievementsModule.manageLeaderboards;
     queueTaxaForClassification = queueModule.queueTaxaForClassification;
     processUserQueue = processorModule.processUserQueue;
     prisma = prismaModule.prisma;

@@ -85,7 +85,7 @@ export function MolluscaIcon({ size = 32, className = '', animate = true }: Moll
 
       <motion.g
         animate={animate ? 'idle' : undefined}
-        variants={swimVariants}
+        variants={swimVariants as any}
         style={{ transformOrigin: '40px 40px' }}
       >
         {/* ===== SHELL PROFILE ===== */}
@@ -134,7 +134,7 @@ export function MolluscaIcon({ size = 32, className = '', animate = true }: Moll
           stroke="#A89878"
           strokeWidth="1"
           animate={animate ? 'idle' : undefined}
-          variants={chamberGlowVariants(0)}
+          variants={chamberGlowVariants(0) as any}
         />
 
         {/* Chamber 2 */}
@@ -144,7 +144,7 @@ export function MolluscaIcon({ size = 32, className = '', animate = true }: Moll
           stroke="#A89878"
           strokeWidth="0.9"
           animate={animate ? 'idle' : undefined}
-          variants={chamberGlowVariants(0.3)}
+          variants={chamberGlowVariants(0.3) as any}
         />
 
         {/* Chamber 3 */}
@@ -154,7 +154,7 @@ export function MolluscaIcon({ size = 32, className = '', animate = true }: Moll
           stroke="#A89878"
           strokeWidth="0.8"
           animate={animate ? 'idle' : undefined}
-          variants={chamberGlowVariants(0.6)}
+          variants={chamberGlowVariants(0.6) as any}
         />
 
         {/* Chamber 4 */}
@@ -164,7 +164,7 @@ export function MolluscaIcon({ size = 32, className = '', animate = true }: Moll
           stroke="#A89878"
           strokeWidth="0.7"
           animate={animate ? 'idle' : undefined}
-          variants={chamberGlowVariants(0.9)}
+          variants={chamberGlowVariants(0.9) as any}
         />
 
         {/* Chamber 5 - smallest, oldest */}
@@ -174,7 +174,7 @@ export function MolluscaIcon({ size = 32, className = '', animate = true }: Moll
           stroke="#A89878"
           strokeWidth="0.6"
           animate={animate ? 'idle' : undefined}
-          variants={chamberGlowVariants(1.2)}
+          variants={chamberGlowVariants(1.2) as any}
         />
 
         {/* Chamber septa (walls between chambers) - darker lines */}
@@ -320,7 +320,7 @@ export function MolluscaIcon({ size = 32, className = '', animate = true }: Moll
             r="1"
             fill="#FFFFFF"
             animate={animate ? 'idle' : undefined}
-            variants={eyeShineVariants}
+            variants={eyeShineVariants as any}
           />
         </g>
 
@@ -328,7 +328,7 @@ export function MolluscaIcon({ size = 32, className = '', animate = true }: Moll
         {/* Tentacle 1 - Top */}
         <motion.g
           animate={animate ? 'idle' : undefined}
-          variants={tentacleWaveVariants(0)}
+          variants={tentacleWaveVariants(0) as any}
           style={{ transformOrigin: '20px 52px' }}
         >
           <path
@@ -351,7 +351,7 @@ export function MolluscaIcon({ size = 32, className = '', animate = true }: Moll
         {/* Tentacle 2 - Upper middle */}
         <motion.g
           animate={animate ? 'idle' : undefined}
-          variants={tentacleWaveVariants(0.2)}
+          variants={tentacleWaveVariants(0.2) as any}
           style={{ transformOrigin: '20px 54px' }}
         >
           <path
@@ -374,7 +374,7 @@ export function MolluscaIcon({ size = 32, className = '', animate = true }: Moll
         {/* Tentacle 3 - Center */}
         <motion.g
           animate={animate ? 'idle' : undefined}
-          variants={tentacleWaveVariants(0.4)}
+          variants={tentacleWaveVariants(0.4) as any}
           style={{ transformOrigin: '20px 56px' }}
         >
           <path
@@ -397,7 +397,7 @@ export function MolluscaIcon({ size = 32, className = '', animate = true }: Moll
         {/* Tentacle 4 - Lower middle */}
         <motion.g
           animate={animate ? 'idle' : undefined}
-          variants={tentacleWaveVariants(0.6)}
+          variants={tentacleWaveVariants(0.6) as any}
           style={{ transformOrigin: '20px 58px' }}
         >
           <path
@@ -420,7 +420,7 @@ export function MolluscaIcon({ size = 32, className = '', animate = true }: Moll
         {/* Tentacle 5 - Bottom */}
         <motion.g
           animate={animate ? 'idle' : undefined}
-          variants={tentacleWaveVariants(0.8)}
+          variants={tentacleWaveVariants(0.8) as any}
           style={{ transformOrigin: '20px 60px' }}
         >
           <path

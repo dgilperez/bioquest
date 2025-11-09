@@ -2,7 +2,6 @@ import { redirect } from 'next/navigation';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { Navigation } from '@/components/layout/Navigation';
-import { SyncButton } from '@/components/stats/SyncButton';
 import { SyncProgress } from '@/components/sync/SyncProgress';
 import { ClientErrorBoundary } from '@/components/errors/ClientErrorBoundary';
 import { prisma } from '@/lib/db/prisma';

@@ -1,4 +1,5 @@
 import React from 'react';
+// @ts-expect-error - Test file for icon loading
 import * as Icons from './src/components/icons/animated';
 
 // Test render all icons to catch errors

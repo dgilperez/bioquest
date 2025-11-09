@@ -351,20 +351,12 @@ export function OnboardingClient({
   );
 }
 
-function ImmersiveSyncProgress({ progress, userName }: { progress: any; userName: string }) {
+function ImmersiveSyncProgress({ progress }: { progress: any; userName: string }) {
   const [currentFunnyMessage, setCurrentFunnyMessage] = useState(progress?.funnyMessage || '');
 
   const percentage = progress?.observationsTotal > 0
     ? Math.round((progress.observationsProcessed / progress.observationsTotal) * 100)
     : 0;
-
-  const phaseLabels = {
-    fetching: 'Fetching observations from iNaturalist',
-    enriching: 'Classifying rarity and calculating points',
-    storing: 'Saving to your profile',
-    calculating: 'Computing statistics and achievements',
-    done: 'Complete!',
-  };
 
   // Update funny message when it changes, triggering animation
   useEffect(() => {

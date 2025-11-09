@@ -11,13 +11,13 @@
  * These tests capture the orchestration bugs that unit tests miss.
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi, beforeAll, afterAll } from 'vitest';
 import { prisma } from '@/lib/db/prisma';
 import { syncUserObservations } from '@/lib/stats/user-stats';
 import { processUserQueue } from '@/lib/rarity-queue/processor';
 import { createMockINatClient, generateMockObservations } from '@tests/helpers/mock-inat-client';
 import { generateTestId, generateTestINatId, cleanupTestUser } from '@tests/helpers/db';
 import { mockClassifyObservationRarityWithError, restoreRarityMocks } from '@tests/helpers/mock-rarity';
+import type { RarityResult } from '@/lib/gamification/rarity';
 
 // Use a module-level counter to track ALL observations generated across ALL tests
 // This ensures truly unique IDs across the entire test suite
@@ -260,7 +260,7 @@ describe('Background Processing Integration', () => {
       pointsAwarded: 10,
       photosCount: 1,
     }));
-    await prisma.observation.createMany({ data: observations });
+    await prisma.observation.createMany({ data: observations as any });
 
     // Manually queue taxa (don't use sync which triggers background processing)
     const taxa = Array.from({ length: 40 }, (_, i) => ({
@@ -309,8 +309,6 @@ describe('Background Processing Integration', () => {
  * - Edge cases (missing items, null values)
  */
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { prisma } from '@/lib/db/prisma';
 import {
   queueTaxaForClassification,
   getQueueStatus,
@@ -900,12 +898,7 @@ describe('Queue Manager - Error Handling', () => {
  * - Large batch handling
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { prisma } from '@/lib/db/prisma';
-import { processUserQueue } from '../processor';
-import { queueTaxaForClassification } from '../manager';
-import { generateTestId, generateTestINatId } from '@tests/helpers/db';
-import { mockClassifyObservationRarity, restoreRarityMocks } from '@tests/helpers/mock-rarity';
+import { mockClassifyObservationRarity } from '@tests/helpers/mock-rarity';
 
 describe('Processor - Edge Cases', () => {
   const testUserId = 'test-processor-edge-user';
@@ -1327,7 +1320,10 @@ describe('Processor - Edge Cases', () => {
         [10003, { rarity: 'epic', globalCount: 50 }],
         [10004, { rarity: 'legendary', globalCount: 10 }],
       ]);
-      await mockClassifyObservationRarity({ perTaxonResults });
+      await mockClassifyObservationRarity({ perTaxonResults: perTaxonResults as Map<number, Partial<RarityResult>> });
+
+      // Clean up existing observations to prevent unique constraint errors
+      await prisma.observation.deleteMany({});
 
       // 1. Create observations with pending rarity
       await prisma.observation.createMany({

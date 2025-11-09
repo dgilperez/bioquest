@@ -22,7 +22,7 @@ export default function OrangeMushroom({ shouldAnimate, duration }: OrangeMushro
         damping: 12,
       },
     },
-  };
+  } as any;
 
   const spotVariants = {
     hidden: { scale: 0, opacity: 0 },
@@ -36,7 +36,7 @@ export default function OrangeMushroom({ shouldAnimate, duration }: OrangeMushro
         stiffness: 190,
       },
     }),
-  };
+  } as any;
 
   return (
     <motion.g

@@ -22,7 +22,7 @@ export default function BlueLeaves({ shouldAnimate, duration }: BlueLeavesProps)
         damping: 12,
       },
     }),
-  };
+  } as any;
 
   const veinVariants = {
     hidden: { pathLength: 0, opacity: 0 },
@@ -35,7 +35,7 @@ export default function BlueLeaves({ shouldAnimate, duration }: BlueLeavesProps)
         ease: 'easeOut',
       },
     }),
-  };
+  } as any;
 
   return (
     <g id="blue-leaves">

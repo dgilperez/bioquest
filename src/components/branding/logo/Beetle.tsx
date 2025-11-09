@@ -22,7 +22,7 @@ export default function Beetle({ shouldAnimate, duration }: BeetleProps) {
         damping: 13,
       },
     },
-  };
+  } as any;
 
   const legVariants = {
     hidden: { pathLength: 0, opacity: 0 },
@@ -35,7 +35,7 @@ export default function Beetle({ shouldAnimate, duration }: BeetleProps) {
         ease: 'easeOut',
       },
     }),
-  };
+  } as any;
 
   const antennaVariants = {
     hidden: { pathLength: 0, opacity: 0 },
@@ -48,7 +48,7 @@ export default function Beetle({ shouldAnimate, duration }: BeetleProps) {
         ease: 'easeOut',
       },
     }),
-  };
+  } as any;
 
   return (
     <motion.g

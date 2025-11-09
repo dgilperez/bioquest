@@ -1,6 +1,6 @@
 'use client';
 
-import { motion, useAnimationControls } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useMemo, useState, useEffect, memo } from 'react';
 
 interface Organism {
@@ -13,6 +13,12 @@ interface Organism {
   type: 'cell' | 'spore' | 'microbe' | 'particle' | 'morula' | 'euglena' | 'tardigrade' | 'bacterium' | 'algae' | 'pollen' | 'spirillum' | 'volvox' | 'hydra';
   opacity: number;
   colorVariant: number; // 0-1 for color variation
+}
+
+interface OrganismProps {
+  size: number;
+  opacity: number;
+  colorVariant: number;
 }
 
 /**
@@ -1027,7 +1033,6 @@ function PollenOrganism({ size, opacity, colorVariant }: OrganismProps) {
 
 // SpirillumOrganism: Corkscrew-shaped bacterium
 function SpirillumOrganism({ size, opacity, colorVariant }: OrganismProps) {
-  const spirillumId = useMemo(() => `spirillum-${Math.random()}`, []);
 
   const bodyColor = useMemo(() =>
     colorVariant < 0.33 ? '#8B7355' : colorVariant < 0.66 ? '#A67C52' : '#7A5C42',
@@ -1060,7 +1065,6 @@ function SpirillumOrganism({ size, opacity, colorVariant }: OrganismProps) {
 
 // VolvoxOrganism: Hollow spherical colony of cells
 function VolvoxOrganism({ size, opacity, colorVariant }: OrganismProps) {
-  const volvoxId = useMemo(() => `volvox-${Math.random()}`, []);
 
   const colonyColor = useMemo(() =>
     colorVariant < 0.33 ? '#4A7C59' : colorVariant < 0.66 ? '#588157' : '#52796F',

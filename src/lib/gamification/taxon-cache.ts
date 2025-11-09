@@ -111,14 +111,16 @@ async function updateCache(
         },
       },
       update: {
-        observationsCount: counts.regional,
+        rgObservationCount: counts.regional,
         cachedAt: now,
         updatedAt: now,
       },
       create: {
         placeId,
         taxonId,
-        observationsCount: counts.regional,
+        placeName: '', // Will be filled in later if needed
+        rank: 'species', // Default
+        rgObservationCount: counts.regional,
         cachedAt: now,
       },
     });
@@ -179,7 +181,7 @@ export async function getTaxonCounts(
             },
           },
           select: {
-            observationsCount: true,
+            rgObservationCount: true,
             cachedAt: true,
           },
         });
@@ -188,10 +190,10 @@ export async function getTaxonCounts(
           !isStale(cachedRegional.cachedAt, CACHE_STALENESS.REGIONAL_COUNT);
 
         if (regionalFresh) {
-          console.log(`    ✓ Regional cache HIT: place ${placeId} (count: ${cachedRegional!.observationsCount})`);
+          console.log(`    ✓ Regional cache HIT: place ${placeId} (count: ${cachedRegional!.rgObservationCount})`);
           return {
             global: cachedNode!.globalObsCount,
-            regional: cachedRegional!.observationsCount,
+            regional: cachedRegional!.rgObservationCount,
           };
         } else {
           console.log(`    ⚠️  Regional cache MISS or STALE: place ${placeId}`);

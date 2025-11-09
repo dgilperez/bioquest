@@ -59,7 +59,7 @@ describe('Tree of Life Stats Refresh', () => {
         pointsAwarded: 10,
       });
     }
-    await prisma.observation.createMany({ data: observations });
+    await prisma.observation.createMany({ data: observations as any });
 
     // STEP 2: Create initial UserTaxonProgress (this happens during sync)
     await prisma.userTaxonProgress.create({
@@ -109,7 +109,7 @@ describe('Tree of Life Stats Refresh', () => {
         pointsAwarded: 10,
       });
     }
-    await prisma.observation.createMany({ data: moreObservations });
+    await prisma.observation.createMany({ data: moreObservations as any });
 
     // STEP 5: Check if UserTaxonProgress updated
     const finalProgress = await prisma.userTaxonProgress.findFirst({
@@ -212,7 +212,7 @@ describe('Tree of Life Stats Refresh', () => {
         pointsAwarded: 10,
       });
     }
-    await prisma.observation.createMany({ data: observations });
+    await prisma.observation.createMany({ data: observations as any });
 
     // Initial state: No progress record
     const before = await prisma.userTaxonProgress.findFirst({

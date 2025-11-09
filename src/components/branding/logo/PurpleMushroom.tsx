@@ -22,7 +22,7 @@ export default function PurpleMushroom({ shouldAnimate, duration }: PurpleMushro
         damping: 11,
       },
     },
-  };
+  } as any;
 
   const spotVariants = {
     hidden: { scale: 0, opacity: 0 },
@@ -36,7 +36,7 @@ export default function PurpleMushroom({ shouldAnimate, duration }: PurpleMushro
         stiffness: 200,
       },
     }),
-  };
+  } as any;
 
   return (
     <motion.g

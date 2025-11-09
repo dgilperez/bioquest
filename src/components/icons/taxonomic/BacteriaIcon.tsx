@@ -90,7 +90,7 @@ export function BacteriaIcon({ size = 32, className = '', animate = true }: Bact
         d="M 60 40 Q 65 35, 68 38 Q 71 41, 74 38"
         initial={false}
         animate={animate ? 'idle' : undefined}
-        variants={flagellaWaveVariants(0)}
+        variants={flagellaWaveVariants(0) as any}
         stroke="#7D6E83"
         strokeWidth="2"
         strokeLinecap="round"
@@ -103,7 +103,7 @@ export function BacteriaIcon({ size = 32, className = '', animate = true }: Bact
         d="M 60 42 Q 65 47, 68 44 Q 71 41, 74 44"
         initial={false}
         animate={animate ? 'idle' : undefined}
-        variants={flagellaWaveVariants(0.3)}
+        variants={flagellaWaveVariants(0.3) as any}
         stroke="#7D6E83"
         strokeWidth="2"
         strokeLinecap="round"
@@ -113,7 +113,7 @@ export function BacteriaIcon({ size = 32, className = '', animate = true }: Bact
 
       <motion.g
         animate={animate ? 'idle' : undefined}
-        variants={bodyRotateVariants}
+        variants={bodyRotateVariants as any}
         style={{ transformOrigin: '40px 40px' }}
       >
         {/* ===== CAPSULE (protective outer layer) ===== */}
@@ -125,7 +125,7 @@ export function BacteriaIcon({ size = 32, className = '', animate = true }: Bact
           fill="#9B59B6"
           opacity="0.25"
           animate={animate ? 'idle' : undefined}
-          variants={capsulePulseVariants}
+          variants={capsulePulseVariants as any}
         />
 
         {/* ===== CELL WALL & MEMBRANE ===== */}
@@ -239,7 +239,7 @@ export function BacteriaIcon({ size = 32, className = '', animate = true }: Bact
             strokeLinecap="round"
             opacity="0.6"
             animate={animate ? 'idle' : undefined}
-            variants={piliWiggleVariants(delay)}
+            variants={piliWiggleVariants(delay) as any}
             style={{ transformOrigin: x1 + 'px ' + y1 + 'px' }}
           />
         );

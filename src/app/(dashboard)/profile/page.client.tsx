@@ -65,7 +65,7 @@ export function ProfileClient({
         ease: [0.25, 0.1, 0.25, 1],
       },
     }),
-  };
+  } as any;
 
   const iconFloat = {
     idle: {
@@ -76,7 +76,7 @@ export function ProfileClient({
         ease: 'easeInOut',
       },
     },
-  };
+  } as any;
 
   return (
     <div className="space-y-8">

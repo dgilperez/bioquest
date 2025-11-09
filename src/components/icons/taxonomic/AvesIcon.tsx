@@ -39,7 +39,7 @@ export function AvesIcon({ size = 32, className = '', animate = true }: AvesIcon
 
       <motion.g
         animate={animate ? 'idle' : undefined}
-        variants={bobVariants}
+        variants={bobVariants as any}
         style={{ transformOrigin: '40px 45px' }}
       >
         {/* ===== TAIL ===== */}
@@ -102,14 +102,14 @@ export function AvesIcon({ size = 32, className = '', animate = true }: AvesIcon
           opacity="0.7"
           transform="rotate(15 36 45)"
           animate={animate ? 'idle' : undefined}
-          variants={wingFlutterVariants(0)}
+          variants={wingFlutterVariants(0) as any}
           style={{ transformOrigin: '36px 45px' }}
         />
 
         {/* ===== RIGHT WING (near side) ===== */}
         <motion.g
           animate={animate ? 'idle' : undefined}
-          variants={wingFlutterVariants(0.1)}
+          variants={wingFlutterVariants(0.1) as any}
           style={{ transformOrigin: '44px 45px' }}
         >
           <ellipse

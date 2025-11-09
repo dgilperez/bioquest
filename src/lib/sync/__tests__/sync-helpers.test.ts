@@ -89,7 +89,7 @@ describe('calculatePointsForNewObservations', () => {
     // Only observations 1, 3, 5 are NEW (not in DB before)
     const newObservationIds = new Set([1, 3, 5]);
 
-    const totalPoints = calculatePointsForNewObservations(enrichedObservations, newObservationIds);
+    const totalPoints = calculatePointsForNewObservations(enrichedObservations as any, newObservationIds);
 
     // Should be: 50 (obs 1) + 100 (obs 3) + 10 (obs 5) = 160
     expect(totalPoints).toBe(160);
@@ -103,7 +103,7 @@ describe('calculatePointsForNewObservations', () => {
 
     const newObservationIds = new Set<number>(); // Empty - all are updates
 
-    const totalPoints = calculatePointsForNewObservations(enrichedObservations, newObservationIds);
+    const totalPoints = calculatePointsForNewObservations(enrichedObservations as any, newObservationIds);
 
     expect(totalPoints).toBe(0);
   });
@@ -148,7 +148,7 @@ describe('buildXPBreakdown', () => {
     const totalXP = 60 + 35 + 110 + 510;
     const newSpeciesCount = 3; // Calculated from stats difference (simulated)
 
-    const breakdown = buildXPBreakdown(enrichedObservations, newObservationIds, totalXP, newSpeciesCount);
+    const breakdown = buildXPBreakdown(enrichedObservations as any, newObservationIds, totalXP, newSpeciesCount);
 
     expect(breakdown.totalXP).toBe(715);
     expect(breakdown.newSpeciesCount).toBe(3); // Passed in value
@@ -177,7 +177,7 @@ describe('buildXPBreakdown', () => {
     const newObservationIds = new Set([1]);
     const newSpeciesCount = 1;
 
-    const breakdown = buildXPBreakdown(enrichedObservations, newObservationIds, 60, newSpeciesCount);
+    const breakdown = buildXPBreakdown(enrichedObservations as any, newObservationIds, 60, newSpeciesCount);
 
     expect(breakdown.newSpeciesCount).toBe(1); // Passed in value
     expect(breakdown.rareFindsCount).toBe(1); // Only observation 1 is rare

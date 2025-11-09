@@ -84,7 +84,7 @@ export function NematodaIcon({ size = 32, className = '', animate = true }: Nema
       <AnimatedPath
         d="M 25 30 Q 35 25, 40 35 Q 45 45, 50 40 Q 55 35, 60 45"
         animate={animate}
-        variants={wormWiggleVariants}
+        variants={wormWiggleVariants as any}
         stroke="url(#wormGradient)"
         strokeWidth="12"
         strokeLinecap="round"
@@ -97,7 +97,7 @@ export function NematodaIcon({ size = 32, className = '', animate = true }: Nema
       <AnimatedPath
         d="M 25 30 Q 35 25, 40 35 Q 45 45, 50 40 Q 55 35, 60 45"
         animate={animate}
-        variants={wormWiggleVariants}
+        variants={wormWiggleVariants as any}
         stroke="#8B7355"
         strokeWidth="14"
         strokeLinecap="round"
@@ -109,7 +109,7 @@ export function NematodaIcon({ size = 32, className = '', animate = true }: Nema
       {/* Segment rings to show body texture */}
       <motion.g
         animate={animate ? 'idle' : undefined}
-        variants={segmentPulseVariants(0)}
+        variants={segmentPulseVariants(0) as any}
       >
         <ellipse
           cx="28"
@@ -125,7 +125,7 @@ export function NematodaIcon({ size = 32, className = '', animate = true }: Nema
 
       <motion.g
         animate={animate ? 'idle' : undefined}
-        variants={segmentPulseVariants(0.3)}
+        variants={segmentPulseVariants(0.3) as any}
       >
         <ellipse
           cx="38"
@@ -141,7 +141,7 @@ export function NematodaIcon({ size = 32, className = '', animate = true }: Nema
 
       <motion.g
         animate={animate ? 'idle' : undefined}
-        variants={segmentPulseVariants(0.6)}
+        variants={segmentPulseVariants(0.6) as any}
       >
         <ellipse
           cx="48"
@@ -189,7 +189,7 @@ export function NematodaIcon({ size = 32, className = '', animate = true }: Nema
           r="1.5"
           fill="#2A1A1A"
           animate={animate ? 'idle' : undefined}
-          variants={eyeWinkVariants}
+          variants={eyeWinkVariants as any}
         />
 
         {/* Sensory bristles */}

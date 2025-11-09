@@ -30,7 +30,7 @@ export function StarIcon({ size = 16, className = '', animate = true }: StarIcon
         },
       },
     },
-  };
+  } as any;
 
   const glowVariants = {
     idle: {
@@ -42,7 +42,7 @@ export function StarIcon({ size = 16, className = '', animate = true }: StarIcon
         ease: 'easeInOut',
       },
     },
-  };
+  } as any;
 
   const shineVariants = {
     idle: {
@@ -54,7 +54,7 @@ export function StarIcon({ size = 16, className = '', animate = true }: StarIcon
         ease: 'easeInOut',
       },
     },
-  };
+  } as any;
 
   return (
     <motion.svg

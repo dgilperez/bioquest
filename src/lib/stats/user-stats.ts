@@ -1,7 +1,7 @@
 import { prisma } from '@/lib/db/prisma';
 import { StreakMilestone } from '@/lib/gamification/streaks';
 import { Badge, Quest, Rarity } from '@/types';
-import { SYNC_CONFIG, LEVEL_CONFIG, getLevelTitle as getTitle } from '@/lib/gamification/constants';
+import { LEVEL_CONFIG } from '@/lib/gamification/constants';
 
 // Re-export for backward compatibility
 export { getLevelTitle } from '@/lib/gamification/constants';
@@ -465,7 +465,7 @@ export async function syncUserObservations(
     return {
       ...result,
       streakMilestone: stats.streakResult.milestoneReached,
-    };
+    } as SyncResult;
   } catch (error) {
     // Classify and enhance error with sync context
     const { classifyError } = await import('@/lib/sync/sync-errors');

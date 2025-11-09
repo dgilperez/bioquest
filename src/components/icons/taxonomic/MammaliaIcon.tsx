@@ -82,14 +82,14 @@ export function MammaliaIcon({ size = 32, className = '', animate = true }: Mamm
 
       <motion.g
         animate={animate ? 'idle' : undefined}
-        variants={headBobVariants}
+        variants={headBobVariants as any}
       >
         {/* Left antler */}
         <motion.path
           fill="#662113"
           d="M15.971 15.083c-1.458-2.333-.667-7.708 0-8.958s-.542-2.458-1.5-.458-.996 3-3.162 2.458-1.088-3.292-.379-5.625c.729-2.4-.917-1.959-1.667-.458-.75 1.5-1.254 5.693-2.901 5.984-1.647.291-6.099.599-2.851-5.651C4.818-.139 2.773-.656 1.68 1.459.361 4.007-.404 7.25.221 8.625c1.113 2.448 3.483 2.95 6.983 2.284s6.101-.634 6.101 1.133c0 1.872.208 3.458 1.042 3.625s1.624-.584 1.624-.584z"
           animate={animate ? 'idle' : undefined}
-          variants={antlerShakeVariants}
+          variants={antlerShakeVariants as any}
           style={{ transformOrigin: '8px 8px' }}
         />
 
@@ -98,7 +98,7 @@ export function MammaliaIcon({ size = 32, className = '', animate = true }: Mamm
           fill="#662113"
           d="M20.028 15.083c1.458-2.333.667-7.708 0-8.958s.542-2.458 1.5-.458.996 3 3.162 2.458 1.088-3.292.379-5.625c-.729-2.4.917-1.959 1.667-.458s1.254 5.693 2.901 5.984c1.647.292 6.099.599 2.851-5.651-1.307-2.514.737-3.031 1.831-.916 1.318 2.549 2.084 5.792 1.459 7.167-1.113 2.448-3.482 2.95-6.982 2.284s-6.102-.634-6.102 1.133c0 1.872-.208 3.458-1.041 3.625s-1.625-.585-1.625-.585z"
           animate={animate ? 'idle' : undefined}
-          variants={antlerShakeVariants}
+          variants={antlerShakeVariants as any}
           style={{ transformOrigin: '28px 8px' }}
         />
 
@@ -107,7 +107,7 @@ export function MammaliaIcon({ size = 32, className = '', animate = true }: Mamm
           fill="#C1694F"
           d="M13.859 15.495c.596 2.392.16 4.422-2.231 5.017-2.392.596-6.344.559-7.958-1.303-2.294-2.646-2.531-6.391-1.189-6.725 1.34-.334 10.783.62 11.378 3.011z"
           animate={animate ? 'idle' : undefined}
-          variants={earTwitchVariants(0)}
+          variants={earTwitchVariants(0) as any}
           style={{ transformOrigin: '7px 17px' }}
         />
 
@@ -116,7 +116,7 @@ export function MammaliaIcon({ size = 32, className = '', animate = true }: Mamm
           fill="#C1694F"
           d="M22.142 15.495c-.596 2.392-.16 4.422 2.231 5.017 2.392.596 6.345.559 7.958-1.303 2.295-2.646 2.531-6.391 1.189-6.725-1.34-.334-10.783.62-11.378 3.011z"
           animate={animate ? 'idle' : undefined}
-          variants={earTwitchVariants(0.2)}
+          variants={earTwitchVariants(0.2) as any}
           style={{ transformOrigin: '29px 17px' }}
         />
 
@@ -153,7 +153,7 @@ export function MammaliaIcon({ size = 32, className = '', animate = true }: Mamm
         {/* Left eye */}
         <motion.g
           animate={animate ? 'idle' : undefined}
-          variants={blinkVariants}
+          variants={blinkVariants as any}
         >
           <path
             fill="#272B2B"
@@ -164,7 +164,7 @@ export function MammaliaIcon({ size = 32, className = '', animate = true }: Mamm
         {/* Right eye */}
         <motion.g
           animate={animate ? 'idle' : undefined}
-          variants={blinkVariants}
+          variants={blinkVariants as any}
         >
           <path
             fill="#272B2B"

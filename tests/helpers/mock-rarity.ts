@@ -75,7 +75,7 @@ export async function mockClassifyObservationRarity(options: MockRarityOptions =
   const spy = vi.spyOn(rarityModule, 'classifyObservationRarity');
 
   // Mock implementation
-  spy.mockImplementation(async (observation: any, accessToken: string, placeId?: number) => {
+  spy.mockImplementation(async (observation: any) => {
     if (shouldFail) {
       throw error;
     }

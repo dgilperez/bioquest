@@ -23,7 +23,7 @@ export function DiamondShapeIcon({ size = 16, className = '', animate = true }: 
         ease: 'easeInOut',
       },
     },
-  };
+  } as any;
 
   const glowVariants = {
     idle: {
@@ -35,7 +35,7 @@ export function DiamondShapeIcon({ size = 16, className = '', animate = true }: 
         ease: 'easeInOut',
       },
     },
-  };
+  } as any;
 
   const shineVariants = {
     idle: {
@@ -47,7 +47,7 @@ export function DiamondShapeIcon({ size = 16, className = '', animate = true }: 
         ease: 'easeInOut',
       },
     },
-  };
+  } as any;
 
   return (
     <motion.svg

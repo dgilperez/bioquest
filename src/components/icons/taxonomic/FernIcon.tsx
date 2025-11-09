@@ -23,7 +23,7 @@ export function FernIcon({ size = 32, className = '', animate = true }: FernIcon
         ease: 'easeInOut',
       },
     },
-  };
+  } as any;
 
   return (
     <motion.svg

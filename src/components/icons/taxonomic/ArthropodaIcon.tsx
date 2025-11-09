@@ -70,13 +70,13 @@ export function ArthropodaIcon({ size = 32, className = '', animate = true }: Ar
 
       <motion.g
         animate={animate ? 'idle' : undefined}
-        variants={crouchBounceVariants}
+        variants={crouchBounceVariants as any}
       >
         {/* ===== LEGS (8 legs - 4 pairs) ===== */}
         {/* Front left leg (leg 1) */}
         <motion.g
           animate={animate ? 'idle' : undefined}
-          variants={legTwitchVariants(0, -25)}
+          variants={legTwitchVariants(0, -25) as any}
           style={{ transformOrigin: '30px 38px' }}
         >
           <path
@@ -95,7 +95,7 @@ export function ArthropodaIcon({ size = 32, className = '', animate = true }: Ar
         {/* Front right leg (leg 2) */}
         <motion.g
           animate={animate ? 'idle' : undefined}
-          variants={legTwitchVariants(0, 25)}
+          variants={legTwitchVariants(0, 25) as any}
           style={{ transformOrigin: '50px 38px' }}
         >
           <path
@@ -113,7 +113,7 @@ export function ArthropodaIcon({ size = 32, className = '', animate = true }: Ar
         {/* Second left leg (leg 3) */}
         <motion.g
           animate={animate ? 'idle' : undefined}
-          variants={legTwitchVariants(0.1, -45)}
+          variants={legTwitchVariants(0.1, -45) as any}
           style={{ transformOrigin: '28px 42px' }}
         >
           <path
@@ -131,7 +131,7 @@ export function ArthropodaIcon({ size = 32, className = '', animate = true }: Ar
         {/* Second right leg (leg 4) */}
         <motion.g
           animate={animate ? 'idle' : undefined}
-          variants={legTwitchVariants(0.1, 45)}
+          variants={legTwitchVariants(0.1, 45) as any}
           style={{ transformOrigin: '52px 42px' }}
         >
           <path
@@ -149,7 +149,7 @@ export function ArthropodaIcon({ size = 32, className = '', animate = true }: Ar
         {/* Third left leg (leg 5) */}
         <motion.g
           animate={animate ? 'idle' : undefined}
-          variants={legTwitchVariants(0.2, -65)}
+          variants={legTwitchVariants(0.2, -65) as any}
           style={{ transformOrigin: '28px 48px' }}
         >
           <path
@@ -167,7 +167,7 @@ export function ArthropodaIcon({ size = 32, className = '', animate = true }: Ar
         {/* Third right leg (leg 6) */}
         <motion.g
           animate={animate ? 'idle' : undefined}
-          variants={legTwitchVariants(0.2, 65)}
+          variants={legTwitchVariants(0.2, 65) as any}
           style={{ transformOrigin: '52px 48px' }}
         >
           <path
@@ -185,7 +185,7 @@ export function ArthropodaIcon({ size = 32, className = '', animate = true }: Ar
         {/* Back left leg (leg 7) */}
         <motion.g
           animate={animate ? 'idle' : undefined}
-          variants={legTwitchVariants(0.3, -85)}
+          variants={legTwitchVariants(0.3, -85) as any}
           style={{ transformOrigin: '30px 52px' }}
         >
           <path
@@ -203,7 +203,7 @@ export function ArthropodaIcon({ size = 32, className = '', animate = true }: Ar
         {/* Back right leg (leg 8) */}
         <motion.g
           animate={animate ? 'idle' : undefined}
-          variants={legTwitchVariants(0.3, 85)}
+          variants={legTwitchVariants(0.3, 85) as any}
           style={{ transformOrigin: '50px 52px' }}
         >
           <path
@@ -241,7 +241,7 @@ export function ArthropodaIcon({ size = 32, className = '', animate = true }: Ar
         {/* Colorful peacock display flaps (extended from abdomen) */}
         <motion.g
           animate={animate ? 'idle' : undefined}
-          variants={flapDisplayVariants}
+          variants={flapDisplayVariants as any}
         >
           {/* Left flap - iridescent blue/green */}
           <ellipse
@@ -333,7 +333,7 @@ export function ArthropodaIcon({ size = 32, className = '', animate = true }: Ar
         {/* Pedipalps (leg-like palps - shorter than legs, used for sensing/mating) */}
         <motion.g
           animate={animate ? 'idle' : undefined}
-          variants={legTwitchVariants(0.05, -15)}
+          variants={legTwitchVariants(0.05, -15) as any}
           style={{ transformOrigin: '33px 34px' }}
         >
           <path
@@ -352,7 +352,7 @@ export function ArthropodaIcon({ size = 32, className = '', animate = true }: Ar
 
         <motion.g
           animate={animate ? 'idle' : undefined}
-          variants={legTwitchVariants(0.05, 15)}
+          variants={legTwitchVariants(0.05, 15) as any}
           style={{ transformOrigin: '47px 34px' }}
         >
           <path

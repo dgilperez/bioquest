@@ -72,7 +72,7 @@ export function AnimaliaIcon({ size = 32, className = '', animate = true }: Anim
 
       <motion.g
         animate={animate ? 'idle' : undefined}
-        variants={lumberVariants}
+        variants={lumberVariants as any}
         style={{ transformOrigin: '40px 46px' }}
       >
         {/* ===== BODY (massive) ===== */}
@@ -132,7 +132,7 @@ export function AnimaliaIcon({ size = 32, className = '', animate = true }: Anim
         {/* ===== HEAD ===== */}
         <motion.g
           animate={animate ? 'idle' : undefined}
-          variants={headBobVariants}
+          variants={headBobVariants as any}
           style={{ transformOrigin: '26px 36px' }}
         >
           {/* Head shadow */}
@@ -250,7 +250,7 @@ export function AnimaliaIcon({ size = 32, className = '', animate = true }: Anim
         {/* Front left leg (far) */}
         <motion.g
           animate={animate ? 'idle' : undefined}
-          variants={legWalkVariants(0, 1)}
+          variants={legWalkVariants(0, 1) as any}
           style={{ transformOrigin: '32px 52px' }}
         >
           <rect
@@ -290,7 +290,7 @@ export function AnimaliaIcon({ size = 32, className = '', animate = true }: Anim
         {/* Front right leg (near) */}
         <motion.g
           animate={animate ? 'idle' : undefined}
-          variants={legWalkVariants(0.625, -1)}
+          variants={legWalkVariants(0.625, -1) as any}
           style={{ transformOrigin: '40px 52px' }}
         >
           <rect
@@ -333,7 +333,7 @@ export function AnimaliaIcon({ size = 32, className = '', animate = true }: Anim
         {/* Back left leg (far) */}
         <motion.g
           animate={animate ? 'idle' : undefined}
-          variants={legWalkVariants(0.3125, -1)}
+          variants={legWalkVariants(0.3125, -1) as any}
           style={{ transformOrigin: '50px 52px' }}
         >
           <rect
@@ -373,7 +373,7 @@ export function AnimaliaIcon({ size = 32, className = '', animate = true }: Anim
         {/* Back right leg (near) */}
         <motion.g
           animate={animate ? 'idle' : undefined}
-          variants={legWalkVariants(0.9375, 1)}
+          variants={legWalkVariants(0.9375, 1) as any}
           style={{ transformOrigin: '58px 52px' }}
         >
           <rect

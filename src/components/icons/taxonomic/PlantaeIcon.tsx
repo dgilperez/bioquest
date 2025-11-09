@@ -46,7 +46,7 @@ export function PlantaeIcon({ size = 32, className = '', animate = true }: Plant
       whileTap={{ scale: 0.9 }}
       whileHover={{ scale: 1.1 }}
       animate={animate ? 'idle' : undefined}
-      variants={leafSwayVariants}
+      variants={leafSwayVariants as any}
       style={{ transformOrigin: 'center' }}
     >
       {/* Shadow */}
@@ -201,7 +201,7 @@ export function PlantaeIcon({ size = 32, className = '', animate = true }: Plant
           strokeWidth="1.8"
           strokeLinecap="round"
           animate={animate}
-          variants={veinDrawVariants}
+          variants={veinDrawVariants as any}
           delay={0.1}
         />
 
@@ -213,7 +213,7 @@ export function PlantaeIcon({ size = 32, className = '', animate = true }: Plant
           strokeLinecap="round"
           opacity="0.5"
           animate={animate}
-          variants={veinDrawVariants}
+          variants={veinDrawVariants as any}
           delay={0.15}
         />
 
@@ -236,7 +236,7 @@ export function PlantaeIcon({ size = 32, className = '', animate = true }: Plant
             strokeLinecap="round"
             fill="none"
             animate={animate}
-            variants={veinDrawVariants}
+            variants={veinDrawVariants as any}
             delay={vein.delay}
           />
         ))}
@@ -260,7 +260,7 @@ export function PlantaeIcon({ size = 32, className = '', animate = true }: Plant
             strokeLinecap="round"
             fill="none"
             animate={animate}
-            variants={veinDrawVariants}
+            variants={veinDrawVariants as any}
             delay={vein.delay}
           />
         ))}
@@ -282,7 +282,7 @@ export function PlantaeIcon({ size = 32, className = '', animate = true }: Plant
             strokeLinecap="round"
             opacity="0.6"
             animate={animate}
-            variants={veinDrawVariants}
+            variants={veinDrawVariants as any}
             delay={vein.delay}
           />
         ))}
@@ -304,7 +304,7 @@ export function PlantaeIcon({ size = 32, className = '', animate = true }: Plant
             strokeLinecap="round"
             opacity="0.6"
             animate={animate}
-            variants={veinDrawVariants}
+            variants={veinDrawVariants as any}
             delay={vein.delay}
           />
         ))}

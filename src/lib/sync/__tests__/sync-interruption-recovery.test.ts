@@ -84,7 +84,7 @@ describe('Sync Interruption & Recovery', () => {
         pointsAwarded: 10,
       });
     }
-    await prisma.observation.createMany({ data: firstBatch });
+    await prisma.observation.createMany({ data: firstBatch as any });
 
     // Update UserStats to reflect partial sync
     await prisma.userStats.update({
@@ -121,7 +121,7 @@ describe('Sync Interruption & Recovery', () => {
         pointsAwarded: 10,
       });
     }
-    await prisma.observation.createMany({ data: secondBatch });
+    await prisma.observation.createMany({ data: secondBatch as any });
 
     // Update stats
     await prisma.userStats.update({
@@ -171,7 +171,7 @@ describe('Sync Interruption & Recovery', () => {
         pointsAwarded: 10,
       });
     }
-    await prisma.observation.createMany({ data: observations });
+    await prisma.observation.createMany({ data: observations as any });
 
     // Check UserStats for sync cursor
     const stats = await prisma.userStats.findUnique({
@@ -220,7 +220,7 @@ describe('Sync Interruption & Recovery', () => {
         priority: 5,
       });
     }
-    await prisma.observation.createMany({ data: observations });
+    await prisma.observation.createMany({ data: observations as any });
     await prisma.rarityClassificationQueue.createMany({ data: queueItems });
 
     // STEP 1: Process 20 items
@@ -249,7 +249,7 @@ describe('Sync Interruption & Recovery', () => {
 
     // STEP 4: Resume processing
     // With our new fix, processUserQueue should process ALL remaining items
-    const result = await processUserQueue(testUserId, 20);
+    await processUserQueue(testUserId, 20);
 
     // VERIFY: All items eventually processed
     const finalRemaining = await prisma.rarityClassificationQueue.count({
@@ -310,11 +310,11 @@ describe('Sync Interruption & Recovery', () => {
     };
 
     // Insert first time
-    await prisma.observation.create({ data: observation });
+    await prisma.observation.create({ data: observation as any });
 
     // Try to insert again - should fail due to unique constraint on id (primary key)
     await expect(
-      prisma.observation.create({ data: observation })
+      prisma.observation.create({ data: observation as any })
     ).rejects.toThrow();
 
     // Verify only one exists
@@ -350,7 +350,7 @@ describe('Sync Interruption & Recovery', () => {
       where: {
         id: 88888, // Use primary key for upsert
       },
-      create: observation,
+      create: observation as any,
       update: {
         taxonName: 'Upsert Test Updated',
       },
@@ -361,7 +361,7 @@ describe('Sync Interruption & Recovery', () => {
       where: {
         id: 88888,
       },
-      create: observation,
+      create: observation as any,
       update: {
         taxonName: 'Upsert Test Updated',
       },

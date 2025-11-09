@@ -58,7 +58,7 @@ export function AnimaliaIcon({ size = 32, className = '', animate = true }: Anim
         strokeLinecap="round"
         fill="none"
         animate={animate ? 'idle' : undefined}
-        variants={tailWagVariants}
+        variants={tailWagVariants as any}
         style={{ transformOrigin: '58px 35px' }}
       />
 
@@ -185,7 +185,7 @@ export function AnimaliaIcon({ size = 32, className = '', animate = true }: Anim
       {/* Front left leg */}
       <motion.g
         animate={animate ? 'idle' : undefined}
-        variants={pawWaveVariants}
+        variants={pawWaveVariants as any}
       >
         <rect
           x="28"

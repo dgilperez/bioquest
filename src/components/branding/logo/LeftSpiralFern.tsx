@@ -18,7 +18,7 @@ export default function LeftSpiralFern({ shouldAnimate, duration }: LeftSpiralFe
         opacity: { duration: duration(0.4) },
       },
     },
-  };
+  } as any;
 
   const suctionVariants = {
     hidden: { scale: 0, opacity: 0 },
@@ -32,7 +32,7 @@ export default function LeftSpiralFern({ shouldAnimate, duration }: LeftSpiralFe
         stiffness: 150,
       },
     }),
-  };
+  } as any;
 
   return (
     <g id="left-tentacle">

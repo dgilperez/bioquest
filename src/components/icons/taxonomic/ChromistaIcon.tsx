@@ -99,7 +99,7 @@ export function ChromistaIcon({ size = 32, className = '', animate = true }: Chr
             strokeLinecap="round"
             opacity="0.7"
             animate={animate ? 'idle' : undefined}
-            variants={ciliaWaveVariants(delay, 'left')}
+            variants={ciliaWaveVariants(delay, 'left') as any}
             style={{ transformOrigin: '25px ' + y + 'px' }}
           />
         );
@@ -121,7 +121,7 @@ export function ChromistaIcon({ size = 32, className = '', animate = true }: Chr
             strokeLinecap="round"
             opacity="0.7"
             animate={animate ? 'idle' : undefined}
-            variants={ciliaWaveVariants(delay, 'right')}
+            variants={ciliaWaveVariants(delay, 'right') as any}
             style={{ transformOrigin: '55px ' + y + 'px' }}
           />
         );
@@ -130,7 +130,7 @@ export function ChromistaIcon({ size = 32, className = '', animate = true }: Chr
       {/* ===== BODY (main cell body) ===== */}
       <motion.g
         animate={animate ? 'idle' : undefined}
-        variants={bodyPulseVariants}
+        variants={bodyPulseVariants as any}
       >
         {/* Cell membrane (outer boundary) */}
         <ellipse
@@ -168,7 +168,7 @@ export function ChromistaIcon({ size = 32, className = '', animate = true }: Chr
       {/* ===== ORAL GROOVE (feeding structure) ===== */}
       <motion.g
         animate={animate ? 'idle' : undefined}
-        variants={oralGroovePulseVariants}
+        variants={oralGroovePulseVariants as any}
       >
         <path
           d="M 40 28 Q 38 32, 40 36 Q 42 40, 40 44"
@@ -199,7 +199,7 @@ export function ChromistaIcon({ size = 32, className = '', animate = true }: Chr
       {/* ===== NUCLEUS (macronucleus - kidney shaped) ===== */}
       <motion.g
         animate={animate ? 'idle' : undefined}
-        variants={nucleusRotateVariants}
+        variants={nucleusRotateVariants as any}
         style={{ transformOrigin: '40px 45px' }}
       >
         <ellipse

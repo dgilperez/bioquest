@@ -143,7 +143,7 @@ export function calculatePointsForNewObservations(
  */
 export function buildXPBreakdown(
   enrichedObservations: EnrichedObservation[],
-  newObservationIds: Set<number>,
+  _newObservationIds: Set<number>,
   totalXP: number,
   newSpeciesCount: number
 ): XPBreakdown {

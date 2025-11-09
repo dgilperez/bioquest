@@ -12,7 +12,6 @@ import { calculateLevel } from '@/lib/sync/user-stats-helpers';
 import {
   getNextBatch,
   markAsProcessing,
-  markAsCompleted,
   markAsFailed,
 } from './manager';
 

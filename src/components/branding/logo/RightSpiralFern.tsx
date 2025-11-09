@@ -18,7 +18,7 @@ export default function RightSpiralFern({ shouldAnimate, duration }: RightSpiral
         opacity: { duration: duration(0.4) },
       },
     },
-  };
+  } as any;
 
   const suctionVariants = {
     hidden: { scale: 0, opacity: 0 },
@@ -32,7 +32,7 @@ export default function RightSpiralFern({ shouldAnimate, duration }: RightSpiral
         stiffness: 150,
       },
     }),
-  };
+  } as any;
 
   return (
     <g id="right-tentacle">

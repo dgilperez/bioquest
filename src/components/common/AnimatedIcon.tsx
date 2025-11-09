@@ -41,7 +41,7 @@ export class AnimatedIconErrorBoundary extends Component<
 
     // Check for common Framer Motion SVG errors
     if (error.message.includes('attribute') && error.message.includes('undefined')) {
-      console.warn('=¡ Common causes:');
+      console.warn('=ï¿½ Common causes:');
       console.warn('  1. SVG geometric attributes (cx, cy, r, d) being animated without initial values');
       console.warn('  2. Missing initial={false} on motion elements with prop-based initial values');
       console.warn('  3. Variants missing "initial" state when using animate={animate ? "idle" : undefined}');
@@ -74,7 +74,7 @@ export class AnimatedIconErrorBoundary extends Component<
           viewBox="0 0 32 32"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
-          title={`Error loading ${iconName || 'icon'}`}
+          aria-label={`Error loading ${iconName || 'icon'}`}
         >
           <circle cx="16" cy="16" r="15" stroke="#ff6b6b" strokeWidth="2" fill="none" />
           <text
@@ -113,18 +113,18 @@ export function useAnimationErrorReporting(componentName: string) {
          errorMessage.includes('Expected moveto') ||
          errorMessage.includes('undefined'))
       ) {
-        console.group(`<¯ Framer Motion Error in ${componentName}`);
+        console.group(`<ï¿½ Framer Motion Error in ${componentName}`);
         originalError.apply(console, args);
 
         // Extract attribute name from error
         const attrMatch = errorMessage.match(/<(\w+)> attribute (\w+):/);
         if (attrMatch) {
           const [, element, attr] = attrMatch;
-          console.warn(`\n=¡ Issue detected:`);
+          console.warn(`\n=ï¿½ Issue detected:`);
           console.warn(`   Element: <${element}>`);
           console.warn(`   Attribute: ${attr}`);
           console.warn(`   Problem: Value is "undefined"\n`);
-          console.warn(`=Ë Quick fixes:`);
+          console.warn(`=ï¿½ Quick fixes:`);
 
           if (attr === 'd') {
             console.warn(`   1. Add initial={false} to <motion.path>`);
@@ -136,7 +136,7 @@ export function useAnimationErrorReporting(componentName: string) {
             console.warn(`   3. Set transformOrigin if using transforms`);
           }
 
-          console.warn(`\n=Í File: src/components/icons/animated/${componentName}.tsx`);
+          console.warn(`\n=ï¿½ File: src/components/icons/animated/${componentName}.tsx`);
         }
 
         console.groupEnd();

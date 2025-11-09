@@ -23,7 +23,7 @@ export function DiamondIcon({ size = 16, className = '', animate = true }: Diamo
         ease: 'easeInOut',
       },
     },
-  };
+  } as any;
 
   const sparkleVariants = (delay: number) => ({
     idle: {
@@ -36,7 +36,7 @@ export function DiamondIcon({ size = 16, className = '', animate = true }: Diamo
         ease: 'easeInOut',
       },
     },
-  });
+  } as any);
 
   const glowVariants = {
     idle: {
@@ -48,7 +48,7 @@ export function DiamondIcon({ size = 16, className = '', animate = true }: Diamo
         ease: 'easeInOut',
       },
     },
-  };
+  } as any;
 
   return (
     <motion.svg
@@ -131,19 +131,19 @@ export function DiamondIcon({ size = 16, className = '', animate = true }: Diamo
       {/* Sparkles */}
       {animate && (
         <>
-          <motion.g variants={sparkleVariants(0)} animate="idle">
+          <motion.g variants={sparkleVariants(0) as any} animate="idle">
             <path
               d="M4 6 L4.5 7 L5 6 L4.5 5 Z"
               fill="#fff"
             />
           </motion.g>
-          <motion.g variants={sparkleVariants(0.7)} animate="idle">
+          <motion.g variants={sparkleVariants(0.7) as any} animate="idle">
             <path
               d="M19 4 L19.5 5 L20 4 L19.5 3 Z"
               fill="#fff"
             />
           </motion.g>
-          <motion.g variants={sparkleVariants(1.4)} animate="idle">
+          <motion.g variants={sparkleVariants(1.4) as any} animate="idle">
             <path
               d="M20 16 L20.5 17 L21 16 L20.5 15 Z"
               fill="#fff"

@@ -30,7 +30,7 @@ export function GemIcon({ size = 16, className = '', animate = true }: GemIconPr
         },
       },
     },
-  };
+  } as any;
 
   const glowVariants = {
     idle: {
@@ -42,7 +42,7 @@ export function GemIcon({ size = 16, className = '', animate = true }: GemIconPr
         ease: 'easeInOut',
       },
     },
-  };
+  } as any;
 
   const sparkleVariants = (delay: number) => ({
     idle: {
@@ -163,7 +163,7 @@ export function GemIcon({ size = 16, className = '', animate = true }: GemIconPr
             cy="10"
             r="1"
             fill="#fff"
-            variants={sparkleVariants(0)}
+            variants={sparkleVariants(0) as any}
             animate="idle"
           />
           <motion.circle
@@ -171,7 +171,7 @@ export function GemIcon({ size = 16, className = '', animate = true }: GemIconPr
             cy="14"
             r="1"
             fill="#fff"
-            variants={sparkleVariants(0.8)}
+            variants={sparkleVariants(0.8) as any}
             animate="idle"
           />
         </>

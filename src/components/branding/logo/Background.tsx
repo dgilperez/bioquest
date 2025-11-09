@@ -7,7 +7,7 @@ interface BackgroundProps {
   duration: (d: number) => number;
 }
 
-export default function Background({ shouldAnimate, duration }: BackgroundProps) {
+export default function Background({ duration }: BackgroundProps) {
   return (
     <motion.circle
       cx="200"

@@ -261,7 +261,7 @@ export async function syncMockObservations(
 
     return {
       newObservations,
-      totalSynced: totalObservations,
+      totalSynced: mockObservations.length,
       newBadges,
       completedQuests,
       questMilestones,

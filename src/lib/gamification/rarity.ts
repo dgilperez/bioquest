@@ -1,5 +1,4 @@
 import { Rarity, INatObservation } from '@/types';
-import { getINatClient } from '@/lib/inat/client';
 import { getTaxonCounts, batchGetTaxonCounts } from './taxon-cache';
 import {
   RARITY_THRESHOLDS,

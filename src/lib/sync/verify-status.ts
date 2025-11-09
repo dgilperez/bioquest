@@ -7,7 +7,6 @@
 
 import { prisma } from '@/lib/db/prisma';
 import { getINatClient } from '@/lib/inat/client';
-import { updateProgress } from './progress';
 import { queueReconciliation } from './reconciliation-queue';
 
 export interface SyncVerificationResult {
