@@ -8,6 +8,7 @@
 import { prisma } from '@/lib/db/prisma';
 import { getINatClient } from '@/lib/inat/client';
 import { updateProgress } from './progress';
+import { queueReconciliation } from './reconciliation-queue';
 
 export interface SyncVerificationResult {
   hasMoreToSync: boolean;
@@ -243,8 +244,8 @@ export async function verifySyncStatus(
     if (inatTotal > IMMEDIATE_RECONCILIATION_THRESHOLD) {
       console.log(`  📋 Large dataset (iNat has ${inatTotal} > ${IMMEDIATE_RECONCILIATION_THRESHOLD} obs), queuing for background processing`);
 
-      // TODO: Actually queue the reconciliation job
-      // For now, just mark it as queued
+      // Queue the reconciliation job
+      await queueReconciliation(userId, inatUsername, accessToken, inatTotal);
       reconciliationQueued = true;
 
       console.log(`  ✅ Reconciliation queued for background processing`);

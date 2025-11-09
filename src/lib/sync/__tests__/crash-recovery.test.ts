@@ -8,6 +8,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { prisma } from '@/lib/db/prisma';
 import { verifySyncStatus, shouldVerifySyncStatus } from '@/lib/sync/verify-status';
+import { processReconciliationQueue } from '@/lib/sync/reconciliation-queue';
 
 // Mock the iNat client
 // Returns empty results by default (for tests that don't need reconciliation)
@@ -288,6 +289,71 @@ describe('Crash Recovery - Sync Status Verification', () => {
   });
 
   describe('Deletion Detection & Reconciliation', () => {
+    it('should actually queue and process large dataset reconciliation (not just say "queued")', async () => {
+      // CRITICAL BUG TEST: Proves that "queued" is a lie - nothing is actually queued
+      const largeDatasetSize = 50000;
+      const inatTotal = 49000;
+      const orphanedCount = 1000;
+
+      // Create 50k local observations
+      const batchSize = 5000;
+      for (let i = 0; i < largeDatasetSize / batchSize; i++) {
+        await prisma.observation.createMany({
+          data: Array.from({ length: batchSize }, (_, j) => ({
+            id: i * batchSize + j + 1,
+            userId: testUserId,
+            observedOn: new Date('2024-01-01'),
+            qualityGrade: 'needs_id',
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          })),
+        });
+      }
+
+      // Mock iNat to return 49k total (1k deletions)
+      mockGetUserObservations = vi.fn().mockResolvedValue({
+        results: [],
+        total_results: inatTotal,
+      });
+
+      // Run verification - should queue for background
+      const result = await verifySyncStatus(testUserId, testUsername, testToken);
+
+      expect(result.reconciliationQueued).toBe(true);
+      expect(result.deletionsReconciled).toBeUndefined();
+
+      // THE BUG (BEFORE FIX): Orphaned observations are still there
+      const countBeforeQueue = await prisma.observation.count({ where: { userId: testUserId } });
+      expect(countBeforeQueue).toBe(largeDatasetSize);
+
+      // Mock iNat to return paginated IDs for reconciliation
+      mockGetUserObservations = vi.fn().mockImplementation(async (username, options) => {
+        const page = options?.page || 1;
+        const perPage = options?.per_page || 50;
+        const start = (page - 1) * perPage;
+        const end = Math.min(start + perPage, inatTotal);
+
+        const results = Array.from({ length: end - start }, (_, i) => ({
+          id: 1 + start + i, // IDs 1-49000 (first 49k match)
+        }));
+
+        return {
+          results,
+          total_results: inatTotal,
+          page,
+          per_page: perPage,
+        };
+      });
+
+      // Process the queue (THE FIX!)
+      const jobsProcessed = await processReconciliationQueue();
+      expect(jobsProcessed).toBe(1);
+
+      // AFTER processing queue, orphaned observations should be gone
+      const countAfterQueue = await prisma.observation.count({ where: { userId: testUserId } });
+      expect(countAfterQueue).toBe(inatTotal);
+    });
+
     it('should NOT block verification for large datasets (>10k observations)', async () => {
       // PERFORMANCE TEST: Large dataset should return quickly, not block for minutes
       // Setup: User with 50,000 observations, deleted 1,000

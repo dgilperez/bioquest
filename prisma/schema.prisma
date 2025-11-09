@@ -41,6 +41,7 @@ model User {
   taxonProgress UserTaxonProgress[]
   syncProgress  SyncProgress?
   rarityQueue   RarityClassificationQueue[]
+  reconciliationQueue ReconciliationQueue[]
 
   @@index([inatId])
   @@index([inatUsername])
@@ -662,4 +663,30 @@ model RarityClassificationQueue {
   @@index([userId, status, priority]) // Query active queue for user
   @@index([status, priority])         // Global queue processing order
   @@map("rarity_classification_queue")
+}
+
+// Background queue for deletion reconciliation (large datasets >10k observations)
+model ReconciliationQueue {
+  id String   @id @default(cuid())
+  userId String
+  inatUsername String
+  accessToken String  // Encrypted iNat access token for background processing
+  inatTotal Int      // Total observations on iNat (for validation)
+  status String @default("pending") // 'pending' | 'processing' | 'completed' | 'failed'
+  progress Int @default(0)  // Number of observation IDs fetched so far
+  deletionsFound Int? // Number of orphaned observations found
+  deletionsProcessed Int? // Number actually deleted
+  attempts Int @default(0)
+  lastAttemptAt DateTime?
+  lastError String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  completedAt DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId]) // One pending job per user max
+  @@index([status])
+  @@index([status, createdAt]) // Process oldest first
+  @@map("reconciliation_queue")
 }
