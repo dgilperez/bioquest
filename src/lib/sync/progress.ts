@@ -45,7 +45,11 @@ export interface SyncProgress {
 
 export async function initProgress(userId: string, totalObservations: number): Promise<void> {
   // ATOMIC check-and-lock: Use raw SQL with WHERE clause to prevent race conditions
-  // This will only update if status is NOT 'syncing', otherwise it throws
+  // Allow update if:
+  // 1. Status is NOT 'syncing' (normal case), OR
+  // 2. Status IS 'syncing' BUT it's stale (started > 10 min ago = server crash/restart)
+  const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
+
   try {
     const result = await prisma.$executeRaw`
       UPDATE sync_progress
@@ -62,17 +66,44 @@ export async function initProgress(userId: string, totalObservations: number): P
         startedAt = ${new Date()},
         updatedAt = ${new Date()}
       WHERE userId = ${userId}
-        AND (status IS NULL OR status != 'syncing')
+        AND (
+          status IS NULL
+          OR status != 'syncing'
+          OR (status = 'syncing' AND startedAt < ${tenMinutesAgo})
+        )
     `;
 
-    // If no rows updated, either record doesn't exist or sync is already in progress
+    // If no rows updated, either record doesn't exist or sync is already in progress (and NOT stale)
     if (result === 0) {
       // Check if sync is already in progress before creating
       const existing = await prisma.syncProgress.findUnique({ where: { userId } });
 
       if (existing && existing.status === 'syncing') {
-        // Sync already in progress - this is OK, just return silently
-        // The sync that's in progress will update the progress
+        // Check if it's stale (shouldn't happen since we check in WHERE clause, but defensive)
+        const isStale = existing.startedAt && existing.startedAt < tenMinutesAgo;
+
+        if (isStale) {
+          // Stale sync - force reset (shouldn't reach here due to WHERE clause, but handle it)
+          console.log(`⚠️ Stale sync detected for ${userId}, resetting...`);
+          await prisma.syncProgress.update({
+            where: { userId },
+            data: {
+              status: 'syncing',
+              phase: 'fetching',
+              currentStep: 0,
+              totalSteps: 4,
+              message: 'Starting sync...',
+              observationsProcessed: 0,
+              observationsTotal: totalObservations,
+              error: null,
+              completedAt: null,
+              startedAt: new Date(),
+            },
+          });
+          return;
+        }
+
+        // Active sync in progress - this is OK, just return silently
         console.log(`⚠️ Sync already in progress for ${userId}, skipping initProgress`);
         return;
       }
@@ -185,6 +216,24 @@ export async function updateProgress(
 export async function getProgress(userId: string): Promise<SyncProgress | null> {
   const progress = await prisma.syncProgress.findUnique({ where: { userId } });
   if (!progress) return null;
+
+  // CRITICAL: Detect and auto-clear stale syncs (from server crashes/restarts)
+  // If status is 'syncing' but sync started >10 minutes ago, it's stale
+  if (progress.status === 'syncing' && progress.startedAt) {
+    const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
+    const isStale = progress.startedAt < tenMinutesAgo;
+
+    if (isStale) {
+      console.log(`⚠️ Detected stale sync in getProgress for ${userId} (started ${Math.round((Date.now() - progress.startedAt.getTime()) / 1000 / 60)} min ago), clearing...`);
+
+      // Clear the stale sync record
+      await prisma.syncProgress.delete({ where: { userId } }).catch(() => {});
+      messageRotators.delete(userId);
+
+      // Return idle state instead of stale sync
+      return null;
+    }
+  }
 
   // Get rotating funny message (only during active sync)
   const funnyMessage = progress.status === 'syncing'

@@ -123,7 +123,10 @@ describe('Progress Tracking and Race Conditions', () => {
 
       expect(sqlString).toContain('UPDATE sync_progress');
       expect(sqlString).toContain('WHERE userId =');
-      expect(sqlString).toContain("AND (status IS NULL OR status != 'syncing')");
+      // Check for stale sync detection in WHERE clause
+      expect(sqlString).toContain("status IS NULL");
+      expect(sqlString).toContain("status != 'syncing'");
+      expect(sqlString).toContain("status = 'syncing' AND startedAt <"); // Stale sync detection
     });
 
     it('should successfully create progress when record does not exist', async () => {

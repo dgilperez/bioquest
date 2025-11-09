@@ -39,9 +39,10 @@ export async function fetchUserObservations({
   maxObservations,
 }: FetchOptions): Promise<FetchResult> {
   const client = getINatClient(accessToken);
-  // ONLY use date filtering (incremental sync) when we have lastSyncedAt (completed full sync)
-  // If we have syncCursor but no lastSyncedAt, it means incomplete initial sync - continue pagination
-  const filterDate = lastSyncedAt;
+  // Use syncCursor for partial syncs (pagination continuation), lastSyncedAt for incremental syncs
+  // syncCursor: Pagination continuation (incomplete sync hitting limit)
+  // lastSyncedAt: True incremental sync (completed full sync, fetching new observations)
+  const filterDate = syncCursor || lastSyncedAt;
   const isIncrementalSync = !!filterDate;
 
   // Use provided max or default to MAX_OBSERVATIONS_PER_SYNC

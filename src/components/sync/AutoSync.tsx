@@ -7,10 +7,11 @@
 
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useRetryableSync } from '@/hooks/useRetryableSync';
 import { RETRY_CONFIG } from '@/lib/sync/retry-strategy';
+import { verifySyncStatus, shouldVerifySyncStatus } from '@/lib/sync/verify-status';
 
 interface AutoSyncProps {
   userId: string;
@@ -28,6 +29,8 @@ export function AutoSync({
   hasMoreToSync
 }: AutoSyncProps) {
   const router = useRouter();
+  const [verificationDone, setVerificationDone] = useState(false);
+  const [verifiedHasMore, setVerifiedHasMore] = useState(hasMoreToSync);
 
   /**
    * Hook provides:
@@ -76,19 +79,31 @@ export function AutoSync({
    * Check if sync should be triggered
    */
   const shouldSync = (): boolean => {
-    // Always sync if there's an incomplete sync
-    if (hasMoreToSync) {
+    console.log('Auto-sync shouldSync check:', {
+      hasMoreToSync: verifiedHasMore,
+      lastSyncedAt,
+      lastSyncAgeMinutes: lastSyncedAt
+        ? Math.round((Date.now() - new Date(lastSyncedAt).getTime()) / 1000 / 60)
+        : null,
+    });
+
+    // Always sync if there's an incomplete sync (using verified flag)
+    if (verifiedHasMore) {
+      console.log('  → YES: hasMoreToSync is true');
       return true;
     }
 
     // Always sync if never synced before
     if (!lastSyncedAt) {
+      console.log('  → YES: never synced before');
       return true;
     }
 
     // Don't auto-sync if recently synced (within 1 hour)
     const hourAgo = Date.now() - 60 * 60 * 1000;
-    return new Date(lastSyncedAt).getTime() < hourAgo;
+    const result = new Date(lastSyncedAt).getTime() < hourAgo;
+    console.log(`  → ${result ? 'YES' : 'NO'}: last sync was ${result ? '>' : '<'} 1 hour ago`);
+    return result;
   };
 
   /**
@@ -113,9 +128,62 @@ export function AutoSync({
   };
 
   /**
-   * Main sync effect
+   * Verification effect - runs FIRST to detect and fix incomplete syncs
+   * CRITICAL for crash recovery: Verifies hasMoreToSync is accurate
    */
   useEffect(() => {
+    if (verificationDone) return;
+
+    const runVerification = async () => {
+      // Check if verification is needed
+      if (!shouldVerifySyncStatus(hasMoreToSync ?? false, lastSyncedAt)) {
+        console.log('📊 Sync status verification: Not needed, trusting flag');
+        setVerificationDone(true);
+        setVerifiedHasMore(hasMoreToSync ?? false);
+        return;
+      }
+
+      try {
+        console.log('📊 Running sync status verification...');
+        const result = await verifySyncStatus(userId, inatUsername, accessToken);
+
+        console.log(`📊 Verification complete:`, {
+          hasMoreToSync: result.hasMoreToSync,
+          localCount: result.localCount,
+          inatTotal: result.inatTotal,
+          corrected: result.corrected,
+        });
+
+        setVerifiedHasMore(result.hasMoreToSync);
+        setVerificationDone(true);
+
+        // If flag was corrected, refresh to update UI
+        if (result.corrected) {
+          console.log('📊 Flag corrected, refreshing page data...');
+          router.refresh();
+        }
+      } catch (error) {
+        console.error('📊 Verification failed:', error);
+        // On error, trust the prop value and mark verification as done
+        setVerifiedHasMore(hasMoreToSync ?? false);
+        setVerificationDone(true);
+      }
+    };
+
+    // Run verification after short delay
+    const timeout = setTimeout(runVerification, 500);
+    return () => clearTimeout(timeout);
+  }, [userId, inatUsername, accessToken, hasMoreToSync, lastSyncedAt, verificationDone, router]);
+
+  /**
+   * Main sync effect - runs AFTER verification completes
+   */
+  useEffect(() => {
+    // Wait for verification to complete
+    if (!verificationDone) {
+      console.log('Auto-sync: Waiting for verification...');
+      return;
+    }
     // Don't sync if currently syncing or retrying
     if (retryState.isSyncing || retryState.isRetrying) {
       return;
@@ -152,11 +220,12 @@ export function AutoSync({
     inatUsername,
     accessToken,
     lastSyncedAt,
-    hasMoreToSync,
+    verifiedHasMore, // Use verified flag instead of hasMoreToSync
     retryState.isSyncing,
     retryState.isRetrying,
     retryState.triggerCount, // Re-run when retry is triggered
     executeSync,
+    verificationDone, // Wait for verification to complete
   ]);
 
   // This component renders nothing
