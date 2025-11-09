@@ -42,6 +42,35 @@ export async function queueReconciliation(
 }
 
 /**
+ * Process pending reconciliation job for a specific user (lazy processing)
+ * Returns true if a job was processed, false if no pending job
+ */
+export async function processUserPendingReconciliation(userId: string): Promise<boolean> {
+  console.log(`🔄 Checking for pending reconciliation job for user ${userId}...`);
+
+  // Check if user has a pending job
+  const job = await prisma.reconciliationQueue.findUnique({
+    where: { userId },
+  });
+
+  if (!job || job.status !== 'pending') {
+    console.log('  No pending reconciliation job');
+    return false;
+  }
+
+  console.log(`  Found pending job ${job.id}, processing...`);
+
+  try {
+    await processReconciliationJob(job.id);
+    console.log(`  ✅ Processed reconciliation job ${job.id}`);
+    return true;
+  } catch (error) {
+    console.error(`  ❌ Failed to process job ${job.id}:`, error);
+    throw error;
+  }
+}
+
+/**
  * Process all pending reconciliation jobs
  * Returns number of jobs processed
  */

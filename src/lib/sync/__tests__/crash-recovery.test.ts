@@ -8,7 +8,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { prisma } from '@/lib/db/prisma';
 import { verifySyncStatus, shouldVerifySyncStatus } from '@/lib/sync/verify-status';
-import { processReconciliationQueue } from '@/lib/sync/reconciliation-queue';
+import { processUserPendingReconciliation } from '@/lib/sync/reconciliation-queue';
 
 // Mock the iNat client
 // Returns empty results by default (for tests that don't need reconciliation)
@@ -345,11 +345,11 @@ describe('Crash Recovery - Sync Status Verification', () => {
         };
       });
 
-      // Process the queue (THE FIX!)
-      const jobsProcessed = await processReconciliationQueue();
-      expect(jobsProcessed).toBe(1);
+      // Lazy processing (THE FIX!) - simulates what AutoSync does on next page load
+      const processed = await processUserPendingReconciliation(testUserId);
+      expect(processed).toBe(true);
 
-      // AFTER processing queue, orphaned observations should be gone
+      // AFTER lazy processing, orphaned observations should be gone
       const countAfterQueue = await prisma.observation.count({ where: { userId: testUserId } });
       expect(countAfterQueue).toBe(inatTotal);
     });
