@@ -1,14 +1,14 @@
 /**
- * Transaction Rollback Tests
+ * Sync System Unit Tests
  *
- * Tests for database transaction atomicity and rollback behavior.
- * Ensures that if any critical operation fails, the entire transaction is rolled back.
+ * Unit-level tests for sync infrastructure:
+ * - Sync cursor logic (pagination continuation)
+ * - Database transaction support (atomicity)
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { storeObservations } from '@/lib/sync/store-observations';
 import { updateUserStatsInDB } from '@/lib/sync/calculate-stats';
-import { Prisma } from '@prisma/client';
+import { storeObservations } from '@/lib/sync/store-observations';
 
 // Mock Prisma
 vi.mock('@/lib/db/prisma', () => ({
@@ -25,9 +25,7 @@ vi.mock('@/lib/db/prisma', () => ({
   },
 }));
 
-describe('Transaction Rollback Scenarios', () => {
-  const mockUserId = 'test-user-id';
-
+describe('Sync System Unit Tests', () => {
   let prisma: any;
 
   beforeEach(async () => {
@@ -36,7 +34,120 @@ describe('Transaction Rollback Scenarios', () => {
     prisma = prismaModule.prisma;
   });
 
-  describe('storeObservations - Transaction Support', () => {
+  describe('Sync Cursor Logic', () => {
+    it('should set syncCursor to newestObservationDate when sync is incomplete', async () => {
+      const mockDate = new Date('2025-01-01T12:00:00Z');
+      prisma.userStats.upsert.mockResolvedValue({});
+
+      await updateUserStatsInDB('user-123', {
+        totalObservations: 100,
+        totalPoints: 1000,
+        rareObservations: 5,
+        legendaryObservations: 1,
+        stats: {
+          level: 5,
+          pointsToNextLevel: 500,
+          totalSpecies: 50,
+          streakResult: {
+            currentStreak: 3,
+            longestStreak: 10,
+            lastObservationDate: mockDate,
+            streakAtRisk: false,
+            hoursUntilBreak: 20,
+          },
+          currentRarityStreak: 1,
+          longestRarityStreak: 2,
+          lastRareObservationDate: mockDate,
+        },
+        fetchedAll: false, // Incomplete sync
+        newestObservationDate: mockDate, // Should be stored as cursor
+      });
+
+      // Verify upsert was called with correct syncCursor
+      const upsertCall = prisma.userStats.upsert.mock.calls[0][0];
+
+      // Check update data
+      expect(upsertCall.update.syncCursor).toEqual(mockDate);
+      expect(upsertCall.update.hasMoreToSync).toBe(true);
+      expect(upsertCall.update.lastSyncedAt).toBeUndefined(); // Should NOT set lastSyncedAt
+
+      // Check create data
+      expect(upsertCall.create.syncCursor).toEqual(mockDate);
+    });
+
+    it('should set syncCursor to null when sync is complete', async () => {
+      const mockDate = new Date('2025-01-01T12:00:00Z');
+      prisma.userStats.upsert.mockResolvedValue({});
+
+      await updateUserStatsInDB('user-123', {
+        totalObservations: 500,
+        totalPoints: 5000,
+        rareObservations: 10,
+        legendaryObservations: 2,
+        stats: {
+          level: 10,
+          pointsToNextLevel: 1000,
+          totalSpecies: 200,
+          streakResult: {
+            currentStreak: 5,
+            longestStreak: 15,
+            lastObservationDate: mockDate,
+            streakAtRisk: false,
+            hoursUntilBreak: 18,
+          },
+          currentRarityStreak: 2,
+          longestRarityStreak: 5,
+          lastRareObservationDate: mockDate,
+        },
+        fetchedAll: true, // Complete sync
+        newestObservationDate: mockDate,
+      });
+
+      const upsertCall = prisma.userStats.upsert.mock.calls[0][0];
+
+      // When complete, cursor should be null (we'll use lastSyncedAt instead)
+      expect(upsertCall.update.syncCursor).toBeNull();
+      expect(upsertCall.update.hasMoreToSync).toBe(false);
+      expect(upsertCall.update.lastSyncedAt).toBeDefined(); // SHOULD set lastSyncedAt
+
+      expect(upsertCall.create.syncCursor).toBeNull();
+    });
+
+    it('should handle null newestObservationDate gracefully', async () => {
+      prisma.userStats.upsert.mockResolvedValue({});
+
+      await updateUserStatsInDB('user-123', {
+        totalObservations: 0,
+        totalPoints: 0,
+        rareObservations: 0,
+        legendaryObservations: 0,
+        stats: {
+          level: 1,
+          pointsToNextLevel: 100,
+          totalSpecies: 0,
+          streakResult: {
+            currentStreak: 0,
+            longestStreak: 0,
+            lastObservationDate: null,
+            streakAtRisk: false,
+            hoursUntilBreak: 24,
+          },
+          currentRarityStreak: 0,
+          longestRarityStreak: 0,
+          lastRareObservationDate: null,
+        },
+        fetchedAll: false,
+        newestObservationDate: null, // No observations fetched
+      });
+
+      const upsertCall = prisma.userStats.upsert.mock.calls[0][0];
+
+      // Should handle null gracefully
+      expect(upsertCall.update.syncCursor).toBeNull();
+    });
+  });
+
+  describe('Transaction Support - storeObservations', () => {
     it('should accept optional transaction context', async () => {
       const mockTx = {
         observation: {
@@ -56,7 +167,7 @@ describe('Transaction Rollback Scenarios', () => {
       ];
 
       // Call with transaction context
-      const result = await storeObservations(mockUserId, enrichedObservations, mockTx as any);
+      const result = await storeObservations('test-user', enrichedObservations, mockTx as any);
 
       // Should use transaction context instead of global prisma
       expect(mockTx.observation.findMany).toHaveBeenCalled();
@@ -79,7 +190,7 @@ describe('Transaction Rollback Scenarios', () => {
       ];
 
       // Call without transaction context
-      const result = await storeObservations(mockUserId, enrichedObservations);
+      const result = await storeObservations('test-user', enrichedObservations);
 
       // Should use global prisma
       expect(prisma.observation.findMany).toHaveBeenCalled();
@@ -87,7 +198,9 @@ describe('Transaction Rollback Scenarios', () => {
     });
   });
 
-  describe('updateUserStatsInDB - Transaction Support', () => {
+  describe('Transaction Support - updateUserStatsInDB', () => {
+    const mockUserId = 'test-user-id';
+
     it('should accept optional transaction context', async () => {
       const mockTx = {
         userStats: {
@@ -160,6 +273,8 @@ describe('Transaction Rollback Scenarios', () => {
   });
 
   describe('Transaction Rollback Behavior', () => {
+    const mockUserId = 'test-user-id';
+
     it('should rollback both operations if storeObservations fails', async () => {
       // Create a mock transaction that tracks operations
       const operations: string[] = [];
@@ -375,9 +490,7 @@ describe('Transaction Rollback Scenarios', () => {
       // Verify both operations completed
       expect(operations).toEqual(['storeObservations', 'updateUserStatsInDB']);
     });
-  });
 
-  describe('Transaction Isolation', () => {
     it('should not affect database if transaction is rolled back', async () => {
       // Mock a failing transaction
       prisma.$transaction.mockRejectedValue(new Error('Transaction failed'));
