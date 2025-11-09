@@ -12,7 +12,6 @@ import { useRouter } from 'next/navigation';
 import { useRetryableSync } from '@/hooks/useRetryableSync';
 import { RETRY_CONFIG } from '@/lib/sync/retry-strategy';
 import { verifySyncStatus, shouldVerifySyncStatus } from '@/lib/sync/verify-status';
-import { processUserPendingReconciliation } from '@/lib/sync/reconciliation-queue';
 
 interface AutoSyncProps {
   userId: string;
@@ -160,10 +159,15 @@ export function AutoSync({
 
         // Lazy processing: Check for pending reconciliation job and process it
         try {
-          const processed = await processUserPendingReconciliation(userId);
-          if (processed) {
-            console.log('📊 Lazy-processed pending reconciliation job');
-            router.refresh(); // Refresh to show updated data
+          const response = await fetch('/api/sync/reconciliation', { method: 'POST' });
+          if (response.ok) {
+            const data = await response.json();
+            if (data.processed) {
+              console.log('📊 Lazy-processed pending reconciliation job');
+              router.refresh(); // Refresh to show updated data
+            }
+          } else {
+            console.error('📊 Reconciliation API error:', response.status);
           }
         } catch (error) {
           console.error('📊 Failed to process pending reconciliation:', error);

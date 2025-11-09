@@ -230,7 +230,7 @@ async function reconcileDeletedObservations(
 
   // 3. Find orphaned IDs
   const orphanedIds: number[] = [];
-  for (const localId of localIds) {
+  for (const localId of Array.from(localIds)) {
     if (!inatIds.has(localId)) {
       orphanedIds.push(localId);
     }
