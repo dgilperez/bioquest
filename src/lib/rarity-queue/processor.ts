@@ -6,7 +6,6 @@
  */
 
 import { prisma } from '@/lib/db/prisma';
-import { INatError, RateLimitError, ErrorCode } from '@/lib/errors';
 import { POINTS_CONFIG, RARITY_BONUS_POINTS } from '@/lib/gamification/constants';
 import { calculateLevel } from '@/lib/sync/user-stats-helpers';
 import {
@@ -14,29 +13,8 @@ import {
   markAsProcessing,
   markAsFailed,
 } from './manager';
-
-/**
- * Determine if an error is transient (retry) or persistent (fail)
- */
-function isTransientError(error: Error): boolean {
-  // Network errors - retry
-  if (error instanceof INatError && error.code === ErrorCode.API_NETWORK) {
-    return true;
-  }
-
-  // Rate limit - retry (with backoff)
-  if (error instanceof RateLimitError) {
-    return true;
-  }
-
-  // 5xx server errors - retry
-  if (error.message.includes('500') || error.message.includes('503')) {
-    return true;
-  }
-
-  // 404, 401, 400 - persistent, don't retry
-  return false;
-}
+import { shouldRetry } from './retry-strategy';
+import { reportClassificationError, isRetriableError } from './sentry-reporting';
 
 /**
  * Classify a single taxon's rarity
@@ -237,14 +215,31 @@ export async function processRarityQueue(
       succeeded++;
 
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      const isTransient = isTransientError(error as Error);
+      const errorObj = error instanceof Error ? error : new Error('Unknown error');
+      const errorMessage = errorObj.message;
+      const isRetriable = isRetriableError(errorObj);
 
       console.error(`  ❌ Failed to classify taxon ${item.taxonId}:`, errorMessage);
-      console.error(`     Transient: ${isTransient}`);
+      console.error(`     Retriable: ${isRetriable}, Attempts: ${item.attempts + 1}`);
 
-      // Mark as failed (will retry if transient and under max attempts)
-      await markAsFailed(item.id, errorMessage, isTransient);
+      // Determine if this is a permanent failure
+      const newAttempts = item.attempts + 1;
+      const isPermanentFailure = !isRetriable || !shouldRetry(newAttempts);
+
+      // Report to Sentry if permanent failure
+      if (isPermanentFailure) {
+        reportClassificationError(errorObj, {
+          userId: item.userId,
+          taxonId: item.taxonId,
+          taxonName: item.taxonName,
+          queueItemId: item.id,
+          attempts: newAttempts,
+          isPermanentFailure: true,
+        });
+      }
+
+      // Mark as failed (will retry if retriable and under max attempts)
+      await markAsFailed(item.id, errorMessage, isRetriable);
 
       failed++;
       errors.push(`Taxon ${item.taxonId}: ${errorMessage}`);
@@ -420,9 +415,27 @@ export async function processUserQueue(
         succeeded++;
 
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-        const isTransient = isTransientError(error as Error);
-        await markAsFailed(item.id, errorMessage, isTransient);
+        const errorObj = error instanceof Error ? error : new Error('Unknown error');
+        const errorMessage = errorObj.message;
+        const isRetriable = isRetriableError(errorObj);
+
+        // Determine if this is a permanent failure
+        const newAttempts = item.attempts + 1;
+        const isPermanentFailure = !isRetriable || !shouldRetry(newAttempts);
+
+        // Report to Sentry if permanent failure
+        if (isPermanentFailure) {
+          reportClassificationError(errorObj, {
+            userId,
+            taxonId: item.taxonId,
+            taxonName: item.taxonName,
+            queueItemId: item.id,
+            attempts: newAttempts,
+            isPermanentFailure: true,
+          });
+        }
+
+        await markAsFailed(item.id, errorMessage, isRetriable);
         failed++;
       }
 

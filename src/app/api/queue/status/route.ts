@@ -47,7 +47,7 @@ export async function GET(_req: NextRequest) {
     return NextResponse.json({
       ...status,
       pendingObservations,
-      isComplete: status.pending === 0 && status.processing === 0 && pendingObservations === 0,
+      isComplete: status.pending === 0 && status.processing === 0 && status.failed === 0 && pendingObservations === 0,
     });
   } catch (error) {
     console.error('Error fetching queue status:', error);
