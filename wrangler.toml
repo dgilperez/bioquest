@@ -1,0 +1,8 @@
+name = "bioquest"
+compatibility_date = "2024-10-23"
+
+# D1 Database Binding
+[[d1_databases]]
+binding = "DB"
+database_name = "bioquest"
+database_id = "2458a1b0-08e9-4ce4-8847-0be89fccee38"
