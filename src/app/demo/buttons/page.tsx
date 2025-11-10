@@ -176,14 +176,14 @@ export default function ButtonDemoPage() {
             <div>
               <h3 className="font-semibold mb-1">Press Animation</h3>
               <p className="text-muted-foreground">
-                Uses Framer Motion's <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">whileTap</code> with scale: 0.95 for tactile feedback
+                Uses Framer Motion&apos;s <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">whileTap</code> with scale: 0.95 for tactile feedback
               </p>
             </div>
 
             <div>
               <h3 className="font-semibold mb-1">Ripple Effect</h3>
               <p className="text-muted-foreground">
-                Material Design-inspired ripple calculated from click position using mouse coordinates and button bounds.
+                Material Design-inspired ripple calculated from click position using mouse coordinates and button&apos;s bounds.
                 Ripples animate scale: 0 → 2 and opacity: 0.5 → 0 over 600ms.
               </p>
             </div>

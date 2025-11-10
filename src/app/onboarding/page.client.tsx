@@ -233,7 +233,7 @@ export function OnboardingClient({
                 transition={{ delay: 0.6 }}
                 className="text-xl md:text-2xl text-nature-100"
               >
-                Let's transform your {observationCount.toLocaleString()} iNaturalist observations
+                Let&apos;s transform your {observationCount.toLocaleString()} iNaturalist observations
                 into an epic adventure
               </motion.p>
 
@@ -247,7 +247,7 @@ export function OnboardingClient({
                   This will take about {Math.ceil(observationCount / 1000) * 6} minutes to import and classify your observations.
                 </p>
 
-                <p className="text-lg font-semibold text-white">You'll unlock:</p>
+                <p className="text-lg font-semibold text-white">You&apos;ll unlock:</p>
                 <div className="flex flex-wrap justify-center gap-4 text-nature-100">
                   <span>✨ Rarity classifications</span>
                   <span>🏆 Badges & achievements</span>
@@ -267,7 +267,7 @@ export function OnboardingClient({
                   onClick={handleGetStarted}
                   className="bg-nature-500 hover:bg-nature-600 text-white px-12 py-6 text-lg"
                 >
-                  Let's Begin
+                  Let&apos;s Begin
                 </Button>
               </motion.div>
             </div>
@@ -520,7 +520,7 @@ function EpicCompletion({
           transition={{ delay: 0.4 }}
           className="text-5xl md:text-6xl font-bold"
         >
-          🎉 You're All Set!
+          🎉 You&apos;re All Set!
         </motion.h1>
 
         <motion.div

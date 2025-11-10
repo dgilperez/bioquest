@@ -248,7 +248,7 @@ export function AdventureClient({ iconicTaxaProgress, activeTrips }: AdventureCl
             Life List
           </h3>
           <p className="text-sm text-muted-foreground mb-4">
-            Browse all species you've observed with search and filters
+            Browse all species you&apos;ve observed with search and filters
           </p>
           <Button variant="outline" className="w-full">
             View Life List

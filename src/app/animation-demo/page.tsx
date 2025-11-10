@@ -117,7 +117,7 @@ export default function AnimationDemoPage() {
                   <span className="text-green-400 mt-1">▹</span>
                   <div>
                     <strong>Path Drawing:</strong> SVG paths animate from 0 to
-                    100% length, creating the "drawing" effect for spirals and
+                    100% length, creating the &quot;drawing&quot; effect for spirals and
                     vines
                   </div>
                 </li>
@@ -139,7 +139,7 @@ export default function AnimationDemoPage() {
                   <span className="text-green-400 mt-1">▹</span>
                   <div>
                     <strong>Continuous Motion:</strong> Subtle rotation and
-                    scaling creates a "breathing" effect
+                    scaling creates a &quot;breathing&quot; effect
                   </div>
                 </li>
               </ul>
@@ -301,7 +301,7 @@ export default function AnimationDemoPage() {
             ♿ Accessibility Built-in
           </h3>
           <p className="text-green-800">
-            The animation automatically respects the user's{' '}
+            The animation automatically respects the user&apos;s{' '}
             <code className="bg-green-100 px-2 py-1 rounded">
               prefers-reduced-motion
             </code>{' '}

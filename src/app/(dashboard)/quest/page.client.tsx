@@ -50,7 +50,7 @@ export function QuestLandingClient({ topQuests, totalActiveQuests }: QuestLandin
       {/* Hero Section */}
       <div className="text-center max-w-2xl mx-auto">
         <h1 className="text-4xl md:text-5xl font-display font-bold mb-4 bg-gradient-to-r from-nature-600 to-nature-800 bg-clip-text text-transparent">
-          What's Your Quest Today?
+          What&apos;s Your Quest Today?
         </h1>
         <p className="text-lg text-muted-foreground">
           Complete quests, explore new locations, and level up your naturalist skills

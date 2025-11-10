@@ -184,7 +184,7 @@ export function ClientSideObservations() {
             Error: {error.message}
             {error.name === 'RateLimitError' && (
               <div className="mt-2 text-xs">
-                You've made too many requests. Please wait a moment before
+                You&apos;ve made too many requests. Please wait a moment before
                 trying again.
               </div>
             )}
@@ -251,7 +251,7 @@ export function ClientSideObservations() {
             Network tab)
           </li>
           <li>Uses your OAuth token for authentication</li>
-          <li>Counts toward YOUR rate limit, not the server's shared limit</li>
+          <li>Counts toward YOUR rate limit, not the server&apos;s shared limit</li>
           <li>
             Server still handles rarity classification, points, and badges
             (shared cache)
