@@ -44,7 +44,7 @@ export default function RedMushroom({ shouldAnimate, duration }: RedMushroomProp
       style={{ transformOrigin: '225px 120px' }}
       variants={growVariants}
       initial="hidden"
-      animate={shouldAnimate ? 'visible' : 'visible'}
+      animate="visible"
     >
       {/* Ground shadow */}
       <ellipse
@@ -220,7 +220,7 @@ export default function RedMushroom({ shouldAnimate, duration }: RedMushroomProp
 
       {/* White spots - varied sizes and irregular shapes */}
       {/* Large central spot */}
-      <motion.g variants={spotVariants} custom={2.0} initial="hidden" animate={shouldAnimate ? 'visible' : 'visible'}>
+      <motion.g variants={spotVariants} custom={2.0} initial="hidden" animate="visible">
         <ellipse
           cx="225"
           cy="78"
@@ -240,7 +240,7 @@ export default function RedMushroom({ shouldAnimate, duration }: RedMushroomProp
       </motion.g>
 
       {/* Upper left spot */}
-      <motion.g variants={spotVariants} custom={2.05} initial="hidden" animate={shouldAnimate ? 'visible' : 'visible'}>
+      <motion.g variants={spotVariants} custom={2.05} initial="hidden" animate="visible">
         <ellipse
           cx="208"
           cy="85"
@@ -260,7 +260,7 @@ export default function RedMushroom({ shouldAnimate, duration }: RedMushroomProp
       </motion.g>
 
       {/* Upper right spot */}
-      <motion.g variants={spotVariants} custom={2.1} initial="hidden" animate={shouldAnimate ? 'visible' : 'visible'}>
+      <motion.g variants={spotVariants} custom={2.1} initial="hidden" animate="visible">
         <ellipse
           cx="242"
           cy="84"
@@ -280,7 +280,7 @@ export default function RedMushroom({ shouldAnimate, duration }: RedMushroomProp
       </motion.g>
 
       {/* Lower left spot */}
-      <motion.g variants={spotVariants} custom={2.15} initial="hidden" animate={shouldAnimate ? 'visible' : 'visible'}>
+      <motion.g variants={spotVariants} custom={2.15} initial="hidden" animate="visible">
         <ellipse
           cx="198"
           cy="94"
@@ -300,7 +300,7 @@ export default function RedMushroom({ shouldAnimate, duration }: RedMushroomProp
       </motion.g>
 
       {/* Mid-left spot */}
-      <motion.g variants={spotVariants} custom={2.08} initial="hidden" animate={shouldAnimate ? 'visible' : 'visible'}>
+      <motion.g variants={spotVariants} custom={2.08} initial="hidden" animate="visible">
         <ellipse
           cx="213"
           cy="93"
@@ -320,7 +320,7 @@ export default function RedMushroom({ shouldAnimate, duration }: RedMushroomProp
       </motion.g>
 
       {/* Lower right spot */}
-      <motion.g variants={spotVariants} custom={2.18} initial="hidden" animate={shouldAnimate ? 'visible' : 'visible'}>
+      <motion.g variants={spotVariants} custom={2.18} initial="hidden" animate="visible">
         <ellipse
           cx="237"
           cy="96"
@@ -340,7 +340,7 @@ export default function RedMushroom({ shouldAnimate, duration }: RedMushroomProp
       </motion.g>
 
       {/* Far left small spot */}
-      <motion.g variants={spotVariants} custom={2.13} initial="hidden" animate={shouldAnimate ? 'visible' : 'visible'}>
+      <motion.g variants={spotVariants} custom={2.13} initial="hidden" animate="visible">
         <ellipse
           cx="193"
           cy="90"
@@ -352,7 +352,7 @@ export default function RedMushroom({ shouldAnimate, duration }: RedMushroomProp
       </motion.g>
 
       {/* Far right small spot */}
-      <motion.g variants={spotVariants} custom={2.2} initial="hidden" animate={shouldAnimate ? 'visible' : 'visible'}>
+      <motion.g variants={spotVariants} custom={2.2} initial="hidden" animate="visible">
         <ellipse
           cx="252"
           cy="92"
@@ -373,7 +373,7 @@ export default function RedMushroom({ shouldAnimate, duration }: RedMushroomProp
         variants={spotVariants}
         custom={2.22}
         initial="hidden"
-        animate={shouldAnimate ? 'visible' : 'visible'}
+        animate="visible"
       />
 
       <motion.circle
@@ -385,7 +385,7 @@ export default function RedMushroom({ shouldAnimate, duration }: RedMushroomProp
         variants={spotVariants}
         custom={2.24}
         initial="hidden"
-        animate={shouldAnimate ? 'visible' : 'visible'}
+        animate="visible"
       />
 
       <motion.circle
@@ -397,7 +397,7 @@ export default function RedMushroom({ shouldAnimate, duration }: RedMushroomProp
         variants={spotVariants}
         custom={2.17}
         initial="hidden"
-        animate={shouldAnimate ? 'visible' : 'visible'}
+        animate="visible"
       />
 
       <motion.circle
@@ -409,7 +409,7 @@ export default function RedMushroom({ shouldAnimate, duration }: RedMushroomProp
         variants={spotVariants}
         custom={2.21}
         initial="hidden"
-        animate={shouldAnimate ? 'visible' : 'visible'}
+        animate="visible"
       />
     </motion.g>
   );

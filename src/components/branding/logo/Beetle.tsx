@@ -56,7 +56,7 @@ export default function Beetle({ shouldAnimate, duration }: BeetleProps) {
       style={{ transformOrigin: '85px 280px' }}
       variants={growVariants}
       initial="hidden"
-      animate={shouldAnimate ? 'visible' : 'visible'}
+      animate="visible"
     >
       {/* Ground shadow */}
       <ellipse

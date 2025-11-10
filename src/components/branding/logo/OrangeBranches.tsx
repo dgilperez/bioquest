@@ -140,7 +140,7 @@ export default function OrangeBranches({ shouldAnimate, duration }: OrangeBranch
             variants={branchVariants}
             custom={branch.delay + 0.05}
             initial="hidden"
-            animate={shouldAnimate ? 'visible' : 'visible'}
+            animate="visible"
           />
 
           {/* Main branch */}
@@ -154,7 +154,7 @@ export default function OrangeBranches({ shouldAnimate, duration }: OrangeBranch
             variants={branchVariants}
             custom={branch.delay}
             initial="hidden"
-            animate={shouldAnimate ? 'visible' : 'visible'}
+            animate="visible"
           />
 
           {/* Highlight layer - lighter, slightly offset up */}
@@ -169,7 +169,7 @@ export default function OrangeBranches({ shouldAnimate, duration }: OrangeBranch
             variants={branchVariants}
             custom={branch.delay + 0.1}
             initial="hidden"
-            animate={shouldAnimate ? 'visible' : 'visible'}
+            animate="visible"
           />
 
           {/* Texture detail - fine lines for bark-like appearance */}
@@ -184,7 +184,7 @@ export default function OrangeBranches({ shouldAnimate, duration }: OrangeBranch
             variants={branchVariants}
             custom={branch.delay + 0.15}
             initial="hidden"
-            animate={shouldAnimate ? 'visible' : 'visible'}
+            animate="visible"
           />
         </g>
       ))}
@@ -204,7 +204,7 @@ export default function OrangeBranches({ shouldAnimate, duration }: OrangeBranch
             variants={branchVariants}
             custom={twig.delay + 0.02}
             initial="hidden"
-            animate={shouldAnimate ? 'visible' : 'visible'}
+            animate="visible"
           />
 
           {/* Main twig */}
@@ -218,7 +218,7 @@ export default function OrangeBranches({ shouldAnimate, duration }: OrangeBranch
             variants={branchVariants}
             custom={twig.delay}
             initial="hidden"
-            animate={shouldAnimate ? 'visible' : 'visible'}
+            animate="visible"
           />
 
           {/* Twig highlight */}
@@ -232,7 +232,7 @@ export default function OrangeBranches({ shouldAnimate, duration }: OrangeBranch
             variants={branchVariants}
             custom={twig.delay + 0.05}
             initial="hidden"
-            animate={shouldAnimate ? 'visible' : 'visible'}
+            animate="visible"
           />
         </g>
       ))}
@@ -250,7 +250,7 @@ export default function OrangeBranches({ shouldAnimate, duration }: OrangeBranch
             variants={sporeVariants}
             custom={spore.delay}
             initial="hidden"
-            animate={shouldAnimate ? 'visible' : 'visible'}
+            animate="visible"
           />
 
           {/* Main spore */}
@@ -262,7 +262,7 @@ export default function OrangeBranches({ shouldAnimate, duration }: OrangeBranch
             variants={sporeVariants}
             custom={spore.delay}
             initial="hidden"
-            animate={shouldAnimate ? 'visible' : 'visible'}
+            animate="visible"
           />
 
           {/* Spore highlight */}
@@ -275,7 +275,7 @@ export default function OrangeBranches({ shouldAnimate, duration }: OrangeBranch
             variants={sporeVariants}
             custom={spore.delay + 0.05}
             initial="hidden"
-            animate={shouldAnimate ? 'visible' : 'visible'}
+            animate="visible"
           />
 
           {/* Spore shadow */}
@@ -289,7 +289,7 @@ export default function OrangeBranches({ shouldAnimate, duration }: OrangeBranch
             variants={sporeVariants}
             custom={spore.delay + 0.03}
             initial="hidden"
-            animate={shouldAnimate ? 'visible' : 'visible'}
+            animate="visible"
           />
         </g>
       ))}

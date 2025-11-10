@@ -44,7 +44,7 @@ export default function OrangeMushroom({ shouldAnimate, duration }: OrangeMushro
       style={{ transformOrigin: '300px 240px' }}
       variants={growVariants}
       initial="hidden"
-      animate={shouldAnimate ? 'visible' : 'visible'}
+      animate="visible"
     >
       {/* Ground shadow */}
       <ellipse
@@ -220,7 +220,7 @@ export default function OrangeMushroom({ shouldAnimate, duration }: OrangeMushro
 
       {/* White/cream spots - varied sizes with individual animations */}
       {/* Large central spot */}
-      <motion.g variants={spotVariants} custom={2.3} initial="hidden" animate={shouldAnimate ? 'visible' : 'visible'}>
+      <motion.g variants={spotVariants} custom={2.3} initial="hidden" animate="visible">
         <ellipse
           cx="300"
           cy="198"
@@ -240,7 +240,7 @@ export default function OrangeMushroom({ shouldAnimate, duration }: OrangeMushro
       </motion.g>
 
       {/* Upper left spot */}
-      <motion.g variants={spotVariants} custom={2.35} initial="hidden" animate={shouldAnimate ? 'visible' : 'visible'}>
+      <motion.g variants={spotVariants} custom={2.35} initial="hidden" animate="visible">
         <ellipse
           cx="287"
           cy="203"
@@ -260,7 +260,7 @@ export default function OrangeMushroom({ shouldAnimate, duration }: OrangeMushro
       </motion.g>
 
       {/* Upper right spot */}
-      <motion.g variants={spotVariants} custom={2.4} initial="hidden" animate={shouldAnimate ? 'visible' : 'visible'}>
+      <motion.g variants={spotVariants} custom={2.4} initial="hidden" animate="visible">
         <ellipse
           cx="313"
           cy="202"
@@ -280,7 +280,7 @@ export default function OrangeMushroom({ shouldAnimate, duration }: OrangeMushro
       </motion.g>
 
       {/* Lower left spot */}
-      <motion.g variants={spotVariants} custom={2.45} initial="hidden" animate={shouldAnimate ? 'visible' : 'visible'}>
+      <motion.g variants={spotVariants} custom={2.45} initial="hidden" animate="visible">
         <ellipse
           cx="279"
           cy="211"
@@ -300,7 +300,7 @@ export default function OrangeMushroom({ shouldAnimate, duration }: OrangeMushro
       </motion.g>
 
       {/* Lower right spot */}
-      <motion.g variants={spotVariants} custom={2.5} initial="hidden" animate={shouldAnimate ? 'visible' : 'visible'}>
+      <motion.g variants={spotVariants} custom={2.5} initial="hidden" animate="visible">
         <ellipse
           cx="318"
           cy="213"
@@ -320,7 +320,7 @@ export default function OrangeMushroom({ shouldAnimate, duration }: OrangeMushro
       </motion.g>
 
       {/* Mid-left small spot */}
-      <motion.g variants={spotVariants} custom={2.38} initial="hidden" animate={shouldAnimate ? 'visible' : 'visible'}>
+      <motion.g variants={spotVariants} custom={2.38} initial="hidden" animate="visible">
         <ellipse
           cx="292"
           cy="209"
@@ -332,7 +332,7 @@ export default function OrangeMushroom({ shouldAnimate, duration }: OrangeMushro
       </motion.g>
 
       {/* Mid-right small spot */}
-      <motion.g variants={spotVariants} custom={2.48} initial="hidden" animate={shouldAnimate ? 'visible' : 'visible'}>
+      <motion.g variants={spotVariants} custom={2.48} initial="hidden" animate="visible">
         <ellipse
           cx="308"
           cy="210"
@@ -353,7 +353,7 @@ export default function OrangeMushroom({ shouldAnimate, duration }: OrangeMushro
         variants={spotVariants}
         custom={2.52}
         initial="hidden"
-        animate={shouldAnimate ? 'visible' : 'visible'}
+        animate="visible"
       />
 
       <motion.circle
@@ -365,7 +365,7 @@ export default function OrangeMushroom({ shouldAnimate, duration }: OrangeMushro
         variants={spotVariants}
         custom={2.54}
         initial="hidden"
-        animate={shouldAnimate ? 'visible' : 'visible'}
+        animate="visible"
       />
 
       <motion.circle
@@ -377,7 +377,7 @@ export default function OrangeMushroom({ shouldAnimate, duration }: OrangeMushro
         variants={spotVariants}
         custom={2.43}
         initial="hidden"
-        animate={shouldAnimate ? 'visible' : 'visible'}
+        animate="visible"
       />
     </motion.g>
   );

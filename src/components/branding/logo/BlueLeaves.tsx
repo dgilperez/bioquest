@@ -45,7 +45,7 @@ export default function BlueLeaves({ shouldAnimate, duration }: BlueLeavesProps)
         variants={leafVariants}
         custom={1.2}
         initial="hidden"
-        animate={shouldAnimate ? 'visible' : 'visible'}
+        animate="visible"
       >
         {/* Leaf shadow layer */}
         <path
@@ -204,7 +204,7 @@ export default function BlueLeaves({ shouldAnimate, duration }: BlueLeavesProps)
         variants={leafVariants}
         custom={1.3}
         initial="hidden"
-        animate={shouldAnimate ? 'visible' : 'visible'}
+        animate="visible"
       >
         {/* Leaf shadow layer */}
         <path
@@ -359,7 +359,7 @@ export default function BlueLeaves({ shouldAnimate, duration }: BlueLeavesProps)
         variants={leafVariants}
         custom={1.4}
         initial="hidden"
-        animate={shouldAnimate ? 'visible' : 'visible'}
+        animate="visible"
       >
         {/* Leaf shadow layer */}
         <path

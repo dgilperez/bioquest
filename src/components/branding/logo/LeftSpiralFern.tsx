@@ -85,7 +85,7 @@ export default function LeftSpiralFern({ shouldAnimate, duration }: LeftSpiralFe
         fill="none"
         initial={false}
         variants={tentacleVariants}
-        animate={shouldAnimate ? 'visible' : 'visible'}
+        animate="visible"
       />
 
       {/* Mid-tone layer */}
@@ -107,7 +107,7 @@ export default function LeftSpiralFern({ shouldAnimate, duration }: LeftSpiralFe
         opacity="0.8"
         variants={tentacleVariants}
         initial={false}
-        animate={shouldAnimate ? 'visible' : 'visible'}
+        animate="visible"
       />
 
       {/* Highlight layer - lighter green on outer edge */}
@@ -124,7 +124,7 @@ export default function LeftSpiralFern({ shouldAnimate, duration }: LeftSpiralFe
         opacity="0.6"
         variants={tentacleVariants}
         initial={false}
-        animate={shouldAnimate ? 'visible' : 'visible'}
+        animate="visible"
       />
 
       {/* Inner highlight - on inner curve */}
@@ -140,7 +140,7 @@ export default function LeftSpiralFern({ shouldAnimate, duration }: LeftSpiralFe
         opacity="0.5"
         variants={tentacleVariants}
         initial={false}
-        animate={shouldAnimate ? 'visible' : 'visible'}
+        animate="visible"
       />
 
       {/* Suction cups along inner curve - larger at base, smaller at tip */}
@@ -171,7 +171,7 @@ export default function LeftSpiralFern({ shouldAnimate, duration }: LeftSpiralFe
           variants={suctionVariants}
           custom={cup.delay}
           initial={false}
-          animate={shouldAnimate ? 'visible' : 'visible'}
+          animate="visible"
         >
           {/* Outer rim */}
           <circle
@@ -229,7 +229,7 @@ export default function LeftSpiralFern({ shouldAnimate, duration }: LeftSpiralFe
           opacity="0.3"
           variants={tentacleVariants}
           initial={false}
-          animate={shouldAnimate ? 'visible' : 'visible'}
+          animate="visible"
         />
       ))}
 
@@ -252,7 +252,7 @@ export default function LeftSpiralFern({ shouldAnimate, duration }: LeftSpiralFe
           opacity={ridge.opacity}
           variants={tentacleVariants}
           initial={false}
-          animate={shouldAnimate ? 'visible' : 'visible'}
+          animate="visible"
         />
       ))}
     </g>

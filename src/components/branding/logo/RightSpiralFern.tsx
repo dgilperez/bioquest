@@ -85,7 +85,7 @@ export default function RightSpiralFern({ shouldAnimate, duration }: RightSpiral
         fill="none"
         initial={false}
         variants={tentacleVariants}
-        animate={shouldAnimate ? 'visible' : 'visible'}
+        animate="visible"
       />
 
       {/* Mid-tone layer */}
@@ -105,7 +105,7 @@ export default function RightSpiralFern({ shouldAnimate, duration }: RightSpiral
         opacity="0.8"
         initial={false}
         variants={tentacleVariants}
-        animate={shouldAnimate ? 'visible' : 'visible'}
+        animate="visible"
       />
 
       {/* Highlight layer - lighter green on outer edge */}
@@ -122,7 +122,7 @@ export default function RightSpiralFern({ shouldAnimate, duration }: RightSpiral
         opacity="0.6"
         initial={false}
         variants={tentacleVariants}
-        animate={shouldAnimate ? 'visible' : 'visible'}
+        animate="visible"
       />
 
       {/* Inner highlight - on inner curve */}
@@ -138,7 +138,7 @@ export default function RightSpiralFern({ shouldAnimate, duration }: RightSpiral
         opacity="0.5"
         initial={false}
         variants={tentacleVariants}
-        animate={shouldAnimate ? 'visible' : 'visible'}
+        animate="visible"
       />
 
       {/* Suction cups along inner curve - larger at base, smaller at tip */}
@@ -169,7 +169,7 @@ export default function RightSpiralFern({ shouldAnimate, duration }: RightSpiral
           variants={suctionVariants}
           custom={cup.delay}
           initial={false}
-          animate={shouldAnimate ? 'visible' : 'visible'}
+          animate="visible"
         >
           {/* Outer rim */}
           <circle
@@ -227,7 +227,7 @@ export default function RightSpiralFern({ shouldAnimate, duration }: RightSpiral
           opacity="0.3"
           variants={tentacleVariants}
           initial={false}
-          animate={shouldAnimate ? 'visible' : 'visible'}
+          animate="visible"
         />
       ))}
 
@@ -250,7 +250,7 @@ export default function RightSpiralFern({ shouldAnimate, duration }: RightSpiral
           opacity={ridge.opacity}
           variants={tentacleVariants}
           initial={false}
-          animate={shouldAnimate ? 'visible' : 'visible'}
+          animate="visible"
         />
       ))}
     </g>

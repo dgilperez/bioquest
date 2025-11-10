@@ -1,6 +1,6 @@
 'use client';
 
-import { motion, useReducedMotion } from 'framer-motion';
+import { motion, useReducedMotion, Variants } from 'framer-motion';
 import { useEffect, useState } from 'react';
 
 // Import all element components
@@ -73,7 +73,7 @@ export default function AnimatedLogo({
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
         initial="hidden"
-        animate={shouldAnimate ? 'visible' : 'visible'}
+        animate="visible"
         variants={containerVariants}
         onAnimationComplete={() => {
           if (!loop) setIsPlaying(false);

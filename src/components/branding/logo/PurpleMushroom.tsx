@@ -44,7 +44,7 @@ export default function PurpleMushroom({ shouldAnimate, duration }: PurpleMushro
       style={{ transformOrigin: '105px 315px' }}
       variants={growVariants}
       initial="hidden"
-      animate={shouldAnimate ? 'visible' : 'visible'}
+      animate="visible"
     >
       {/* Ground shadow */}
       <ellipse
@@ -220,7 +220,7 @@ export default function PurpleMushroom({ shouldAnimate, duration }: PurpleMushro
 
       {/* Cream/light purple spots - varied sizes with individual animations */}
       {/* Central spot */}
-      <motion.g variants={spotVariants} custom={2.6} initial="hidden" animate={shouldAnimate ? 'visible' : 'visible'}>
+      <motion.g variants={spotVariants} custom={2.6} initial="hidden" animate="visible">
         <ellipse
           cx="105"
           cy="282"
@@ -240,7 +240,7 @@ export default function PurpleMushroom({ shouldAnimate, duration }: PurpleMushro
       </motion.g>
 
       {/* Upper left spot */}
-      <motion.g variants={spotVariants} custom={2.65} initial="hidden" animate={shouldAnimate ? 'visible' : 'visible'}>
+      <motion.g variants={spotVariants} custom={2.65} initial="hidden" animate="visible">
         <ellipse
           cx="94"
           cy="287"
@@ -260,7 +260,7 @@ export default function PurpleMushroom({ shouldAnimate, duration }: PurpleMushro
       </motion.g>
 
       {/* Upper right spot */}
-      <motion.g variants={spotVariants} custom={2.7} initial="hidden" animate={shouldAnimate ? 'visible' : 'visible'}>
+      <motion.g variants={spotVariants} custom={2.7} initial="hidden" animate="visible">
         <ellipse
           cx="116"
           cy="286"
@@ -280,7 +280,7 @@ export default function PurpleMushroom({ shouldAnimate, duration }: PurpleMushro
       </motion.g>
 
       {/* Lower left spot */}
-      <motion.g variants={spotVariants} custom={2.75} initial="hidden" animate={shouldAnimate ? 'visible' : 'visible'}>
+      <motion.g variants={spotVariants} custom={2.75} initial="hidden" animate="visible">
         <ellipse
           cx="88"
           cy="294"
@@ -300,7 +300,7 @@ export default function PurpleMushroom({ shouldAnimate, duration }: PurpleMushro
       </motion.g>
 
       {/* Lower right spot */}
-      <motion.g variants={spotVariants} custom={2.8} initial="hidden" animate={shouldAnimate ? 'visible' : 'visible'}>
+      <motion.g variants={spotVariants} custom={2.8} initial="hidden" animate="visible">
         <ellipse
           cx="120"
           cy="295"
@@ -320,7 +320,7 @@ export default function PurpleMushroom({ shouldAnimate, duration }: PurpleMushro
       </motion.g>
 
       {/* Mid-left small spot */}
-      <motion.g variants={spotVariants} custom={2.68} initial="hidden" animate={shouldAnimate ? 'visible' : 'visible'}>
+      <motion.g variants={spotVariants} custom={2.68} initial="hidden" animate="visible">
         <ellipse
           cx="98"
           cy="291"
@@ -332,7 +332,7 @@ export default function PurpleMushroom({ shouldAnimate, duration }: PurpleMushro
       </motion.g>
 
       {/* Mid-right small spot */}
-      <motion.g variants={spotVariants} custom={2.78} initial="hidden" animate={shouldAnimate ? 'visible' : 'visible'}>
+      <motion.g variants={spotVariants} custom={2.78} initial="hidden" animate="visible">
         <ellipse
           cx="112"
           cy="292"
@@ -353,7 +353,7 @@ export default function PurpleMushroom({ shouldAnimate, duration }: PurpleMushro
         variants={spotVariants}
         custom={2.82}
         initial="hidden"
-        animate={shouldAnimate ? 'visible' : 'visible'}
+        animate="visible"
       />
 
       <motion.circle
@@ -365,7 +365,7 @@ export default function PurpleMushroom({ shouldAnimate, duration }: PurpleMushro
         variants={spotVariants}
         custom={2.84}
         initial="hidden"
-        animate={shouldAnimate ? 'visible' : 'visible'}
+        animate="visible"
       />
     </motion.g>
   );
