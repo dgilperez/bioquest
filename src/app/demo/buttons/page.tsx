@@ -191,7 +191,7 @@ export default function ButtonDemoPage() {
             <div>
               <h3 className="font-semibold mb-1">Loading Spinner</h3>
               <p className="text-muted-foreground">
-                SVG circle with strokeDasharray animated via Framer Motion's rotate transform.
+                SVG circle with strokeDasharray animated via Framer Motion&apos;s rotate transform.
                 Size adapts to button size (sm: 14px, md: 16px, lg: 20px).
               </p>
             </div>
