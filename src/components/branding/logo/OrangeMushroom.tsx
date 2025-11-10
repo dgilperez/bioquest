@@ -3,11 +3,10 @@
 import { motion } from 'framer-motion';
 
 interface OrangeMushroomProps {
-  shouldAnimate: boolean;
   duration: (d: number) => number;
 }
 
-export default function OrangeMushroom({ shouldAnimate, duration }: OrangeMushroomProps) {
+export default function OrangeMushroom({ duration }: OrangeMushroomProps) {
   const growVariants = {
     hidden: { scale: 0, opacity: 0, y: 10 },
     visible: {

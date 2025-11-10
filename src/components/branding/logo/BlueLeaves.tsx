@@ -3,11 +3,10 @@
 import { motion } from 'framer-motion';
 
 interface BlueLeavesProps {
-  shouldAnimate: boolean;
   duration: (d: number) => number;
 }
 
-export default function BlueLeaves({ shouldAnimate, duration }: BlueLeavesProps) {
+export default function BlueLeaves({ duration }: BlueLeavesProps) {
   const leafVariants = {
     hidden: { scale: 0, opacity: 0, rotate: -25 },
     visible: (delay: number) => ({

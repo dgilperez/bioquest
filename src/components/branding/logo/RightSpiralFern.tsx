@@ -3,11 +3,10 @@
 import { motion } from 'framer-motion';
 
 interface RightSpiralFernProps {
-  shouldAnimate: boolean;
   duration: (d: number) => number;
 }
 
-export default function RightSpiralFern({ shouldAnimate, duration }: RightSpiralFernProps) {
+export default function RightSpiralFern({ duration }: RightSpiralFernProps) {
   const tentacleVariants = {
     hidden: { pathLength: 0, opacity: 0 },
     visible: {

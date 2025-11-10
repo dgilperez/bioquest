@@ -3,11 +3,10 @@
 import { motion } from 'framer-motion';
 
 interface PurpleMushroomProps {
-  shouldAnimate: boolean;
   duration: (d: number) => number;
 }
 
-export default function PurpleMushroom({ shouldAnimate, duration }: PurpleMushroomProps) {
+export default function PurpleMushroom({ duration }: PurpleMushroomProps) {
   const growVariants = {
     hidden: { scale: 0, opacity: 0, y: 8 },
     visible: {

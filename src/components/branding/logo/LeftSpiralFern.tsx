@@ -3,11 +3,10 @@
 import { motion } from 'framer-motion';
 
 interface LeftSpiralFernProps {
-  shouldAnimate: boolean;
   duration: (d: number) => number;
 }
 
-export default function LeftSpiralFern({ shouldAnimate, duration }: LeftSpiralFernProps) {
+export default function LeftSpiralFern({ duration }: LeftSpiralFernProps) {
   const tentacleVariants = {
     hidden: { pathLength: 0, opacity: 0 },
     visible: {

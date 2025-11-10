@@ -3,11 +3,10 @@
 import { motion } from 'framer-motion';
 
 interface RedMushroomProps {
-  shouldAnimate: boolean;
   duration: (d: number) => number;
 }
 
-export default function RedMushroom({ shouldAnimate, duration }: RedMushroomProps) {
+export default function RedMushroom({ duration }: RedMushroomProps) {
   const growVariants = {
     hidden: { scale: 0, opacity: 0, y: 15 },
     visible: {

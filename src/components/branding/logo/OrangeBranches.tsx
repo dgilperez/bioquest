@@ -3,11 +3,10 @@
 import { motion } from 'framer-motion';
 
 interface OrangeBranchesProps {
-  shouldAnimate: boolean;
   duration: (d: number) => number;
 }
 
-export default function OrangeBranches({ shouldAnimate, duration }: OrangeBranchesProps) {
+export default function OrangeBranches({ duration }: OrangeBranchesProps) {
   const branchVariants = {
     hidden: { pathLength: 0, opacity: 0 },
     visible: (delay: number) => ({

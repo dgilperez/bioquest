@@ -27,7 +27,7 @@ describe('Tree of Life Stats Refresh', () => {
     await prisma.user.create({
       data: {
         id: testUserId,
-        inatId: 888888,
+        inatId: 333333, // Unique across all test files
         inatUsername: 'tol-test-user',
         accessToken: 'mock-token',
       },

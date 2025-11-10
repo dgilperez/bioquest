@@ -3,7 +3,6 @@
 import { motion } from 'framer-motion';
 
 interface GreenFrondsProps {
-  shouldAnimate: boolean;
   duration: (d: number) => number;
 }
 

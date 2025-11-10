@@ -1,6 +1,6 @@
 'use client';
 
-import { motion, useReducedMotion, Variants } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 
 // Import all element components
@@ -81,32 +81,32 @@ export default function AnimatedLogo({
         }}
       >
         {/* Background circle */}
-        <Background shouldAnimate={shouldAnimate} duration={duration} />
+        <Background duration={duration} />
 
         {/* Organic elements layer by layer */}
 
         {/* Bottom layer - green fronds */}
-        <GreenFronds shouldAnimate={shouldAnimate} duration={duration} />
+        <GreenFronds duration={duration} />
 
         {/* Orange connecting branches */}
-        <OrangeBranches shouldAnimate={shouldAnimate} duration={duration} />
+        <OrangeBranches duration={duration} />
 
         {/* Left spiral fern */}
-        <LeftSpiralFern shouldAnimate={shouldAnimate} duration={duration} />
+        <LeftSpiralFern duration={duration} />
 
         {/* Right spiral fern (dominant) */}
-        <RightSpiralFern shouldAnimate={shouldAnimate} duration={duration} />
+        <RightSpiralFern duration={duration} />
 
         {/* Blue-green leaves on right */}
-        <BlueLeaves shouldAnimate={shouldAnimate} duration={duration} />
+        <BlueLeaves duration={duration} />
 
         {/* Mushrooms */}
-        <RedMushroom shouldAnimate={shouldAnimate} duration={duration} />
-        <OrangeMushroom shouldAnimate={shouldAnimate} duration={duration} />
-        <PurpleMushroom shouldAnimate={shouldAnimate} duration={duration} />
+        <RedMushroom duration={duration} />
+        <OrangeMushroom duration={duration} />
+        <PurpleMushroom duration={duration} />
 
         {/* Beetle (top layer) */}
-        <Beetle shouldAnimate={shouldAnimate} duration={duration} />
+        <Beetle duration={duration} />
 
         {/* Continuous breathing animation wrapper */}
         {loop && shouldAnimate && (

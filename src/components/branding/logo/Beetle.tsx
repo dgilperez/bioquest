@@ -3,11 +3,10 @@
 import { motion } from 'framer-motion';
 
 interface BeetleProps {
-  shouldAnimate: boolean;
   duration: (d: number) => number;
 }
 
-export default function Beetle({ shouldAnimate, duration }: BeetleProps) {
+export default function Beetle({ duration }: BeetleProps) {
   const growVariants = {
     hidden: { scale: 0, opacity: 0, rotate: 25 },
     visible: {

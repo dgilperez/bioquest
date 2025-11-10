@@ -3,7 +3,6 @@
 import { motion } from 'framer-motion';
 
 interface BackgroundProps {
-  shouldAnimate: boolean;
   duration: (d: number) => number;
 }
 
