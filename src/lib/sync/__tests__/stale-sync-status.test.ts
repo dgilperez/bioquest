@@ -26,12 +26,12 @@ describe('Stale Sync Status Detection', () => {
     await prisma.syncProgress.deleteMany({ where: { userId: testUserId } });
     await prisma.user.deleteMany({ where: { id: testUserId } });
     // Also clean up any users with the same inatId to prevent unique constraint errors
-    await prisma.user.deleteMany({ where: { inatId: 999999 } });
+    await prisma.user.deleteMany({ where: { inatId: 888888 } });
 
     await prisma.user.create({
       data: {
         id: testUserId,
-        inatId: 999999,
+        inatId: 888888,
         inatUsername: 'stale-test-user',
         email: 'stale@test.com',
       },
