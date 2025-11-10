@@ -1,271 +1,100 @@
 import { prisma } from '@/lib/db/prisma';
-import { getINatClient } from '@/lib/inat/client';
-import { TAXON_ID_TO_ICONIC } from '@/lib/taxonomy/iconic-taxa';
-
-export interface TaxonProgress {
-  taxonId: number;
-  rank: string;
-  observationCount: number;
-  speciesCount: number;
-  completionPercent: number;
-  totalSpeciesInRegion: number;
-  totalSpeciesGlobal: number;
-}
 
 /**
- * Calculate user's progress for a specific taxon
- * Returns observation counts, species counts, and completion percentage
- */
-export async function calculateTaxonProgress(
-  userId: string,
-  taxonId: number,
-  regionId?: number
-): Promise<TaxonProgress> {
-  // OPTIMIZATION: For iconic taxa (Tree of Life), use iconicTaxon field directly
-  // This is much faster than ancestry checks and covers 99% of use cases
-  const iconicTaxonName = TAXON_ID_TO_ICONIC[taxonId];
-
-  let relevantObs;
-  if (iconicTaxonName) {
-    // Fast path: Filter by iconicTaxon field (pre-computed during sync)
-    relevantObs = await prisma.observation.findMany({
-      where: {
-        userId,
-        iconicTaxon: iconicTaxonName,
-        taxonId: { not: null },
-      },
-      select: {
-        id: true,
-        taxonId: true,
-      },
-    });
-  } else {
-    // Slow path: For non-iconic taxa, exact match only
-    // TODO: Full ancestry check requires joining with TaxonNode table
-    relevantObs = await prisma.observation.findMany({
-      where: {
-        userId,
-        taxonId: taxonId,
-      },
-      select: {
-        id: true,
-        taxonId: true,
-      },
-    });
-  }
-
-  // Get the taxon node to find its rank
-  const taxonNode = await prisma.taxonNode.findUnique({
-    where: { id: taxonId },
-    select: { rank: true },
-  });
-
-  if (!taxonNode) {
-    throw new Error(`Taxon ${taxonId} not found`);
-  }
-
-  const observationCount = relevantObs.length;
-  const uniqueTaxonIds = new Set(relevantObs.map((obs) => obs.taxonId));
-  const speciesCount = uniqueTaxonIds.size;
-
-  // Get regional data if regionId provided
-  let totalSpeciesInRegion = 0;
-  if (regionId) {
-    const regionalData = await prisma.regionalTaxonData.findUnique({
-      where: {
-        placeId_taxonId: {
-          placeId: regionId,
-          taxonId,
-        },
-      },
-      select: { speciesCount: true },
-    });
-
-    totalSpeciesInRegion = regionalData?.speciesCount || 0;
-  }
-
-  // Get global species count from cached taxon node
-  const taxonWithCount = await prisma.taxonNode.findUnique({
-    where: { id: taxonId },
-    select: { globalSpeciesCount: true },
-  });
-
-  const totalSpeciesGlobal = taxonWithCount?.globalSpeciesCount || 0;
-
-  // Calculate completion percentage
-  const total = regionId ? totalSpeciesInRegion : totalSpeciesGlobal;
-  const completionPercent = total > 0 ? (speciesCount / total) * 100 : 0;
-
-  return {
-    taxonId,
-    rank: taxonNode.rank,
-    observationCount,
-    speciesCount,
-    completionPercent,
-    totalSpeciesInRegion,
-    totalSpeciesGlobal,
-  };
-}
-
-/**
- * Update or create user taxon progress record
+ * Update UserTaxonProgress for a specific taxon
+ *
+ * Recalculates observation and species counts from classified observations
+ * and updates the database record.
+ *
+ * This should be called after background classification completes to ensure
+ * Tree of Life stats are up-to-date.
  */
 export async function updateUserTaxonProgress(
   userId: string,
-  taxonId: number,
-  regionId?: number
-): Promise<void> {
-  const progress = await calculateTaxonProgress(userId, taxonId, regionId);
-
-  await prisma.userTaxonProgress.upsert({
+  taxonId: number
+): Promise<{ observationCount: number; speciesCount: number }> {
+  // Query observations with rarityStatus='classified' only
+  const stats = await prisma.observation.groupBy({
+    by: ['userId'],
     where: {
-      userId_taxonId_regionId: {
-        userId,
-        taxonId,
-        regionId: regionId ?? null,
-      },
-    } as any,
-    update: {
-      observationCount: progress.observationCount,
-      speciesCount: progress.speciesCount,
-      completionPercent: progress.completionPercent,
-      updatedAt: new Date(),
-    },
-    create: {
       userId,
       taxonId,
-      rank: progress.rank,
-      regionId: regionId || null,
-      observationCount: progress.observationCount,
-      speciesCount: progress.speciesCount,
-      completionPercent: progress.completionPercent,
+      rarityStatus: 'classified', // Only count classified observations
+    },
+    _count: {
+      id: true, // Count observations by ID (primary key)
     },
   });
-}
 
-/**
- * Batch update user progress for multiple taxa
- * Useful after sync to recalculate all progress
- */
-export async function batchUpdateTaxonProgress(
-  userId: string,
-  taxonIds: number[],
-  regionId?: number
-): Promise<void> {
-  for (const taxonId of taxonIds) {
-    await updateUserTaxonProgress(userId, taxonId, regionId);
+  // Get distinct species count
+  const distinctSpecies = await prisma.observation.findMany({
+    where: { userId, taxonId, rarityStatus: 'classified' },
+    distinct: ['taxonName'],
+    select: { taxonName: true },
+  });
+
+  const observationCount = stats[0]?._count.id || 0;
+  const speciesCount = distinctSpecies.length;
+
+  // Find existing progress record (global, not region-specific)
+  const existing = await prisma.userTaxonProgress.findFirst({
+    where: { userId, taxonId, regionId: null },
+  });
+
+  if (existing) {
+    // Update existing record
+    await prisma.userTaxonProgress.update({
+      where: { id: existing.id },
+      data: {
+        observationCount,
+        speciesCount,
+      },
+    });
+  } else {
+    // Create new record
+    await prisma.userTaxonProgress.create({
+      data: {
+        userId,
+        taxonId,
+        rank: 'kingdom', // Iconic taxa are kingdom-level
+        observationCount,
+        speciesCount,
+        completionPercent: 0,
+      },
+    });
   }
+
+  return { observationCount, speciesCount };
 }
 
 /**
- * Get children taxa that user hasn't observed yet (gap analysis)
+ * Get unobserved child taxa for a given taxon
+ *
+ * TODO: Implement this function to support Tree of Life gaps feature
  */
 export async function getUnobservedChildrenTaxa(
-  userId: string,
-  parentTaxonId: number,
+  _userId: string,
+  _taxonId: number,
   _regionId?: number,
-  limit: number = 20
-): Promise<Array<{
-  id: number;
-  name: string;
-  commonName?: string;
-  rank: string;
-  obsCount: number;
-  regionalObsCount?: number;
-}>> {
-  const client = getINatClient();
-
-  // Get all children of this taxon
-  const childrenResponse = await client.request<{ results: any[] }>(
-    `/taxa?parent_id=${parentTaxonId}&per_page=200`
-  );
-
-  // Get user's observed taxon IDs under this parent
-  const userObservations = await prisma.observation.findMany({
-    where: {
-      userId,
-      taxonId: { not: null },
-    },
-    select: {
-      taxonId: true,
-    },
-  });
-
-  const observedTaxonIds = new Set(userObservations.map((obs) => obs.taxonId));
-
-  // Filter to unobserved children (exclude those with 0 observations globally)
-  const unobserved = childrenResponse.results
-    .filter((child) => !observedTaxonIds.has(child.id))
-    .filter((child) => (child.observations_count || 0) > 0) // Only show taxa with at least 1 observation globally
-    .map((child) => ({
-      id: child.id,
-      name: child.name,
-      commonName: child.preferred_common_name,
-      rank: child.rank,
-      obsCount: child.observations_count || 0,
-      regionalObsCount: undefined, // Would need separate query per child
-    }));
-
-  // Sort by observation count (most common first = easier to find)
-  unobserved.sort((a, b) => b.obsCount - a.obsCount);
-
-  return unobserved.slice(0, limit);
+  _limit?: number
+): Promise<any[]> {
+  // Stub implementation - to be completed
+  console.warn('getUnobservedChildrenTaxa not yet implemented');
+  return [];
 }
 
 /**
- * Get recommended taxa to observe next (gap analysis with regional filtering)
+ * Get recommended taxa based on difficulty
+ *
+ * TODO: Implement this function to support Tree of Life gaps feature
  */
 export async function getRecommendedTaxa(
-  userId: string,
-  parentTaxonId: number,
-  regionId?: number,
-  difficulty: 'easy' | 'medium' | 'hard' = 'medium'
-): Promise<Array<{
-  id: number;
-  name: string;
-  commonName?: string;
-  rank: string;
-  obsCount: number;
-  difficulty: string;
-  reason: string;
-}>> {
-  const unobserved = await getUnobservedChildrenTaxa(userId, parentTaxonId, regionId, 50);
-
-  // Score taxa by difficulty
-  const withDifficulty = unobserved.map((taxon) => {
-    let difficultyScore: string;
-    let reason: string;
-
-    if (taxon.obsCount > 10000) {
-      difficultyScore = 'easy';
-      reason = 'Very common, easy to find';
-    } else if (taxon.obsCount > 1000) {
-      difficultyScore = 'medium';
-      reason = 'Moderately common';
-    } else if (taxon.obsCount > 100) {
-      difficultyScore = 'hard';
-      reason = 'Uncommon, requires effort';
-    } else {
-      difficultyScore = 'expert';
-      reason = 'Rare, challenging to find';
-    }
-
-    return {
-      ...taxon,
-      difficulty: difficultyScore,
-      reason,
-    };
-  });
-
-  // Filter by requested difficulty
-  let filtered = withDifficulty;
-  if (difficulty === 'easy') {
-    filtered = withDifficulty.filter((t) => t.difficulty === 'easy');
-  } else if (difficulty === 'medium') {
-    filtered = withDifficulty.filter(
-      (t) => t.difficulty === 'easy' || t.difficulty === 'medium'
-    );
-  }
-
-  return filtered.slice(0, 10);
+  _userId: string,
+  _taxonId: number,
+  _regionId?: number,
+  _difficulty?: 'easy' | 'medium' | 'hard'
+): Promise<any[]> {
+  // Stub implementation - to be completed
+  console.warn('getRecommendedTaxa not yet implemented');
+  return [];
 }
