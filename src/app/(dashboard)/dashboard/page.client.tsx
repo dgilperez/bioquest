@@ -12,6 +12,7 @@ import { BadgeUnlockCeremony } from '@/components/celebrations/BadgeUnlockCeremo
 import { StreakMilestone } from '@/components/celebrations/StreakMilestone';
 import { QuestProgressCelebration } from '@/components/celebrations/QuestProgressCelebration';
 import { QuickStartOverlay } from '@/components/onboarding/QuickStartOverlay';
+import { BackgroundClassificationBanner } from '@/components/classification/BackgroundClassificationBanner';
 import { staggerContainer } from '@/lib/animations/variants';
 import { Badge } from '@/types';
 import { toast } from 'sonner';
@@ -243,6 +244,16 @@ export function DashboardClient({
           <p className="text-muted-foreground font-body text-lg">
             Here&apos;s your progress as a naturalist 🌿
           </p>
+        </motion.div>
+
+        {/* Classification Status Indicator */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.2 }}
+          className="flex justify-start"
+        >
+          <BackgroundClassificationBanner minimal />
         </motion.div>
 
         {/* Two-column layout: Level + Streak */}

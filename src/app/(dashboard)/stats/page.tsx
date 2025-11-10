@@ -6,6 +6,7 @@ import { TaxonomicBreakdown } from '@/components/stats/TaxonomicBreakdown';
 import { SpeciesAccumulationChart } from '@/components/stats/SpeciesAccumulationChart';
 import { RarityDistribution } from '@/components/stats/RarityDistribution';
 import { LifeListPreview } from '@/components/stats/LifeListPreview';
+import { BackgroundClassificationBanner } from '@/components/classification/BackgroundClassificationBanner';
 import type { AdvancedStatsResult } from '@/lib/stats/advanced-stats';
 
 export default function StatsPage() {
@@ -72,6 +73,11 @@ export default function StatsPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      {/* Background Classification Banner */}
+      <div className="mb-6">
+        <BackgroundClassificationBanner />
+      </div>
+
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">Your Statistics</h1>
         <p className="text-gray-600">

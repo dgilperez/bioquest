@@ -7,6 +7,7 @@ import { GapAnalysis } from '@/components/tree-of-life/GapAnalysis';
 import { RegionalFilter } from '@/components/tree-of-life/RegionalFilter';
 import { SunburstChart } from '@/components/tree-of-life/SunburstChart';
 import { TreemapChart } from '@/components/tree-of-life/TreemapChart';
+import { BackgroundClassificationBanner } from '@/components/classification/BackgroundClassificationBanner';
 import { ChevronLeft, Home, Loader2, LayoutList, Network } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -166,6 +167,9 @@ export function TreeOfLifeClient() {
 
   return (
     <div className="max-w-7xl mx-auto space-y-8">
+      {/* Background Classification Banner */}
+      <BackgroundClassificationBanner />
+
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
