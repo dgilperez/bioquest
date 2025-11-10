@@ -303,15 +303,15 @@ describe('Crash Recovery - Sync Status Verification', () => {
       const largeDatasetSize = 50000;
       const inatTotal = 49000;
 
-      // Clean up ALL existing observations (aggressive cleanup for large data tests)
-      await prisma.observation.deleteMany({});
+      // Clean up test user's observations (scoped for test isolation)
+      await prisma.observation.deleteMany({ where: { userId: testUserId } });
 
       // Create 50k local observations
       const batchSize = 5000;
       for (let i = 0; i < largeDatasetSize / batchSize; i++) {
         await prisma.observation.createMany({
           data: Array.from({ length: batchSize }, (_, j) => ({
-            id: i * batchSize + j + 1,
+            id: 1000000 + i * batchSize + j,
             userId: testUserId,
             observedOn: new Date('2024-01-01'),
             qualityGrade: 'needs_id',
@@ -347,7 +347,7 @@ describe('Crash Recovery - Sync Status Verification', () => {
         const end = Math.min(start + perPage, inatTotal);
 
         const results = Array.from({ length: end - start }, (_, i) => ({
-          id: 1 + start + i, // IDs 1-49000 (first 49k match)
+          id: 1000000 + start + i, // IDs 1000000-1049000 (unique range to avoid conflicts)
         }));
 
         return {
@@ -373,8 +373,8 @@ describe('Crash Recovery - Sync Status Verification', () => {
       const largeDatasetSize = 50000;
       const inatTotal = 49000;
 
-      // Clean up ALL existing observations (aggressive cleanup for large data tests)
-      await prisma.observation.deleteMany({});
+      // Clean up test user's observations (scoped for test isolation)
+      await prisma.observation.deleteMany({ where: { userId: testUserId } });
 
       // Create 50k local observations (using different ID range to avoid conflicts)
       const batchSize = 5000;

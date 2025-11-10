@@ -1322,8 +1322,8 @@ describe('Processor - Edge Cases', () => {
       ]);
       await mockClassifyObservationRarity({ perTaxonResults: perTaxonResults as Map<number, Partial<RarityResult>> });
 
-      // Clean up existing observations to prevent unique constraint errors
-      await prisma.observation.deleteMany({});
+      // Clean up test user's observations (scoped for test isolation)
+      await prisma.observation.deleteMany({ where: { userId: testUserId } });
 
       // 1. Create observations with pending rarity
       await prisma.observation.createMany({
