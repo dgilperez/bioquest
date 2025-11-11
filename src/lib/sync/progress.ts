@@ -56,20 +56,20 @@ export async function initProgress(userId: string, totalObservations: number): P
       SET
         status = 'syncing',
         phase = 'fetching',
-        currentStep = 0,
-        totalSteps = 4,
+        "currentStep" = 0,
+        "totalSteps" = 4,
         message = 'Starting sync...',
-        observationsProcessed = 0,
-        observationsTotal = ${totalObservations},
+        "observationsProcessed" = 0,
+        "observationsTotal" = ${totalObservations},
         error = NULL,
-        completedAt = NULL,
-        startedAt = ${new Date()},
-        updatedAt = ${new Date()}
-      WHERE userId = ${userId}
+        "completedAt" = NULL,
+        "startedAt" = ${new Date()},
+        "updatedAt" = ${new Date()}
+      WHERE "userId" = ${userId}
         AND (
           status IS NULL
           OR status != 'syncing'
-          OR (status = 'syncing' AND startedAt < ${tenMinutesAgo})
+          OR (status = 'syncing' AND "startedAt" < ${tenMinutesAgo})
         )
     `;
 
