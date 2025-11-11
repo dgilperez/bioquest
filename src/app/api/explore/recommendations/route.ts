@@ -4,6 +4,8 @@ import { authOptions } from '@/lib/auth';
 import { getLocationRecommendations, getUserCoordinates } from '@/lib/explore/recommendations-optimized';
 import { recommendationsCache } from '@/lib/cache/recommendations-cache';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(req: NextRequest) {
   console.log('==================== RECOMMENDATIONS API CALLED ====================');
   try {
